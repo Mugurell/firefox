@@ -6,6 +6,7 @@ package org.mozilla.samples.compose.browser
 
 import android.content.Context
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.Immutable
 import androidx.compose.ui.platform.LocalContext
 import mozilla.appservices.remotesettings.RemoteSettingsServer
 import mozilla.components.browser.engine.gecko.GeckoEngine
@@ -29,6 +30,7 @@ import org.mozilla.samples.compose.browser.app.AppStore
 /**
  * Global components of the sample browser.
  */
+@Immutable
 class Components(
     context: Context,
 ) {

@@ -12,13 +12,20 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import mozilla.components.compose.base.theme.AcornTheme
-import mozilla.components.support.ktx.android.view.setupPersistentInsets
+import mozilla.components.compose.browser.toolbar.store.BrowserToolbarState
+import mozilla.components.compose.browser.toolbar.store.BrowserToolbarStore
 import org.mozilla.samples.compose.browser.browser.BrowserScreen
+import org.mozilla.samples.compose.browser.browser.BrowserScreenState
+import org.mozilla.samples.compose.browser.browser.BrowserScreenStore
+import org.mozilla.samples.compose.browser.browser.BrowserToolbarMiddleware
+import org.mozilla.samples.compose.browser.browser.BrowserToolbarMiddleware.Companion.Dependencies
+import org.mozilla.samples.compose.browser.browser.StoreProvider.Companion.storeProvider
 import org.mozilla.samples.compose.browser.ext.components
 import org.mozilla.samples.compose.browser.settings.SettingsScreen
 
@@ -34,18 +41,37 @@ class BrowserComposeActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
-        window.setupPersistentInsets()
 
         setContent {
             val navController = rememberNavController()
+            val browserScreenStore = remember {
+                storeProvider.build(BrowserScreenState()) { state ->
+                    BrowserScreenStore(state)
+                }
+            }
+            val browserToolbarStore = remember {
+                storeProvider.build(BrowserToolbarState()) { state ->
+                    BrowserToolbarStore(
+                        initialState = state,
+                        middleware = listOf(
+                            BrowserToolbarMiddleware(
+                                initialDependencies = Dependencies(
+                                    lifecycleOwner = this,
+                                    components = components,
+                                    navController = navController,
+                                    browserScreenStore = browserScreenStore,
+                                ),
+                            ),
+                        ),
+                    )
+                }
+            }
 
             AcornTheme {
-                Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    Box(modifier = Modifier.padding(innerPadding)) {
-                        NavHost(navController, startDestination = ROUTE_BROWSER) {
-                            composable(ROUTE_BROWSER) { BrowserScreen(navController) }
-                            composable(ROUTE_SETTINGS) { SettingsScreen() }
-                        }
+                Box(modifier = Modifier.fillMaxSize()) {
+                    NavHost(navController, startDestination = ROUTE_BROWSER) {
+                        composable(ROUTE_BROWSER) { BrowserScreen(browserScreenStore, browserToolbarStore) }
+                        composable(ROUTE_SETTINGS) { SettingsScreen() }
                     }
                 }
             }

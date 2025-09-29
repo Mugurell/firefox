@@ -4,12 +4,23 @@
 
 package org.mozilla.samples.compose.browser.browser
 
-import android.content.Context
+import androidx.lifecycle.Lifecycle.State.RESUMED
+import androidx.lifecycle.LifecycleOwner
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.NavController
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.distinctUntilChangedBy
+import kotlinx.coroutines.launch
+import mozilla.components.browser.state.selector.selectedTab
 import mozilla.components.compose.browser.toolbar.concept.Action.ActionButtonRes
 import mozilla.components.compose.browser.toolbar.concept.Action.TabCounterAction
 import mozilla.components.compose.browser.toolbar.concept.PageOrigin
+import mozilla.components.compose.browser.toolbar.store.BrowserDisplayToolbarAction.BrowserActionsEndUpdated
+import mozilla.components.compose.browser.toolbar.store.BrowserDisplayToolbarAction.PageOriginUpdated
 import mozilla.components.compose.browser.toolbar.store.BrowserToolbarAction
+import mozilla.components.compose.browser.toolbar.store.BrowserToolbarAction.CommitUrl
 import mozilla.components.compose.browser.toolbar.store.BrowserToolbarAction.ToggleEditMode
 import mozilla.components.compose.browser.toolbar.store.BrowserToolbarInteraction.BrowserToolbarEvent
 import mozilla.components.compose.browser.toolbar.store.BrowserToolbarInteraction.BrowserToolbarMenu
@@ -21,10 +32,15 @@ import mozilla.components.compose.browser.toolbar.store.BrowserToolbarState
 import mozilla.components.compose.browser.toolbar.store.DisplayState
 import mozilla.components.compose.browser.toolbar.store.EditState
 import mozilla.components.compose.browser.toolbar.store.Mode
+import mozilla.components.compose.browser.toolbar.store.ToolbarGravity
+import mozilla.components.lib.state.Action
 import mozilla.components.lib.state.Middleware
 import mozilla.components.lib.state.MiddlewareContext
+import mozilla.components.lib.state.State
 import mozilla.components.lib.state.Store
+import mozilla.components.lib.state.ext.flow
 import org.mozilla.samples.compose.browser.BrowserComposeActivity.Companion.ROUTE_SETTINGS
+import org.mozilla.samples.compose.browser.Components
 import org.mozilla.samples.compose.browser.R
 import org.mozilla.samples.compose.browser.browser.DisplayBrowserActionsInteractions.TabCounterClicked
 import org.mozilla.samples.compose.browser.browser.DisplayPageActionsEndInteractions.RefreshClicked
@@ -65,6 +81,8 @@ internal class BrowserToolbarMiddleware(
         when (action) {
             is BrowserToolbarAction.Init -> {
                 next(buildInitialState())
+                observePageOriginUpdates(context)
+                observeTabCounterUpdates(context)
             }
 
             is PageOriginClicked -> {
@@ -77,6 +95,11 @@ internal class BrowserToolbarMiddleware(
 
             is MenuInteractions.SettingsClicked -> {
                 dependencies.navController.navigate(ROUTE_SETTINGS)
+            }
+
+            is CommitUrl -> {
+                dependencies.components.sessionUseCases.loadUrl(action.text)
+                next(ToggleEditMode(false))
             }
 
             else -> {
@@ -100,6 +123,7 @@ internal class BrowserToolbarMiddleware(
         editState = EditState(
             editActionsEnd = buildEditPageActionsEnd(),
         ),
+        gravity = ToolbarGravity.Bottom,
     )
 
     private fun buildDisplayPageActions() = listOf(
@@ -112,8 +136,8 @@ internal class BrowserToolbarMiddleware(
 
     private fun buildDisplayBrowserActions() = listOf(
         TabCounterAction(
-            count = 1,
-            contentDescription = "Tabs open: 1",
+            count = dependencies.components.store.state.tabs.size,
+            contentDescription = "Tab counter",
             showPrivacyMask = false,
             onClick = TabCounterClicked,
         ),
@@ -144,9 +168,48 @@ internal class BrowserToolbarMiddleware(
         ),
     )
 
+    private fun observePageOriginUpdates(
+        context: MiddlewareContext<BrowserToolbarState, BrowserToolbarAction>,
+    ) {
+        dependencies.components.store.observeWhileActive {
+            distinctUntilChangedBy { it.selectedTab?.content?.url }
+                .collect {
+                    context.dispatch(
+                        PageOriginUpdated(
+                            context.state.displayState.pageOrigin.copy(
+                                url = (it.selectedTab?.content?.url ?: ""),
+                            ),
+                        ),
+                    )
+                }
+        }
+    }
+
+    private fun observeTabCounterUpdates(
+        context: MiddlewareContext<BrowserToolbarState, BrowserToolbarAction>,
+    ) {
+        dependencies.components.store.observeWhileActive {
+            distinctUntilChangedBy { it.tabs.size }
+                .collect {
+                    context.dispatch(BrowserActionsEndUpdated(buildDisplayBrowserActions()))
+                }
+        }
+    }
+
+    private inline fun <S : State, A : Action> Store<S, A>.observeWhileActive(
+        crossinline observe: suspend (Flow<S>.() -> Unit),
+    ): Job? = dependencies.lifecycleOwner.run {
+        lifecycleScope.launch {
+            repeatOnLifecycle(RESUMED) {
+                flow().observe()
+            }
+        }
+    }
+
     companion object {
         data class Dependencies(
-            val context: Context,
+            val lifecycleOwner: LifecycleOwner,
+            val components: Components,
             val navController: NavController,
             val browserScreenStore: Store<BrowserScreenState, BrowserScreenAction>,
         )
