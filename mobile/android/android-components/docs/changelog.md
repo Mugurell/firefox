@@ -5,8 +5,10 @@ permalink: /changelog/
 ---
 
 # 145.0 (In Development)
+* **ui-widgets**
+* * 🆕 New `EngineViewScrollingDataBehavior` means to only be used to animate a bottom toolbar/banner in sync with the current webpage [Bug 1991654](https://bugzilla.mozilla.org/show_bug.cgi?id=1991654).
 * **concept-engine** and **browser-engine-gecko**
-* * 🆕 New `verticalScrollPosition` and `verticalScrollDelta` APIs exposing the current scroll position and delta of the webpage [Bug 1990215](https://bugzilla.mozilla.org/show_bug.cgi?id=1990215)
+* * 🆕 New `verticalScrollPosition` and `verticalScrollDelta` APIs exposing the current scroll position and delta of the webpage [Bug 1990215](https://bugzilla.mozilla.org/show_bug.cgi?id=1990215).
 * **support-ktx**
   * 🚒 Bug fixed [Bug 1979064](https://bugzilla.mozilla.org/show_bug.cgi?id=1979064). Added back the API checks for `Window.setupPersistentInsets` and `ImeInsetsSynchronizer.setup` as on Android <13 the insets framework is not reliable.
 * **support-appservices**
