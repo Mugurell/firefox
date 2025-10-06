@@ -46,4 +46,7 @@ class FakeEngineView(
     override fun removeWindowInsetsListener(key: String) = Unit
 
     override var selectionActionDelegate: SelectionActionDelegate? = null
+
+    override val verticalScrollPosition = flowOf(0f)
+    override val verticalScrollDelta = flowOf(0f)
 }
