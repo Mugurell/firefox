@@ -1510,6 +1510,13 @@ abstract class BaseBrowserFragment :
             container = binding.browserLayout,
             topBar = topContent,
             bottomBar = bottomContent,
+            onDimensionsCalculated = { dimensions ->
+                (getSwipeRefreshLayout().layoutParams as? CoordinatorLayout.LayoutParams)?.apply {
+                    topMargin = dimensions.topHeight
+                    bottomMargin = dimensions.bottomHeight
+                }
+                getEngineView().setDynamicToolbarMaxHeight(0)
+            }
         )
     }
 
@@ -1759,6 +1766,8 @@ abstract class BaseBrowserFragment :
         topToolbarHeight: Int,
         bottomToolbarHeight: Int,
     ) {
+        if (FeatureFlags.USE_NEW_CHROME_HOST) return
+
         val context = requireContext()
 
         if (isToolbarDynamic(context) && webAppToolbarShouldBeVisible) {

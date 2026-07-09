@@ -28,6 +28,7 @@ class BrowserChromeHost(
     private val container: ViewGroup,
     private val topBar: (@Composable () -> Unit) = {},
     private val bottomBar: (@Composable () -> Unit) = {},
+    onDimensionsCalculated: ((BrowserChromeDimensions) -> Unit) = { _ -> },
 ) : BrowserChrome {
     override val layout: View = ComposeView(container.context).apply {
         id = R.id.browser_chrome_host
@@ -37,6 +38,7 @@ class BrowserChromeHost(
                 BrowserChromeScaffold(
                     topBar = topBar,
                     bottomBar = bottomBar,
+                    onDimensionsCalculated = onDimensionsCalculated
                 )
             }
         }

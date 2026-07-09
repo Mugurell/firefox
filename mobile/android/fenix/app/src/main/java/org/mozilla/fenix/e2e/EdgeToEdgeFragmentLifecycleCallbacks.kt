@@ -19,6 +19,8 @@ import androidx.navigation.fragment.NavHostFragment
 import mozilla.components.feature.qr.QrFragment
 import mozilla.components.support.ktx.android.view.clearPersistentInsets
 import mozilla.components.support.ktx.android.view.setupPersistentInsets
+import org.mozilla.fenix.FeatureFlags
+import org.mozilla.fenix.browser.BrowserFragment
 
 /**
  * [FragmentLifecycleCallbacks] delegate for configuring the container activity
@@ -67,7 +69,7 @@ class EdgeToEdgeFragmentLifecycleCallbacks(
             // Change the edge-to-edge behavior immediately after the new fragment is attached
             // to ensure an immediate change.
             fragment.view?.doOnAttach {
-                when (fragment is SystemInsetsPaddedFragment) {
+                when (fragment is SystemInsetsPaddedFragment && !fragment.hasE2EExceptionallySet) {
                     true -> setupPersistentInsets()
                     else -> clearPersistentInsets()
                 }
@@ -76,6 +78,15 @@ class EdgeToEdgeFragmentLifecycleCallbacks(
     }
 
     companion object {
+        private val edgeToEdgeSpecialInclusions = listOf(
+            BrowserFragment::class.java.simpleName to FeatureFlags.USE_NEW_CHROME_HOST,
+        )
+
+        private val Fragment.hasE2EExceptionallySet: Boolean
+            get() = edgeToEdgeSpecialInclusions
+                .firstOrNull { it.first == this::class.java.simpleName }?.second
+                ?: false
+
         /**
          * Register this functionality to observe all fragment navigations in [supportFragmentManager]
          * and configure the parent activity with a new edge-to-edge behavior depending on the current fragment.
