@@ -4,6 +4,7 @@
 
 package org.mozilla.fenix.components.toolbar.chrome
 
+import androidx.annotation.Px
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -23,38 +24,49 @@ import androidx.compose.foundation.layout.windowInsetsStartWidth
 import androidx.compose.foundation.layout.windowInsetsTopHeight
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.composed
+import androidx.compose.ui.draw.clipToBounds
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.layout.layoutId
+import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.unit.LayoutDirection
+import org.mozilla.fenix.components.toolbar.scroll.BrowserToolbarScrollState
 
 @Composable
 fun BrowserChromeScaffold(
     modifier: Modifier = Modifier,
     topBar: (@Composable () -> Unit) = {},
     bottomBar: (@Composable () -> Unit) = {},
-    onDimensionsCalculated: ((BrowserChromeDimensions) -> Unit) = { _ -> },
+    onNewChromeDimensions: ((BrowserChromeDimensions) -> Unit) = { _ -> },
 ) {
     var lastDimensions = remember { BrowserChromeDimensions() }
-    LaunchedEffect(lastDimensions) { onDimensionsCalculated(lastDimensions) }
+    LaunchedEffect(lastDimensions) { onNewChromeDimensions(lastDimensions) }
+
+    val statusBars = WindowInsets.statusBars
+    val navigationBars = WindowInsets.navigationBars
+    val sideInsets = WindowInsets.systemBars.union(WindowInsets.displayCutout)
 
     Layout(
         modifier = modifier.fillMaxSize(),
         content = {
-            Box(modifier = Modifier.layoutId("start")) { SideStrip(atStart = true) }
-            Box(modifier = Modifier.layoutId("end")) { SideStrip(atStart = false) }
+            Box(modifier = Modifier.layoutId("start")) { SideStrip(sideInsets, atStart = true) }
+            Box(modifier = Modifier.layoutId("end")) { SideStrip(sideInsets, atStart = false) }
 
             // Using fillMaxWidth here is safe because the custom layout will redefine
             // what "max width" means when passing down constraints to these columns.
             Column(modifier = Modifier.layoutId("top").fillMaxWidth()) {
-                EdgeStrip(atBottom = false)
+                EdgeStrip(statusBars, navigationBars, atBottom = false)
                 topBar()
             }
 
             Column(modifier = Modifier.layoutId("bottom").fillMaxWidth()) {
                 bottomBar()
-                EdgeStrip(atBottom = true)
+                EdgeStrip(statusBars, navigationBars, atBottom = true)
             }
         },
     ) { measurables, constraints ->
@@ -88,9 +100,30 @@ fun BrowserChromeScaffold(
 
         val topHeight = topPlaceable.height
         val botHeight = bottomPlaceable.height
-        val newDimensions = BrowserChromeDimensions(startWidth, topHeight, endWidth, botHeight)
+
+        val startInset = if (layoutDirection == LayoutDirection.Ltr) {
+            sideInsets.getLeft(this, layoutDirection)
+        } else {
+            sideInsets.getRight(this, layoutDirection)
+        }
+        val endInset = if (layoutDirection == LayoutDirection.Ltr) {
+            sideInsets.getRight(this, layoutDirection)
+        } else {
+            sideInsets.getLeft(this, layoutDirection)
+        }
+
+        val newDimensions = BrowserChromeDimensions(
+            startWidth = startWidth,
+            topHeight = topHeight,
+            endWidth = endWidth,
+            bottomHeight = botHeight,
+            startInset = startInset,
+            topInset = statusBars.getTop(this),
+            endInset = endInset,
+            bottomInset = navigationBars.getBottom(this),
+        )
         if (lastDimensions != newDimensions) {
-            onDimensionsCalculated(newDimensions)
+            onNewChromeDimensions(newDimensions)
             lastDimensions = newDimensions
         }
 
@@ -108,29 +141,126 @@ fun BrowserChromeScaffold(
 }
 
 /**
+ * Which edge a piece of chrome is anchored to.
+ */
+enum class ChromeEdge { Top, Bottom }
+
+/**
+ * Wraps chrome [content] that should collapse/expand with scrolling. The whole [content] translates
+ * with this [edge]'s offset (up for [ChromeEdge.Top], down for [ChromeEdge.Bottom]) inside a fixed
+ * clip region, so it slides *behind* the fixed background strip rather than over it.
+ *
+ * The translation is the edge's *clamped* offset — bounded by that edge's collapsible height — so it
+ * stops exactly when the edge is hidden regardless of the other edge's height. This only translates;
+ * it does *not* define the collapse range. Mark the subtree whose height should bound this edge's
+ * collapse (the toolbar, stacked with the navbar in bottom-toolbar mode) with
+ * [Modifier.collapseRange] and the matching [edge]. Content left unmarked (an autofill bar stacked
+ * above the toolbar) rides the same offset but doesn't extend the range, so it parks flush when the
+ * toolbar is hidden instead of sliding off.
+ *
+ * @param scrollState Shared scroll state driving the translation.
+ * @param edge Which edge this chrome is anchored to (sets the translation direction and which
+ * clamped offset it reads).
+ */
+@Composable
+fun CollapsingChrome(
+    scrollState: BrowserToolbarScrollState,
+    edge: ChromeEdge,
+    content: @Composable () -> Unit,
+) {
+    Box(modifier = Modifier.clipToBounds()) {
+        Box(
+            modifier = Modifier.graphicsLayer {
+                translationY = when (edge) {
+                    ChromeEdge.Top -> scrollState.topOffset
+                    ChromeEdge.Bottom -> -scrollState.bottomOffset
+                }
+            },
+        ) {
+            content()
+        }
+    }
+}
+
+/**
+ * Marks a subtree inside a [CollapsingChrome] as the one whose measured height defines how far the
+ * given [edge] can collapse ([BrowserToolbarScrollState.topBarHeight] / [bottomBarHeight]). Apply it
+ * to the toolbar (stacked with the navbar in bottom-toolbar mode); leave secondary content that only
+ * mirrors the offset (an autofill bar) unmarked. The edge's height is reset to 0 when this subtree
+ * leaves composition, so removing a bar shrinks the collapse range instead of leaving it stale.
+ */
+fun Modifier.collapseRange(
+    scrollState: BrowserToolbarScrollState,
+    edge: ChromeEdge,
+): Modifier = composed {
+    DisposableEffect(scrollState, edge) {
+        onDispose {
+            when (edge) {
+                ChromeEdge.Top -> scrollState.topBarHeight = 0f
+                ChromeEdge.Bottom -> scrollState.bottomBarHeight = 0f
+            }
+        }
+    }
+    onSizeChanged {
+        when (edge) {
+            ChromeEdge.Top -> scrollState.topBarHeight = it.height.toFloat()
+            ChromeEdge.Bottom -> scrollState.bottomBarHeight = it.height.toFloat()
+        }
+    }
+}
+
+/**
  * Dimensions of the browser chrome in pixels.
  *
  * @param startWidth Start chrome width in pixels.
  * @param topHeight Top chrome height in pixels.
  * @param endWidth End chrome width in pixels.
  * @param bottomHeight Bottom chrome height in pixels.
+ * @param startInset Start chrome inset in pixels.
+ * @param topInset Top chrome inset in pixels.
+ * @param endInset End chrome inset in pixels.
+ * @param bottomInset Bottom chrome inset in pixels.
  */
 data class BrowserChromeDimensions(
-    val startWidth: Int = 0,
-    val topHeight: Int = 0,
-    val endWidth: Int = 0,
-    val bottomHeight: Int = 0,
-)
+    @Px val startWidth: Int = 0,
+    @Px val topHeight: Int = 0,
+    @Px val endWidth: Int = 0,
+    @Px val bottomHeight: Int = 0,
+    @Px val startInset: Int = 0,
+    @Px val topInset: Int = 0,
+    @Px val endInset: Int = 0,
+    @Px val bottomInset: Int = 0,
+) {
+    companion object {
+        /**
+         * Get the current chrome dimensions without the system insets.
+         */
+        fun BrowserChromeDimensions.withoutInsets(): BrowserChromeDimensions {
+            return this.copy(
+                startWidth = maxOf(0, startWidth - startInset),
+                topHeight = maxOf(0, topHeight - topInset),
+                endWidth = maxOf(0, endWidth - endInset),
+                bottomHeight = maxOf(0, bottomHeight - bottomInset),
+                // Zeroing out the insets in the returned object so it's clear they were stripped.
+                startInset = 0, topInset = 0, endInset = 0, bottomInset = 0,
+            )
+        }
+    }
+}
 
 @Composable
-private fun EdgeStrip(atBottom: Boolean) {
+private fun EdgeStrip(
+    statusBars: WindowInsets,
+    navigationBars: WindowInsets,
+    atBottom: Boolean,
+) {
     Spacer(
         modifier = Modifier
             .fillMaxWidth()
             .then(
                 when {
-                    atBottom -> Modifier.windowInsetsBottomHeight(WindowInsets.navigationBars)
-                    else -> Modifier.windowInsetsTopHeight(WindowInsets.statusBars)
+                    atBottom -> Modifier.windowInsetsBottomHeight(navigationBars)
+                    else -> Modifier.windowInsetsTopHeight(statusBars)
                 },
             )
             .background(MaterialTheme.colorScheme.surface),
@@ -138,8 +268,7 @@ private fun EdgeStrip(atBottom: Boolean) {
 }
 
 @Composable
-private fun SideStrip(atStart: Boolean) {
-    val sideInsets = WindowInsets.systemBars.union(WindowInsets.displayCutout)
+private fun SideStrip(sideInsets: WindowInsets, atStart: Boolean) {
     Spacer(
         modifier = Modifier
             .fillMaxHeight()

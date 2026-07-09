@@ -23,7 +23,7 @@ object FeatureFlags {
      * a single [BrowserChromeHost] overlay + scaffold, instead of the separate per-bar ComposeViews.
      * Off by default while the host is brought up to parity with the existing path.
      */
-    const val USE_NEW_CHROME_HOST = false
+    const val USE_NEW_CHROME_HOST = true
 
     /**
      * Pull-to-refresh allows you to pull the web content down far enough to have the page to

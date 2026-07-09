@@ -8,6 +8,7 @@ import android.view.View
 import mozilla.components.concept.toolbar.ScrollableToolbar
 import org.mozilla.fenix.FeatureFlags.USE_NEW_CHROME_HOST
 import org.mozilla.fenix.components.toolbar.ToolbarPosition
+import org.mozilla.fenix.components.toolbar.scroll.BrowserToolbarScrollBehavior
 
 /**
  * The browser chrome as the fragment sees it: the toolbar (and navigation bar) plus their scroll
@@ -18,13 +19,24 @@ import org.mozilla.fenix.components.toolbar.ToolbarPosition
  * chrome structure can be swapped behind [USE_NEW_CHROME_HOST].
  */
 interface BrowserChrome : ScrollableToolbar {
-    /** The root [View] added to the browser layout. */
+    /**
+     * The root [View] added to the browser layout.
+     */
     val layout: View
 
-    /** Make the chrome visible. */
+    /**
+     * Shared scroll behavior / offset driving the dynamic bars.
+     */
+    val scrollBehavior: BrowserToolbarScrollBehavior?
+
+    /**
+     * Make the chrome visible.
+     */
     fun visible()
 
-    /** Hide the chrome (e.g. entering fullscreen). */
+    /**
+     * Hide the chrome (e.g. entering fullscreen).
+     */
     fun gone()
 
     /**

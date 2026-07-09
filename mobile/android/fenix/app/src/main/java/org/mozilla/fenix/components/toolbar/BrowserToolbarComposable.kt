@@ -263,6 +263,8 @@ class BrowserToolbarComposable(
         layout.isVisible = true
     }
 
+    override val scrollBehavior = null
+
     /**
      * Sets whether the toolbar will have a dynamic behavior (to be scrolled) or not.
      *

@@ -30,6 +30,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.AndroidUiDispatcher
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.coordinatorlayout.widget.CoordinatorLayout
@@ -37,6 +38,7 @@ import androidx.core.content.getSystemService
 import androidx.core.text.HtmlCompat
 import androidx.core.view.OnApplyWindowInsetsListener
 import androidx.core.view.isVisible
+import androidx.core.view.updateMargins
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.NavController
@@ -45,6 +47,7 @@ import androidx.preference.PreferenceManager
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.snackbar.Snackbar.LENGTH_LONG
 import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
@@ -199,6 +202,12 @@ import org.mozilla.fenix.components.toolbar.ToolbarPosition
 import org.mozilla.fenix.components.toolbar.ToolbarsIntegration
 import org.mozilla.fenix.components.toolbar.chrome.BrowserChrome
 import org.mozilla.fenix.components.toolbar.chrome.BrowserChromeHost
+import org.mozilla.fenix.components.toolbar.chrome.ChromeEdge
+import org.mozilla.fenix.components.toolbar.chrome.CollapsingChrome
+import org.mozilla.fenix.components.toolbar.chrome.collapseRange
+import org.mozilla.fenix.components.toolbar.scroll.BrowserEngineViewClippingBehavior
+import org.mozilla.fenix.components.toolbar.scroll.BrowserToolbarScrollState
+import org.mozilla.fenix.components.toolbar.scroll.DefaultBrowserToolbarScrollBehavior
 import org.mozilla.fenix.compose.snackbar.DefaultSnackbarFactory
 import org.mozilla.fenix.crashes.CrashContentIntegration
 import org.mozilla.fenix.crashes.CrashContentView
@@ -208,6 +217,7 @@ import org.mozilla.fenix.downloads.DownloadService
 import org.mozilla.fenix.downloads.RenameAndChangeLocationDialogFragment
 import org.mozilla.fenix.downloads.dialog.createDownloadAppDialog
 import org.mozilla.fenix.ext.accessibilityManager
+import org.mozilla.fenix.ext.behavior
 import org.mozilla.fenix.ext.breadcrumb
 import org.mozilla.fenix.ext.components
 import org.mozilla.fenix.ext.getBottomToolbarHeight
@@ -1422,7 +1432,7 @@ abstract class BaseBrowserFragment :
         }
 
         return if (FeatureFlags.USE_NEW_CHROME_HOST) {
-            buildBrowserChromeHost(toolbarStore, settings, appStore)
+            buildBrowserChromeHost(store, toolbarStore, settings, appStore)
         } else {
             BrowserToolbarComposable(
                 activity = activity,
@@ -1454,6 +1464,7 @@ abstract class BaseBrowserFragment :
      * swipe-to-switch-tabs.
      */
     private fun buildBrowserChromeHost(
+        store: BrowserStore,
         toolbarStore: BrowserToolbarStore,
         settings: org.mozilla.fenix.utils.Settings,
         appStore: AppStore,
@@ -1476,15 +1487,21 @@ abstract class BaseBrowserFragment :
         }
         val navbar = browserNavigationBar?.asComposable()
 
+        // Owned here so the collapsing content below and the host share one scroll state.
+        val scrollBehavior = DefaultBrowserToolbarScrollBehavior(state = BrowserToolbarScrollState())
+        val scrollState = scrollBehavior.state
+
         val topContent: @Composable () -> Unit = when (atBottom) {
             true -> { {} }
             else -> {
                 {
-                    Column {
-                        if (shouldShowTabStrip && AcornWindowSize.isLargeWindow()) {
-                            tabStrip()
+                    CollapsingChrome(scrollState = scrollState, edge = ChromeEdge.Top) {
+                        Column(modifier = Modifier.collapseRange(scrollState, ChromeEdge.Top)) {
+                            if (shouldShowTabStrip && AcornWindowSize.isLargeWindow()) {
+                                tabStrip()
+                            }
+                            toolbar()
                         }
-                        toolbar()
                     }
                 }
             }
@@ -1492,13 +1509,28 @@ abstract class BaseBrowserFragment :
         val bottomContent: @Composable () -> Unit = when (atBottom) {
             true -> {
                 {
-                    Column {
-                        toolbar()
-                        navbar?.invoke()
+                    CollapsingChrome(scrollState = scrollState, edge = ChromeEdge.Bottom) {
+                        Column {
+                            Column(modifier = Modifier.collapseRange(scrollState, ChromeEdge.Bottom)) {
+                                toolbar()
+                                navbar?.invoke()
+                            }
+                        }
                     }
                 }
             }
-            else -> { { navbar?.invoke() } }
+            else -> {
+                {
+                    // Top-toolbar mode: the navbar collapses at the bottom on its own height (an
+                    // autofill bar, if stacked above, would ride the same offset but stay unmarked so
+                    // it parks flush).
+                    CollapsingChrome(scrollState = scrollState, edge = ChromeEdge.Bottom) {
+                        Column(modifier = Modifier.collapseRange(scrollState, ChromeEdge.Bottom)) {
+                            navbar?.invoke()
+                        }
+                    }
+                }
+            }
         }
 
         toolbarStore.dispatch(
@@ -1512,16 +1544,57 @@ abstract class BaseBrowserFragment :
             ),
         )
 
+        val context = binding.root.context
+        val engineView = getEngineView()
+        val swipeRefresh = getSwipeRefreshLayout()
+        val swipeRefreshParams = swipeRefresh.layoutParams as CoordinatorLayout.LayoutParams
+        val isDynamic = isToolbarDynamic(context) && webAppToolbarShouldBeVisible
+
         return BrowserChromeHost(
             container = binding.browserLayout,
+            browserStore = store,
+            scrollBehavior = scrollBehavior,
+            customTabId = customTabSessionId,
+            settings = settings,
+            coroutineScope = CoroutineScope(
+                viewLifecycleOwner.lifecycleScope.coroutineContext + AndroidUiDispatcher.Main,
+            ),
             topBar = topContent,
             bottomBar = bottomContent,
-            onDimensionsCalculated = { dimensions ->
-                (getSwipeRefreshLayout().layoutParams as? CoordinatorLayout.LayoutParams)?.apply {
-                    topMargin = dimensions.topHeight
-                    bottomMargin = dimensions.bottomHeight
+            onNewChromeDimensions = { dimensions ->
+                if (isDynamic) {
+                    // Static margins are only the system-bar insets. The collapsible toolbar reserve
+                    // (setDynamicToolbarMaxHeight) and the vertical clipping are owned by the
+                    // behavior, derived from the shared scroll state's measured per-edge heights, so
+                    // the engine can never disagree with how far the bars actually collapse.
+                    swipeRefreshParams.updateMargins(
+                        left = dimensions.startWidth,
+                        right = dimensions.endWidth,
+                        top = dimensions.topInset,
+                        bottom = dimensions.bottomInset,
+                    )
+                    browserToolbar.scrollBehavior?.let { scrollBehavior ->
+                        swipeRefreshParams.behavior =
+                            BrowserEngineViewClippingBehavior(
+                                context = context,
+                                attrs = null,
+                                engineViewParent = swipeRefresh,
+                                scrollBehavior = scrollBehavior,
+                            )
+                    }
+                } else {
+                    engineView.apply {
+                        setDynamicToolbarMaxHeight(0)
+                        setVerticalClipping(0)
+                    }
+                    swipeRefresh.behavior = null
+                    swipeRefreshParams.updateMargins(
+                        left = dimensions.startWidth,
+                        top = dimensions.topHeight,
+                        right = dimensions.endWidth,
+                        bottom = dimensions.bottomHeight,
+                    )
                 }
-                getEngineView().setDynamicToolbarMaxHeight(0)
             },
         )
     }
