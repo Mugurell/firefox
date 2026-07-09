@@ -37,7 +37,6 @@ import mozilla.components.compose.browser.toolbar.store.ToolbarGravity
 import mozilla.components.compose.browser.toolbar.store.ToolbarGravity.Bottom
 import mozilla.components.compose.browser.toolbar.store.ToolbarGravity.Top
 import mozilla.components.concept.engine.EngineView
-import mozilla.components.concept.toolbar.ScrollableToolbar
 import mozilla.components.feature.toolbar.ToolbarBehaviorController
 import mozilla.components.lib.state.ext.observeAsComposableState
 import mozilla.components.support.ktx.android.view.findViewInHierarchy
@@ -52,6 +51,7 @@ import org.mozilla.fenix.components.AppStore
 import org.mozilla.fenix.components.appstate.AppAction.SearchAction.SearchEnded
 import org.mozilla.fenix.components.toolbar.ToolbarPosition.BOTTOM
 import org.mozilla.fenix.components.toolbar.ToolbarPosition.TOP
+import org.mozilla.fenix.components.toolbar.chrome.BrowserChrome
 import org.mozilla.fenix.theme.FirefoxTheme
 import org.mozilla.fenix.utils.Settings
 
@@ -85,7 +85,7 @@ class BrowserToolbarComposable(
     private val tabStripContent: @Composable () -> Unit,
     private val searchSuggestionsContent: @Composable (Modifier) -> Unit,
     private val navigationBarContent: (@Composable () -> Unit)?,
-) : ScrollableToolbar {
+) : BrowserChrome {
     init {
         if (!settings.shouldUseMinimalBottomToolbarWhenEnteringText) {
             setupShowingToolbarsAfterKeyboardHidden()
@@ -100,7 +100,7 @@ class BrowserToolbarComposable(
         )
     }
 
-    val layout: View = ScrollableToolbarComposeView(activity, this) {
+    override val layout: View = ScrollableToolbarComposeView(activity, this) {
         val isSearching = toolbarStore.observeAsComposableState { it.isEditMode() }.value
         val shouldShowTabStrip: Boolean = remember { shouldShowTabStrip() }
         val customColors = browserScreenStore.observeAsComposableState { it.customTabColors }
@@ -255,11 +255,11 @@ class BrowserToolbarComposable(
         }
     }
 
-    internal fun gone() {
+    override fun gone() {
         layout.isVisible = false
     }
 
-    internal fun visible() {
+    override fun visible() {
         layout.isVisible = true
     }
 
@@ -276,7 +276,7 @@ class BrowserToolbarComposable(
      * @param toolbarPosition [ToolbarPosition] to set the toolbar to.
      * @param shouldDisableScroll force disable of the dynamic behavior irrespective of the intrinsic checks.
      */
-    fun setToolbarBehavior(toolbarPosition: ToolbarPosition, shouldDisableScroll: Boolean = false) {
+    override fun setToolbarBehavior(toolbarPosition: ToolbarPosition, shouldDisableScroll: Boolean) {
         when (toolbarPosition) {
             ToolbarPosition.BOTTOM -> {
                 if (settings.isDynamicToolbarEnabled &&

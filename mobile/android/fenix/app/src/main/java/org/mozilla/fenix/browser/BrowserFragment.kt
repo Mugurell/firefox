@@ -40,6 +40,7 @@ import mozilla.components.support.base.feature.UserInteractionHandler
 import mozilla.components.support.base.feature.ViewBoundFeatureWrapper
 import mozilla.components.support.ktx.kotlin.isContentUrl
 import mozilla.components.support.utils.DefaultDateTimeProvider
+import org.mozilla.fenix.FeatureFlags
 import org.mozilla.fenix.GleanMetrics.Translations
 import org.mozilla.fenix.R
 import org.mozilla.fenix.browser.store.BrowserScreenAction.ReaderModeStatusUpdated
@@ -219,6 +220,11 @@ class BrowserFragment : BaseBrowserFragment(), UserInteractionHandler, SystemIns
     }
 
     private fun setupToolbarSwipeBehavior(settings: Settings, components: Components) {
+        // Parity gap: swipe-to-switch-tabs is not yet wired for the chrome-host path. It needs the
+        // host to expose the toolbar/navbar on-screen bounds, which the basic host does not yet do.
+        // Tracked as a follow-up before the flag is enabled. See Bug 2051301.
+        if (FeatureFlags.USE_NEW_CHROME_HOST) return
+
         if (!settings.isTabStripEnabled && settings.isSwipeToolbarToSwitchTabsEnabled) {
             binding.gestureLayout.addGestureListener(
                 ToolbarHorizontalGesturesHandler(

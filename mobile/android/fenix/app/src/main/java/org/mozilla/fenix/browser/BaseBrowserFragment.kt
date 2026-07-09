@@ -27,6 +27,8 @@ import androidx.biometric.BiometricManager
 import androidx.compose.foundation.layout.Column
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.viewinterop.AndroidView
@@ -67,7 +69,11 @@ import mozilla.components.browser.state.state.content.DownloadState
 import mozilla.components.browser.state.store.BrowserStore
 import mozilla.components.browser.thumbnails.BrowserThumbnails
 import mozilla.components.browser.toolbar.BrowserToolbar
+import mozilla.components.compose.browser.toolbar.BrowserToolbar
+import mozilla.components.compose.browser.toolbar.store.BrowserToolbarAction
 import mozilla.components.compose.browser.toolbar.store.BrowserToolbarStore
+import mozilla.components.compose.browser.toolbar.store.ToolbarGravity.Bottom
+import mozilla.components.compose.browser.toolbar.store.ToolbarGravity.Top
 import mozilla.components.concept.base.crash.Breadcrumb
 import mozilla.components.concept.engine.permission.SitePermissions
 import mozilla.components.concept.engine.prompt.ShareData
@@ -190,6 +196,8 @@ import org.mozilla.fenix.components.toolbar.BrowserToolbarComposable
 import org.mozilla.fenix.components.toolbar.ToolbarContainerView
 import org.mozilla.fenix.components.toolbar.ToolbarPosition
 import org.mozilla.fenix.components.toolbar.ToolbarsIntegration
+import org.mozilla.fenix.components.toolbar.chrome.BrowserChrome
+import org.mozilla.fenix.components.toolbar.chrome.BrowserChromeHost
 import org.mozilla.fenix.compose.snackbar.DefaultSnackbarFactory
 import org.mozilla.fenix.crashes.CrashContentIntegration
 import org.mozilla.fenix.crashes.CrashContentView
@@ -270,11 +278,11 @@ abstract class BaseBrowserFragment :
 
     @VisibleForTesting
     @Suppress("VariableNaming")
-    internal var _browserToolbar: BrowserToolbarComposable? = null
+    internal var _browserToolbar: BrowserChrome? = null
     private var awesomeBarComposable: AwesomeBarComposable? = null
 
     @VisibleForTesting
-    internal val browserToolbar: BrowserToolbarComposable
+    internal val browserToolbar: BrowserChrome
         get() = _browserToolbar!!
 
     @VisibleForTesting(otherwise = VisibleForTesting.PROTECTED)
@@ -1382,7 +1390,7 @@ abstract class BaseBrowserFragment :
         activity: HomeActivity,
         store: BrowserStore,
         readerModeController: DefaultReaderModeController,
-    ): BrowserToolbarComposable {
+    ): BrowserChrome {
         val toolbarStore by buildToolbarStore(activity, readerModeController)
         val components = requireComponents
         val settings = components.settings
@@ -1412,20 +1420,96 @@ abstract class BaseBrowserFragment :
             )
         }
 
-        return BrowserToolbarComposable(
-            activity = activity,
+        return if (FeatureFlags.USE_NEW_CHROME_HOST) {
+            buildBrowserChromeHost(toolbarStore, settings, appStore)
+        } else {
+            BrowserToolbarComposable(
+                activity = activity,
+                container = binding.browserLayout,
+                toolbarStore = toolbarStore,
+                browserScreenStore = browserScreenStore,
+                appStore = appStore,
+                browserStore = store,
+                settings = settings,
+                customTabSession = customTabSessionId?.let { store.state.findCustomTab(it) },
+                tabStripContent = buildTabStrip(appStore, settings),
+                searchSuggestionsContent = { modifier ->
+                    (awesomeBarComposable ?: buildAwesomeBar(activity, toolbarStore, modifier)).SearchSuggestions()
+                },
+                navigationBarContent = browserNavigationBar?.asComposable(),
+            )
+        }
+    }
+
+    /**
+     * Builds the single-overlay [BrowserChromeHost] chrome (behind [FeatureFlags.USE_NEW_CHROME_HOST]).
+     * The toolbar / tab strip / navigation bar content is placed into the host's scaffold slots
+     * based on toolbar position.
+     *
+     * This is the basic host. It is not yet at parity with the per-bar path; the following are still
+     * owned by that path and tracked as follow-ups before the flag is enabled (see Bug 2051301):
+     * search / AwesomeBar, custom-tab colors, CFR, keyboard transitions, fullscreen and
+     * PWA/custom-tab visibility, accessibility fixed-toolbar behavior, and horizontal
+     * swipe-to-switch-tabs.
+     */
+    private fun buildBrowserChromeHost(
+        toolbarStore: BrowserToolbarStore,
+        settings: org.mozilla.fenix.utils.Settings,
+        appStore: AppStore,
+    ): BrowserChromeHost {
+        val shouldShowTabStrip = customTabSessionId == null && settings.isTabStripEnabled
+        val atBottom = !shouldShowTabStrip && settings.toolbarPosition == ToolbarPosition.BOTTOM
+
+        val toolbar: @Composable () -> Unit = {
+            val toolbarState by toolbarStore.stateFlow.collectAsState()
+            BrowserToolbar(
+                store = toolbarStore,
+                cfr = toolbarState.displayState.cfr,
+                useMinimalBottomToolbarWhenEnteringText =
+                    settings.shouldUseMinimalBottomToolbarWhenEnteringText,
+            )
+        }
+        val tabStrip = buildTabStrip(appStore, settings)
+        val navbar = browserNavigationBar?.asComposable()
+
+        val topContent: @Composable () -> Unit = when (atBottom) {
+            true -> { {} }
+            else -> {
+                {
+                    Column {
+                        if (shouldShowTabStrip) {
+                            tabStrip()
+                        }
+                        toolbar()
+                    }
+                }
+            }
+        }
+        val bottomContent: @Composable () -> Unit = when (atBottom) {
+            true -> {
+                {
+                    Column {
+                        toolbar()
+                        navbar?.invoke()
+                    }
+                }
+            }
+            else -> { { navbar?.invoke() } }
+        }
+
+        toolbarStore.dispatch(
+            BrowserToolbarAction.ToolbarGravityUpdated(
+                when (settings.shouldUseBottomToolbar) {
+                    true -> Bottom
+                    false -> Top
+                },
+            ),
+        )
+
+        return BrowserChromeHost(
             container = binding.browserLayout,
-            toolbarStore = toolbarStore,
-            browserScreenStore = browserScreenStore,
-            appStore = appStore,
-            browserStore = store,
-            settings = settings,
-            customTabSession = customTabSessionId?.let { store.state.findCustomTab(it) },
-            tabStripContent = buildTabStrip(appStore, settings),
-            searchSuggestionsContent = { modifier ->
-                (awesomeBarComposable ?: buildAwesomeBar(activity, toolbarStore, modifier)).SearchSuggestions()
-            },
-            navigationBarContent = browserNavigationBar?.asComposable(),
+            topBar = topContent,
+            bottomBar = bottomContent,
         )
     }
 
@@ -2289,7 +2373,7 @@ abstract class BaseBrowserFragment :
     }
 
     @CallSuper
-    internal open fun onUpdateToolbarForConfigurationChange(toolbar: BrowserToolbarComposable) {
+    internal open fun onUpdateToolbarForConfigurationChange(toolbar: BrowserChrome) {
         reinitializeEngineView()
 
         // If the microsurvey feature is visible, we should update it's state.

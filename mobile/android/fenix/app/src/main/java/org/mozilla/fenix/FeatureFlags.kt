@@ -4,6 +4,8 @@
 
 package org.mozilla.fenix
 
+import org.mozilla.fenix.components.toolbar.chrome.BrowserChromeHost
+
 /**
  * A single source for setting feature flags that are mostly based on build type.
  */
@@ -15,6 +17,13 @@ object FeatureFlags {
      * be enabled which is behind the Secret Settings.
      * */
     val customExtensionCollectionFeature = Config.channel.isNightlyOrDebug || Config.channel.isBeta
+
+    /**
+     * Routes the browser chrome (toolbar, navigation bar, and system-bar background strips) through
+     * a single [BrowserChromeHost] overlay + scaffold, instead of the separate per-bar ComposeViews.
+     * Off by default while the host is brought up to parity with the existing path.
+     */
+    const val USE_NEW_CHROME_HOST = false
 
     /**
      * Pull-to-refresh allows you to pull the web content down far enough to have the page to
