@@ -38,12 +38,12 @@ class BrowserChromeHost(
             MaterialTheme(
                 colorScheme = MaterialTheme.colorScheme.copy(
                     surface = Color.Red,
-                )
+                ),
             ) {
                 BrowserChromeScaffold(
                     topBar = topBar,
                     bottomBar = bottomBar,
-                    onDimensionsCalculated = onDimensionsCalculated
+                    onDimensionsCalculated = onDimensionsCalculated,
                 )
             }
         }

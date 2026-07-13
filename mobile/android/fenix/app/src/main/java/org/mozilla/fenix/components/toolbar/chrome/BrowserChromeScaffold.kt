@@ -34,7 +34,7 @@ fun BrowserChromeScaffold(
     modifier: Modifier = Modifier,
     topBar: (@Composable () -> Unit) = {},
     bottomBar: (@Composable () -> Unit) = {},
-    onDimensionsCalculated: ((BrowserChromeDimensions) -> Unit) = { _ -> }
+    onDimensionsCalculated: ((BrowserChromeDimensions) -> Unit) = { _ -> },
 ) {
     var lastDimensions = remember { BrowserChromeDimensions() }
     LaunchedEffect(lastDimensions) { onDimensionsCalculated(lastDimensions) }
@@ -56,7 +56,7 @@ fun BrowserChromeScaffold(
                 bottomBar()
                 EdgeStrip(atBottom = true)
             }
-        }
+        },
     ) { measurables, constraints ->
         val startMeasurable = measurables.first { it.layoutId == "start" }
         val endMeasurable = measurables.first { it.layoutId == "end" }
@@ -81,7 +81,7 @@ fun BrowserChromeScaffold(
         val verticalConstraints = constraints.copy(
             minWidth = remainingWidth,
             maxWidth = remainingWidth,
-            minHeight = 0
+            minHeight = 0,
         )
         val topPlaceable = topMeasurable.measure(verticalConstraints)
         val bottomPlaceable = bottomMeasurable.measure(verticalConstraints)

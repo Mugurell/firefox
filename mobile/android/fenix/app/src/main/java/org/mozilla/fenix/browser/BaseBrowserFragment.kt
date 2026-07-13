@@ -69,6 +69,7 @@ import mozilla.components.browser.state.state.content.DownloadState
 import mozilla.components.browser.state.store.BrowserStore
 import mozilla.components.browser.thumbnails.BrowserThumbnails
 import mozilla.components.browser.toolbar.BrowserToolbar
+import mozilla.components.compose.base.theme.layout.AcornWindowSize
 import mozilla.components.compose.browser.toolbar.BrowserToolbar
 import mozilla.components.compose.browser.toolbar.store.BrowserToolbarAction
 import mozilla.components.compose.browser.toolbar.store.BrowserToolbarStore
@@ -1469,7 +1470,10 @@ abstract class BaseBrowserFragment :
                     settings.shouldUseMinimalBottomToolbarWhenEnteringText,
             )
         }
-        val tabStrip = buildTabStrip(appStore, settings)
+        val tabStrip = when (shouldShowTabStrip) {
+            true -> buildTabStrip(appStore, settings)
+            else -> { {} }
+        }
         val navbar = browserNavigationBar?.asComposable()
 
         val topContent: @Composable () -> Unit = when (atBottom) {
@@ -1477,7 +1481,7 @@ abstract class BaseBrowserFragment :
             else -> {
                 {
                     Column {
-                        if (shouldShowTabStrip) {
+                        if (shouldShowTabStrip && AcornWindowSize.isLargeWindow()) {
                             tabStrip()
                         }
                         toolbar()
@@ -1499,7 +1503,9 @@ abstract class BaseBrowserFragment :
 
         toolbarStore.dispatch(
             BrowserToolbarAction.ToolbarGravityUpdated(
-                when (settings.shouldUseBottomToolbar) {
+                // From the resolved placement, not the raw preference: with the tab strip shown the
+                // toolbar is at the top regardless of the bottom-toolbar preference.
+                when (atBottom) {
                     true -> Bottom
                     false -> Top
                 },
@@ -1516,7 +1522,7 @@ abstract class BaseBrowserFragment :
                     bottomMargin = dimensions.bottomHeight
                 }
                 getEngineView().setDynamicToolbarMaxHeight(0)
-            }
+            },
         )
     }
 
