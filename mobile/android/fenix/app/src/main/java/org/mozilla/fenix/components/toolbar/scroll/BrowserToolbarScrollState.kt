@@ -64,7 +64,7 @@ class BrowserToolbarScrollState(
             }
         }
 
-    /** Collapsible height of the top edge in pixels (set by `Modifier.collapseRange`). */
+    /** Collapsible height of the top edge in pixels (the whole top chrome column). */
     var topBarHeight: Float
         get() = _topBarHeight.floatValue
         set(value) {
@@ -73,7 +73,7 @@ class BrowserToolbarScrollState(
             }
         }
 
-    /** Collapsible height of the bottom edge in pixels (set by `Modifier.collapseRange`). */
+    /** Collapsible height of the bottom edge in pixels (the whole bottom chrome column). */
     var bottomBarHeight: Float
         get() = _bottomBarHeight.floatValue
         set(value) {
