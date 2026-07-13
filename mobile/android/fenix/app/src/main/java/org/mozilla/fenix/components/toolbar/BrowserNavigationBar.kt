@@ -22,7 +22,6 @@ import mozilla.components.compose.browser.toolbar.store.ToolbarGravity.Top
 import mozilla.components.support.utils.KeyboardState
 import mozilla.components.support.utils.keyboardAsState
 import org.mozilla.fenix.R
-import org.mozilla.fenix.theme.FirefoxTheme
 import org.mozilla.fenix.utils.Settings
 
 /**
@@ -92,13 +91,13 @@ class BrowserNavigationBar(
         }
 
         if (uiState.displayState.navigationActions.isNotEmpty() && !isKeyboardVisible) {
-            FirefoxTheme {
+//            FirefoxTheme {
                 NavigationBar(
                     actions = uiState.displayState.navigationActions,
                     toolbarGravity = toolbarGravity,
                     onInteraction = { toolbarStore.dispatch(it) },
                 )
-            }
+//            }
         }
     }
 

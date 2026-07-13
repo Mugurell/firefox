@@ -4,12 +4,14 @@
 
 package mozilla.components.compose.browser.toolbar
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -51,6 +53,7 @@ fun NavigationBar(
     Surface {
         Box(
             modifier = Modifier
+                .background(MaterialTheme.colorScheme.surface)
                 .height(if (toolbarGravity == Top) 60.dp else 48.dp)
                 .pointerInput(Unit) {
                     awaitPointerEventScope {

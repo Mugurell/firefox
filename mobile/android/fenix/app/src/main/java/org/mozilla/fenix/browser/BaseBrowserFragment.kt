@@ -1549,7 +1549,7 @@ abstract class BaseBrowserFragment :
         appStore: AppStore,
         settings: org.mozilla.fenix.utils.Settings,
     ): @Composable () -> Unit = {
-        FirefoxTheme {
+//        FirefoxTheme {
             TabStrip(
                 showTabCounterButton = false,
                 onAddTabClick = {
@@ -1580,7 +1580,7 @@ abstract class BaseBrowserFragment :
                 onTabCounterClick = { onTabCounterClicked(appStore.state.mode) },
             )
         }
-    }
+//    }
 
     private fun buildAwesomeBar(
         activity: HomeActivity,

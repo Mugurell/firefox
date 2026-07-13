@@ -197,7 +197,8 @@ private fun TabStripContent(
         modifier = Modifier
             .fillMaxWidth()
             .height(dimensionResource(R.dimen.tab_strip_height))
-            .background(brush = colors.backgroundBrush)
+//            .background(brush = colors.backgroundBrush)
+            .background(MaterialTheme.colorScheme.surface)
             .systemGestureExclusion(),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween,

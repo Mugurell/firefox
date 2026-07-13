@@ -21,11 +21,11 @@ import androidx.compose.foundation.layout.windowInsetsBottomHeight
 import androidx.compose.foundation.layout.windowInsetsEndWidth
 import androidx.compose.foundation.layout.windowInsetsStartWidth
 import androidx.compose.foundation.layout.windowInsetsTopHeight
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.layout.layoutId
 
@@ -133,7 +133,7 @@ private fun EdgeStrip(atBottom: Boolean) {
                     else -> Modifier.windowInsetsTopHeight(WindowInsets.statusBars)
                 },
             )
-            .background(Color.Red),
+            .background(MaterialTheme.colorScheme.surface),
     )
 }
 
@@ -149,6 +149,6 @@ private fun SideStrip(atStart: Boolean) {
                     else -> Modifier.windowInsetsEndWidth(sideInsets)
                 },
             )
-            .background(Color.Red),
+            .background(MaterialTheme.colorScheme.surface),
     )
 }

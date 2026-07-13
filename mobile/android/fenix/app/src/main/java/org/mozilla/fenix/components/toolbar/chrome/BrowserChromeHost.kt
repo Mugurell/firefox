@@ -6,14 +6,15 @@ package org.mozilla.fenix.components.toolbar.chrome
 
 import android.view.View
 import android.view.ViewGroup
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.ViewCompositionStrategy
 import androidx.coordinatorlayout.widget.CoordinatorLayout
 import androidx.core.view.isVisible
 import org.mozilla.fenix.R
 import org.mozilla.fenix.components.toolbar.ToolbarPosition
-import org.mozilla.fenix.theme.FirefoxTheme
 
 /**
  * Single parent for the browser chrome: one full-screen overlay [ComposeView] added over the engine
@@ -34,7 +35,11 @@ class BrowserChromeHost(
         id = R.id.browser_chrome_host
         setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed)
         setContent {
-            FirefoxTheme {
+            MaterialTheme(
+                colorScheme = MaterialTheme.colorScheme.copy(
+                    surface = Color.Red,
+                )
+            ) {
                 BrowserChromeScaffold(
                     topBar = topBar,
                     bottomBar = bottomBar,
