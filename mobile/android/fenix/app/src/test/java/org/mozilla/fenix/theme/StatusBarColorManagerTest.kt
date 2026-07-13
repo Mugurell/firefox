@@ -157,6 +157,24 @@ class StatusBarColorManagerTest {
     }
 
     @Test
+    fun `GIVEN the new chrome host WHEN the browser fragment resumes THEN the gradient is hidden`() = runTest(testDispatcher) {
+        val manager = buildStatusBarColorManager(isTabStripEnabled = true, useNewChromeHost = true)
+        manager.onFragmentResumed(fragmentManager, mockk<BrowserFragment>())
+
+        verify { tabStripStatusBarView.hide() }
+        verify(exactly = 0) { tabStripStatusBarView.show() }
+    }
+
+    @Test
+    fun `GIVEN the new chrome host WHEN the home fragment resumes THEN the gradient is still shown`() = runTest(testDispatcher) {
+        val manager = buildStatusBarColorManager(isTabStripEnabled = true, useNewChromeHost = true)
+        manager.onFragmentResumed(fragmentManager, homeFragment)
+        testScheduler.advanceUntilIdle()
+
+        verify { tabStripStatusBarView.show() }
+    }
+
+    @Test
     fun `GIVEN NavHostFragment, DialogFragment and ExternalAppBrowserFragment as ignored fragments WHEN an ignored fragment resumes THEN do nothing`() = runTest(testDispatcher) {
         val manager = buildStatusBarColorManager(isTabStripEnabled = true)
 
@@ -187,6 +205,7 @@ class StatusBarColorManagerTest {
     private fun buildStatusBarColorManager(
         isTabStripEnabled: Boolean,
         appStore: AppStore = AppStore(),
+        useNewChromeHost: Boolean = false,
     ): StatusBarColorManager {
         every { settings.isTabStripEnabled } returns isTabStripEnabled
 
@@ -197,6 +216,7 @@ class StatusBarColorManagerTest {
             appStore = appStore,
             tabStripStatusBarView = tabStripStatusBarView,
             mainDispatcher = testDispatcher,
+            useNewChromeHost = useNewChromeHost,
         )
     }
 }

@@ -4,21 +4,17 @@
 
 package org.mozilla.fenix.components.toolbar.scroll
 
-import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.AnimationSpec
-import androidx.compose.animation.core.DecayAnimationSpec
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
 import androidx.compose.runtime.Stable
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
 import androidx.compose.ui.input.nestedscroll.NestedScrollSource
-import androidx.compose.ui.unit.Velocity
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.job
-import kotlin.math.abs
 
 /**
  * Interface that defines how the browser toolbar should respond to scrolling.
@@ -31,87 +27,71 @@ interface BrowserToolbarScrollBehavior {
     val state: BrowserToolbarScrollState
 
     /**
-     * An [AnimationSpec] that will be used to snap the toolbar to its edges.
+     * An [AnimationSpec] that will be used to animate the toolbar back to shown when scrolling stops.
      */
     val snapAnimationSpec: AnimationSpec<Float>?
 
     /**
-     * A [DecayAnimationSpec] used to settle the toolbar after a fling.
-     */
-    val flingAnimationSpec: DecayAnimationSpec<Float>?
-
-    /**
-     * The [NestedScrollConnection] that view-side scroll sources call directly to feed scroll
-     * deltas, flings and post-fling settles into this behavior.
+     * The [NestedScrollConnection] that view-side scroll sources call directly to feed scroll deltas
+     * into this behavior.
      */
     val nestedScrollConnection: NestedScrollConnection
 
     /**
-     * Settle the toolbar to its nearest edge (fully expanded or fully collapsed).
+     * Settle the chrome once scrolling stops — animates it back to fully shown.
      */
     suspend fun settle()
+
+    /** Animate the chrome to fully shown, serialized with [settle] and [collapse]. */
+    suspend fun expand()
+
+    /** Animate the chrome to fully collapsed, serialized with [settle] and [expand]. */
+    suspend fun collapse()
 }
 
 /**
- * Default implementation of [BrowserToolbarScrollBehavior].
+ * Default implementation of [BrowserToolbarScrollBehavior]. The chrome collapses only while the user
+ * is actively scrolling down; once scrolling stops it is animated back to fully shown by [settle].
  *
  * @param state The [BrowserToolbarScrollState] to use.
- * @param snapAnimationSpec The [AnimationSpec] to use for snapping.
- * @param flingAnimationSpec The [DecayAnimationSpec] used to settle the toolbar after a fling.
+ * @param snapAnimationSpec The [AnimationSpec] to use when animating back to shown.
  */
 @Stable
 class DefaultBrowserToolbarScrollBehavior(
     override val state: BrowserToolbarScrollState,
     override val snapAnimationSpec: AnimationSpec<Float>? = spring(stiffness = Spring.StiffnessMediumLow),
-    override var flingAnimationSpec: DecayAnimationSpec<Float>? = null,
 ) : BrowserToolbarScrollBehavior {
     override val nestedScrollConnection = object : NestedScrollConnection {
         override fun onPreScroll(available: Offset, source: NestedScrollSource): Offset {
             if (available.y == 0f) return Offset.Zero
 
-            // A new scroll gesture takes over: cancel any in-flight settle/fling animation so the
-            // user's drag and the animation don't fight over heightOffset.
+            // A new scroll gesture takes over: cancel any in-flight settle animation so the user's
+            // drag and the animation don't fight over heightOffset.
             settleJob?.cancel()
 
             val prevHeightOffset = state.heightOffset
             state.heightOffset = (prevHeightOffset + available.y).coerceIn(state.heightOffsetLimit, 0f)
             return Offset(0f, state.heightOffset - prevHeightOffset)
         }
-
-        override suspend fun onPostFling(consumed: Velocity, available: Velocity): Velocity {
-            val decaySpec = flingAnimationSpec
-            if (available.y != 0f && decaySpec != null) {
-                // Decay then snap as a single exclusive animation so a concurrent settle()
-                // (from onStopNestedScroll) cannot interleave writes to heightOffset.
-                runSingleAnimation {
-                    val animatable = Animatable(state.heightOffset)
-                    animatable.animateDecay(
-                        initialVelocity = available.y,
-                        animationSpec = decaySpec,
-                    ) {
-                        state.heightOffset = value.coerceIn(state.heightOffsetLimit, 0f)
-                    }
-                    snapToClosestEdge()
-                }
-            } else {
-                settle()
-            }
-            return super.onPostFling(consumed, available)
-        }
     }
 
     private var settleJob: Job? = null
 
     override suspend fun settle() {
-        runSingleAnimation {
-            snapToClosestEdge()
-        }
+        runSingleAnimation { animateToOffset(0f) }
+    }
+
+    override suspend fun expand() {
+        runSingleAnimation { animateToOffset(0f) }
+    }
+
+    override suspend fun collapse() {
+        runSingleAnimation { animateToOffset(state.heightOffsetLimit) }
     }
 
     /**
      * Run [block] as the single active toolbar animation, cancelling any previously running one
-     * first. This serializes [settle] and the post-fling settle so they never write
-     * [BrowserToolbarScrollState.heightOffset] concurrently.
+     * first, so repeated settles never write [BrowserToolbarScrollState.heightOffset] concurrently.
      */
     private suspend fun runSingleAnimation(block: suspend () -> Unit) = coroutineScope {
         // cancelAndJoin on a completed (or null) job is a no-op.
@@ -121,20 +101,19 @@ class DefaultBrowserToolbarScrollBehavior(
     }
 
     /**
-     * Snap [BrowserToolbarScrollState.heightOffset] to whichever edge (fully expanded or fully
-     * collapsed) is closer. No-op when already at an edge or when there is no snap spec.
+     * Animate [BrowserToolbarScrollState.heightOffset] to [target] (0 = fully shown,
+     * [BrowserToolbarScrollState.heightOffsetLimit] = fully collapsed). No-op when already there or
+     * without a snap spec.
      *
-     * Must be called from within [runSingleAnimation] so it is serialized with other animations.
+     * Must be called from within [runSingleAnimation] so every settle/expand/collapse is serialized
+     * through the one job and can't fight over the offset.
      */
-    private suspend fun snapToClosestEdge() {
-        val snapSpec = snapAnimationSpec ?: return
-        if (state.heightOffset == 0f || state.heightOffset == state.heightOffsetLimit) return
-
-        val targetValue = if (abs(state.heightOffset) < abs(state.heightOffsetLimit) / 2) {
-            0f
-        } else {
-            state.heightOffsetLimit
+    private suspend fun animateToOffset(target: Float) {
+        if (state.heightOffset == target) return
+        val snapSpec = snapAnimationSpec ?: run {
+            state.heightOffset = target
+            return
         }
-        state.animateTo(targetValue, snapSpec)
+        state.animateTo(target, snapSpec)
     }
 }

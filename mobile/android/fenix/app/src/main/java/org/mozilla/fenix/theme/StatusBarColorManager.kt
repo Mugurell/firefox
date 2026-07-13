@@ -18,6 +18,7 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 import mozilla.components.lib.state.ext.flowScoped
+import org.mozilla.fenix.FeatureFlags
 import org.mozilla.fenix.browser.BrowserFragment
 import org.mozilla.fenix.components.AppStore
 import org.mozilla.fenix.customtabs.ExternalAppBrowserFragment
@@ -36,6 +37,8 @@ import org.mozilla.fenix.wallpapers.Wallpaper
  * @param tabStripStatusBarView View class that sets the status bar background with the tab strip
  * gradient when the tab strip is visible.
  * @param mainDispatcher The [CoroutineDispatcher] used to observe wallpaper changes.
+ * @param useNewChromeHost Whether the browser chrome paints the status-bar band itself, in which
+ * case [tabStripStatusBarView] must stay hidden on the browser.
  */
 class StatusBarColorManager(
     private val themeManager: ThemeManager,
@@ -44,6 +47,7 @@ class StatusBarColorManager(
     private val settings: Settings,
     private val tabStripStatusBarView: TabStripStatusBarView,
     private val mainDispatcher: CoroutineDispatcher = Dispatchers.Main,
+    private val useNewChromeHost: Boolean = FeatureFlags.USE_NEW_CHROME_HOST,
 ) : FragmentLifecycleCallbacks() {
 
     private var wallpaperScope: CoroutineScope? = null
@@ -68,6 +72,15 @@ class StatusBarColorManager(
         when {
             // Don't show the gradient if tab strip is not enabled or private mode is enabled.
             !settings.isTabStripEnabled || themeManager.currentTheme.isPrivate -> {
+                tabStripStatusBarView.hide()
+            }
+
+            // The new chrome host paints the status-bar band itself, as the top strip of the
+            // collapsing top chrome column. This overlay lives on the window's decor view, above
+            // the browser's CoordinatorLayout and outside the chrome's scroll state, so it would
+            // stay put — and, being brought to front, cover the chrome's own strip — while the
+            // chrome scrolls away. Let the chrome own that band instead.
+            fragment is BrowserFragment && useNewChromeHost -> {
                 tabStripStatusBarView.hide()
             }
 

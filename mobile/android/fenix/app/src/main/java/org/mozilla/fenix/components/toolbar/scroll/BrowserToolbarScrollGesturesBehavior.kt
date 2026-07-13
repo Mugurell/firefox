@@ -8,7 +8,6 @@ import android.content.Context
 import android.view.View
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.input.nestedscroll.NestedScrollSource
-import androidx.compose.ui.unit.Velocity
 import androidx.coordinatorlayout.widget.CoordinatorLayout
 import androidx.core.view.ViewCompat
 import kotlinx.coroutines.CoroutineScope
@@ -33,6 +32,10 @@ internal class BrowserToolbarScrollGesturesBehavior<V : View>(
 
     var isScrollEnabled: Boolean = true
 
+    // True between a fling being started and its momentum settling. Used to defer showing the bars
+    // until the fling finishes, so they don't pop back mid-fling on the touch-up stop.
+    private var awaitingFlingSettle = false
+
     // Cache engineView reference. Stale references are unlikely as the whole toolbar is
     // recreated on major layout changes, but we check each scroll start.
     private var engineView: EngineView? = null
@@ -52,6 +55,11 @@ internal class BrowserToolbarScrollGesturesBehavior<V : View>(
     ): Boolean {
         if (engineView == null) {
             engineView = coordinatorLayout.findViewInHierarchy { it is EngineView } as? EngineView
+        }
+        // A fresh touch scroll (e.g. grabbing the page mid-fling) clears any pending fling wait so
+        // its stop reveals the bars.
+        if (type == ViewCompat.TYPE_TOUCH) {
+            awaitingFlingSettle = false
         }
         return isScrollEnabled && shouldScroll && (axes and ViewCompat.SCROLL_AXIS_VERTICAL != 0)
     }
@@ -86,6 +94,11 @@ internal class BrowserToolbarScrollGesturesBehavior<V : View>(
     ) {
         if (!isScrollEnabled) return
 
+        // A fling produces a touch-up stop followed by a momentum (non-touch) stop. Wait for the
+        // momentum to finish before showing the bars, otherwise they'd pop back mid-fling.
+        if (type == ViewCompat.TYPE_TOUCH && awaitingFlingSettle) return
+        awaitingFlingSettle = false
+
         coroutineScope.launch {
             scrollBehavior.settle()
         }
@@ -98,11 +111,9 @@ internal class BrowserToolbarScrollGesturesBehavior<V : View>(
         velocityX: Float,
         velocityY: Float,
     ): Boolean {
-        coroutineScope.launch {
-            val available = Velocity(0f, -velocityY)
-            val consumed = scrollBehavior.nestedScrollConnection.onPreFling(available)
-            scrollBehavior.nestedScrollConnection.onPostFling(consumed, available - consumed)
-        }
+        // Let the page consume the fling; the bars stay collapsed through the momentum and are shown
+        // again once it settles (the following non-touch onStopNestedScroll).
+        awaitingFlingSettle = true
         return false
     }
 
@@ -121,28 +132,18 @@ internal class BrowserToolbarScrollGesturesBehavior<V : View>(
     }
 
     /**
-     * Force the toolbar to expand.
+     * Force the toolbar to expand. Routed through [BrowserToolbarScrollBehavior.expand] so it is
+     * serialized with settle/collapse rather than racing them on the shared offset.
      */
     fun forceExpand() {
-        val spec = scrollBehavior.snapAnimationSpec ?: run {
-            scrollBehavior.state.heightOffset = 0f
-            return
-        }
-        coroutineScope.launch {
-            scrollBehavior.state.animateTo(0f, spec)
-        }
+        coroutineScope.launch { scrollBehavior.expand() }
     }
 
     /**
-     * Force the toolbar to collapse.
+     * Force the toolbar to collapse. Routed through [BrowserToolbarScrollBehavior.collapse] for the
+     * same serialization.
      */
     fun forceCollapse() {
-        val spec = scrollBehavior.snapAnimationSpec ?: run {
-            scrollBehavior.state.heightOffset = scrollBehavior.state.heightOffsetLimit
-            return
-        }
-        coroutineScope.launch {
-            scrollBehavior.state.animateTo(scrollBehavior.state.heightOffsetLimit, spec)
-        }
+        coroutineScope.launch { scrollBehavior.collapse() }
     }
 }

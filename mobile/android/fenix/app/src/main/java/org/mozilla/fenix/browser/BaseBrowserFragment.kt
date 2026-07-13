@@ -72,7 +72,6 @@ import mozilla.components.browser.state.state.content.DownloadState
 import mozilla.components.browser.state.store.BrowserStore
 import mozilla.components.browser.thumbnails.BrowserThumbnails
 import mozilla.components.browser.toolbar.BrowserToolbar
-import mozilla.components.compose.base.theme.layout.AcornWindowSize
 import mozilla.components.compose.browser.toolbar.BrowserToolbar
 import mozilla.components.compose.browser.toolbar.store.BrowserToolbarAction
 import mozilla.components.compose.browser.toolbar.store.BrowserToolbarStore
@@ -202,9 +201,6 @@ import org.mozilla.fenix.components.toolbar.ToolbarPosition
 import org.mozilla.fenix.components.toolbar.ToolbarsIntegration
 import org.mozilla.fenix.components.toolbar.chrome.BrowserChrome
 import org.mozilla.fenix.components.toolbar.chrome.BrowserChromeHost
-import org.mozilla.fenix.components.toolbar.chrome.ChromeEdge
-import org.mozilla.fenix.components.toolbar.chrome.CollapsingChrome
-import org.mozilla.fenix.components.toolbar.chrome.collapseRange
 import org.mozilla.fenix.components.toolbar.scroll.BrowserEngineViewClippingBehavior
 import org.mozilla.fenix.components.toolbar.scroll.BrowserToolbarScrollState
 import org.mozilla.fenix.components.toolbar.scroll.DefaultBrowserToolbarScrollBehavior
@@ -1487,21 +1483,20 @@ abstract class BaseBrowserFragment :
         }
         val navbar = browserNavigationBar?.asComposable()
 
-        // Owned here so the collapsing content below and the host share one scroll state.
+        // Owned here so the host (and its scaffold) share one scroll state.
         val scrollBehavior = DefaultBrowserToolbarScrollBehavior(state = BrowserToolbarScrollState())
-        val scrollState = scrollBehavior.state
 
+        // The scaffold collapses each whole edge (system-bar strip + these bars) as a unit, so the
+        // content here is plain — no per-bar collapse wrapper.
         val topContent: @Composable () -> Unit = when (atBottom) {
             true -> { {} }
             else -> {
                 {
-                    CollapsingChrome(scrollState = scrollState, edge = ChromeEdge.Top) {
-                        Column(modifier = Modifier.collapseRange(scrollState, ChromeEdge.Top)) {
-                            if (shouldShowTabStrip && AcornWindowSize.isLargeWindow()) {
-                                tabStrip()
-                            }
-                            toolbar()
+                    Column {
+                        if (shouldShowTabStrip) {
+                            tabStrip()
                         }
+                        toolbar()
                     }
                 }
             }
@@ -1509,25 +1504,16 @@ abstract class BaseBrowserFragment :
         val bottomContent: @Composable () -> Unit = when (atBottom) {
             true -> {
                 {
-                    CollapsingChrome(scrollState = scrollState, edge = ChromeEdge.Bottom) {
-                        Column {
-                            Column(modifier = Modifier.collapseRange(scrollState, ChromeEdge.Bottom)) {
-                                toolbar()
-                                navbar?.invoke()
-                            }
-                        }
+                    Column {
+                        toolbar()
+                        navbar?.invoke()
                     }
                 }
             }
             else -> {
                 {
-                    // Top-toolbar mode: the navbar collapses at the bottom on its own height (an
-                    // autofill bar, if stacked above, would ride the same offset but stay unmarked so
-                    // it parks flush).
-                    CollapsingChrome(scrollState = scrollState, edge = ChromeEdge.Bottom) {
-                        Column(modifier = Modifier.collapseRange(scrollState, ChromeEdge.Bottom)) {
-                            navbar?.invoke()
-                        }
+                    Column {
+                        navbar?.invoke()
                     }
                 }
             }
@@ -1563,15 +1549,17 @@ abstract class BaseBrowserFragment :
             bottomBar = bottomContent,
             onNewChromeDimensions = { dimensions ->
                 if (isDynamic) {
-                    // Static margins are only the system-bar insets. The collapsible toolbar reserve
-                    // (setDynamicToolbarMaxHeight) and the vertical clipping are owned by the
-                    // behavior, derived from the shared scroll state's measured per-edge heights, so
-                    // the engine can never disagree with how far the bars actually collapse.
+                    // Vertically the engine view fills edge to edge (top/bottom margins = 0): the top
+                    // and bottom chrome — system-bar background strips included — collapse fully off
+                    // screen, so the web content must reclaim that space. The whole collapsible
+                    // height is reserved with Gecko and reclaimed via the behavior, which derives the
+                    // reserve and clipping from the shared scroll state's measured per-edge heights.
+                    // Only the side strips (landscape nav bar / cutout) stay as fixed margins.
                     swipeRefreshParams.updateMargins(
                         left = dimensions.startWidth,
                         right = dimensions.endWidth,
-                        top = dimensions.topInset,
-                        bottom = dimensions.bottomInset,
+                        top = 0,
+                        bottom = 0,
                     )
                     browserToolbar.scrollBehavior?.let { scrollBehavior ->
                         swipeRefreshParams.behavior =

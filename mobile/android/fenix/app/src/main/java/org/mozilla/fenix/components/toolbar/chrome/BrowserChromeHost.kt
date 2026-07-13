@@ -6,7 +6,6 @@ package org.mozilla.fenix.components.toolbar.chrome
 
 import android.view.View
 import android.view.ViewGroup
-import androidx.compose.animation.rememberSplineBasedDecay
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -26,7 +25,6 @@ import org.mozilla.fenix.R
 import org.mozilla.fenix.components.toolbar.ToolbarPosition
 import org.mozilla.fenix.components.toolbar.scroll.BrowserToolbarScrollBehavior
 import org.mozilla.fenix.components.toolbar.scroll.BrowserToolbarScrollGesturesBehavior
-import org.mozilla.fenix.components.toolbar.scroll.DefaultBrowserToolbarScrollBehavior
 import org.mozilla.fenix.theme.FirefoxTheme
 import org.mozilla.fenix.utils.Settings
 
@@ -70,6 +68,7 @@ class BrowserChromeHost(
                 ),
             ) {
                 BrowserChromeScaffold(
+                    scrollState = scrollBehavior.state,
                     topBar = topBar,
                     bottomBar = bottomBar,
                     onNewChromeDimensions = onNewChromeDimensions,
@@ -94,12 +93,6 @@ class BrowserChromeHost(
 
     @Composable
     private fun ChromeContent() {
-        // Fling decay for the scroll behavior (snap alone doesn't carry momentum after a fling).
-        val flingSpec = rememberSplineBasedDecay<Float>()
-        LaunchedEffect(flingSpec) {
-            (scrollBehavior as? DefaultBrowserToolbarScrollBehavior)?.flingAnimationSpec = flingSpec
-        }
-
         // Show/hide the chrome based on page load, fullscreen and security state, and re-enable
         // scrolling appropriately — the same controller the per-bar path uses.
         DisposableEffect(Unit) {
@@ -124,6 +117,7 @@ class BrowserChromeHost(
 
         FirefoxTheme {
             BrowserChromeScaffold(
+                scrollState = scrollBehavior.state,
                 topBar = topBar,
                 bottomBar = bottomBar,
                 onNewChromeDimensions = onNewChromeDimensions,
