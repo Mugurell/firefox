@@ -1734,6 +1734,7 @@ class HomeFragment : Fragment(), UserInteractionHandler, OnLongPressedListener {
             activityRef = WeakReference(requireActivity()),
             store = store,
             appStore = requireComponents.appStore,
+            browsingModeManager = browsingModeManager,
             navControllerRef = WeakReference(findNavController()),
             settings = requireComponents.settings,
             defaultTopSitesProvider = requireComponents.core.defaultTopSitesProvider,
