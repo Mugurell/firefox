@@ -1648,10 +1648,15 @@ open class HomeActivity : LocaleAwareAppCompatActivity(), NavHostActivity, Crash
         return super.getSystemService(name)
     }
 
+    /** Returns the [BrowsingMode] of the session this activity is bound to, if any. */
+    @VisibleForTesting(otherwise = VisibleForTesting.PROTECTED)
+    internal open fun getSessionBrowsingMode(): BrowsingMode? = null
+
     private fun createBrowsingModeManager(intent: Intent?): BrowsingModeManager {
         return DefaultBrowsingModeManager(
             intent = intent,
             settings = components.settings,
+            getSessionMode = ::getSessionBrowsingMode,
             onModeChange = { newMode ->
                 updateSecureWindowFlags(newMode)
 

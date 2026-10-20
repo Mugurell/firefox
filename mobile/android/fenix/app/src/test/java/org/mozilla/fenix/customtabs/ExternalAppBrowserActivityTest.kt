@@ -266,4 +266,41 @@ class ExternalAppBrowserActivityTest {
         assertEquals("mozilla", activity.getExternalTabId())
         assertNull(activity.getExternalTab())
     }
+
+    @Test
+    fun `GIVEN a private custom tab WHEN getting the session browsing mode THEN return private`() {
+        val activity = buildActivityWithCustomTab(private = true)
+
+        assertEquals(BrowsingMode.Private, activity.getSessionBrowsingMode())
+    }
+
+    @Test
+    fun `GIVEN a normal custom tab WHEN getting the session browsing mode THEN return normal`() {
+        val activity = buildActivityWithCustomTab(private = false)
+
+        assertEquals(BrowsingMode.Normal, activity.getSessionBrowsingMode())
+    }
+
+    @Test
+    fun `GIVEN the custom tab does not exist WHEN getting the session browsing mode THEN return null`() {
+        val activity = spyk(ExternalAppBrowserActivity())
+        every { activity.components.core.store } returns BrowserStore()
+        every { activity.intent } returns Intent(Intent.ACTION_VIEW).apply { putSessionId("mozilla") }
+
+        assertNull(activity.getSessionBrowsingMode())
+    }
+
+    private fun buildActivityWithCustomTab(private: Boolean): ExternalAppBrowserActivity {
+        val store =
+            BrowserStore(
+                BrowserState(
+                    customTabs =
+                        listOf(createCustomTab(url = "https://www.mozilla.org", id = "mozilla", private = private))
+                )
+            )
+        val activity = spyk(ExternalAppBrowserActivity())
+        every { activity.components.core.store } returns store
+        every { activity.intent } returns Intent(Intent.ACTION_VIEW).apply { putSessionId("mozilla") }
+        return activity
+    }
 }

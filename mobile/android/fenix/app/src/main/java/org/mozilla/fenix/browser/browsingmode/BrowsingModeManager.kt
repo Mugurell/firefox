@@ -5,8 +5,6 @@
 package org.mozilla.fenix.browser.browsingmode
 
 import android.content.Intent
-import mozilla.components.support.utils.toSafeIntent
-import org.mozilla.fenix.HomeActivity.Companion.PRIVATE_BROWSING_MODE
 import org.mozilla.fenix.components.AppStore
 import org.mozilla.fenix.utils.Settings
 
@@ -43,11 +41,14 @@ interface BrowsingModeManager {
  *
  * @param intent The [Intent] that started the activity.
  * @param settings [Settings] used to persist the current browsing mode in storage.
+ * @param getSessionMode Returns the [BrowsingMode] of the session this activity is bound to, if any. It takes
+ *   precedence over the [Intent] and the last known [BrowsingMode].
  * @param onModeChange Callback invoked when the browsing mode changes.
  */
 class DefaultBrowsingModeManager(
     intent: Intent?,
     private val settings: Settings,
+    private val getSessionMode: () -> BrowsingMode? = { null },
     private val onModeChange: (BrowsingMode) -> Unit,
 ) : BrowsingModeManager {
     override var mode: BrowsingMode = BrowsingMode.Normal
@@ -58,22 +59,12 @@ class DefaultBrowsingModeManager(
         }
 
     init {
-        mode = getModeFromIntentOrLastKnown(intent)
+        mode = resolveMode(intent)
     }
 
     override fun updateMode(intent: Intent?) {
-        mode = getModeFromIntentOrLastKnown(intent)
+        mode = resolveMode(intent)
     }
 
-    /** Returns the [BrowsingMode] set by the [intent] or the last known [BrowsingMode]. */
-    private fun getModeFromIntentOrLastKnown(intent: Intent?): BrowsingMode {
-        intent?.toSafeIntent()?.let {
-            if (it.hasExtra(PRIVATE_BROWSING_MODE)) {
-                val startPrivateMode = it.getBooleanExtra(PRIVATE_BROWSING_MODE, false)
-                return BrowsingMode.fromBoolean(isPrivate = startPrivateMode)
-            }
-        }
-
-        return settings.lastKnownMode
-    }
+    private fun resolveMode(intent: Intent?) = resolveBrowsingMode(getSessionMode(), intent, settings.lastKnownMode)
 }

@@ -17,6 +17,7 @@ import mozilla.components.concept.engine.utils.ABOUT_HOME_URL
 import mozilla.components.support.utils.OnEnterAnimationCompleteListener
 import mozilla.components.support.utils.SafeIntent
 import org.mozilla.fenix.HomeActivity
+import org.mozilla.fenix.browser.browsingmode.BrowsingMode
 import org.mozilla.fenix.ext.components
 import org.mozilla.fenix.ext.getIntentSessionId
 
@@ -29,6 +30,9 @@ const val EXTRA_IS_SANDBOX_CUSTOM_TAB = "org.mozilla.fenix.customtabs.EXTRA_IS_S
 @Suppress("TooManyFunctions")
 open class ExternalAppBrowserActivity : HomeActivity() {
     private var isFinishedAnimating = false
+
+    override fun getSessionBrowsingMode(): BrowsingMode? =
+        getExternalTab()?.content?.private?.let { BrowsingMode.fromBoolean(isPrivate = it) }
 
     override fun onResume() {
         super.onResume()
