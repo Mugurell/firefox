@@ -44,6 +44,8 @@
     <attr name="fenixWordmarkLogo" format="reference" />
     <attr name="awesomeBarIndicatorColor" format="reference|color"/>
     <attr name="awesomeBarIndicatorBookmarkColor" format="reference|color"/>
+    <!-- Whether the theme is the one of a private browsing window -->
+    <attr name="isPrivateTheme" format="boolean" />
 
     <declare-styleable name="TrackingProtectionCategoryItem">
         <attr name="categoryItemTitle" format="reference" />

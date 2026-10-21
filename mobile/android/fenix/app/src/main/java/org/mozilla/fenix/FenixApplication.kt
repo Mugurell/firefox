@@ -119,6 +119,7 @@ import org.mozilla.fenix.components.appstate.AppAction
 import org.mozilla.fenix.components.initializeGlean
 import org.mozilla.fenix.components.metrics.MozillaProductDetector
 import org.mozilla.fenix.components.startMetricsIfEnabled
+import org.mozilla.fenix.compose.ext.isPrivateTheme
 import org.mozilla.fenix.experiments.maybeFetchExperiments
 import org.mozilla.fenix.ext.application
 import org.mozilla.fenix.ext.components
@@ -1368,7 +1369,7 @@ open class FenixApplication : Application(), Provider, ThemeProvider {
 
     @Composable
     override fun provideTheme(): Theme {
-        return if (components.appStore.state.mode.isPrivate) {
+        return if (isPrivateTheme()) {
             Private
         } else {
             DefaultThemeProvider.provideTheme()
