@@ -97,7 +97,7 @@ class TrustPanelNavigationMiddleware(
             "about:certificate?cert=${Uri.encode(base64)}",
             parentId = sessionState?.id,
             contextId = sessionState?.contextId,
-            private = appStore.state.mode.isPrivate,
+            private = sessionState?.content?.private ?: appStore.state.mode.isPrivate,
         )
     }
 }

@@ -13,6 +13,7 @@ import io.mockk.mockk
 import io.mockk.runs
 import io.mockk.verify
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.runTest
 import mozilla.components.browser.state.state.SessionState
 import mozilla.components.feature.tabs.TabsUseCases
@@ -69,84 +70,82 @@ class TrustPanelNavigationMiddlewareTest {
     }
 
     @Test
-    fun `GIVEN browsing mode is normal WHEN security certificate action is dispatched THEN navigate to security certificate`() =
+    fun `GIVEN a normal tab in private mode WHEN security certificate action is dispatched THEN open the certificate in a normal tab`() =
         runTest {
-            val testSessionId = "session-id"
-            val testContextId = "context-id"
-            val isPrivate = false
+            every { appStore.state.mode.isPrivate } returns true
 
-            every { appStore.state.mode.isPrivate } returns isPrivate
-
-            val sessionState: SessionState = mockk {
-                every { id } returns testSessionId
-                every { contextId } returns testContextId
-            }
-            val websiteInfoState: WebsiteInfoState = mockk {
-                every { certificate } returns mockk(relaxed = true)
-            }
-            val store =
-                createStore(
-                    trustPanelState =
-                        TrustPanelState(
-                            sessionState = sessionState,
-                            websiteInfoState = websiteInfoState,
-                        ),
-                    scope = this,
-                )
-
-            store.dispatch(TrustPanelAction.Navigate.SecurityCertificate)
-            testScheduler.advanceUntilIdle()
+            dispatchSecurityCertificate(sessionState = createSessionState(isPrivate = false))
 
             verify { navController.navigate(R.id.browserFragment) }
             verify {
                 tabsUseCases.addTab(
                     url = "about:certificate?cert=null",
-                    parentId = testSessionId,
-                    contextId = testContextId,
-                    private = isPrivate,
+                    parentId = "session-id",
+                    contextId = "context-id",
+                    private = false,
                 )
             }
         }
 
     @Test
-    fun `GIVEN browsing mode is private WHEN security certificate action is dispatched THEN navigate to security certificate`() =
+    fun `GIVEN a private tab in normal mode WHEN security certificate action is dispatched THEN open the certificate in a private tab`() =
         runTest {
-            val testSessionId = "session-id"
-            val testContextId = "context-id"
-            val isPrivate = true
+            every { appStore.state.mode.isPrivate } returns false
 
-            every { appStore.state.mode.isPrivate } returns isPrivate
-
-            val sessionState: SessionState = mockk {
-                every { id } returns testSessionId
-                every { contextId } returns testContextId
-            }
-            val websiteInfoState: WebsiteInfoState = mockk {
-                every { certificate } returns mockk(relaxed = true)
-            }
-            val store =
-                createStore(
-                    trustPanelState =
-                        TrustPanelState(
-                            sessionState = sessionState,
-                            websiteInfoState = websiteInfoState,
-                        ),
-                    scope = this,
-                )
-
-            store.dispatch(TrustPanelAction.Navigate.SecurityCertificate)
-            testScheduler.advanceUntilIdle()
+            dispatchSecurityCertificate(sessionState = createSessionState(isPrivate = true))
 
             verify { navController.navigate(R.id.browserFragment) }
             verify {
                 tabsUseCases.addTab(
                     url = "about:certificate?cert=null",
-                    parentId = testSessionId,
-                    contextId = testContextId,
-                    private = isPrivate,
+                    parentId = "session-id",
+                    contextId = "context-id",
+                    private = true,
                 )
             }
         }
+
+    @Test
+    fun `GIVEN no tab in private mode WHEN security certificate action is dispatched THEN open the certificate in a private tab`() =
+        runTest {
+            every { appStore.state.mode.isPrivate } returns true
+
+            dispatchSecurityCertificate(sessionState = null)
+
+            verify { navController.navigate(R.id.browserFragment) }
+            verify {
+                tabsUseCases.addTab(
+                    url = "about:certificate?cert=null",
+                    parentId = null,
+                    contextId = null,
+                    private = true,
+                )
+            }
+        }
+
+    private fun createSessionState(isPrivate: Boolean): SessionState = mockk {
+        every { id } returns "session-id"
+        every { contextId } returns "context-id"
+        every { content.private } returns isPrivate
+    }
+
+    private fun TestScope.dispatchSecurityCertificate(sessionState: SessionState?) {
+        val websiteInfoState: WebsiteInfoState = mockk {
+            every { certificate } returns mockk(relaxed = true)
+        }
+        val store =
+            createStore(
+                trustPanelState =
+                    TrustPanelState(
+                        sessionState = sessionState,
+                        websiteInfoState = websiteInfoState,
+                    ),
+                scope = this,
+            )
+
+        store.dispatch(TrustPanelAction.Navigate.SecurityCertificate)
+        testScheduler.advanceUntilIdle()
+    }
 
     private fun createStore(
         trustPanelState: TrustPanelState = TrustPanelState(),
