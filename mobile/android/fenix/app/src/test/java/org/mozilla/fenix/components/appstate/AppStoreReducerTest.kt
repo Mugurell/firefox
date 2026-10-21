@@ -402,4 +402,26 @@ class AppStoreReducerTest {
             finalState.snackbarState,
         )
     }
+
+    @Test
+    fun `WHEN a custom tab moves to the foreground THEN it is the last foreground custom tab`() {
+        val state =
+            AppStoreReducer.reduce(
+                AppState(lastForegroundCustomTabId = "other"),
+                AppAction.CustomTabMovedToForeground("custom"),
+            )
+
+        assertEquals("custom", state.lastForegroundCustomTabId)
+    }
+
+    @Test
+    fun `WHEN the main browser moves to the foreground THEN there is no last foreground custom tab`() {
+        val state =
+            AppStoreReducer.reduce(
+                AppState(lastForegroundCustomTabId = "custom"),
+                AppAction.MainBrowserMovedToForeground,
+            )
+
+        assertNull(state.lastForegroundCustomTabId)
+    }
 }

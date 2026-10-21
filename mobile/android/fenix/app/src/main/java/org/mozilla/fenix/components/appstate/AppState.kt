@@ -4,6 +4,7 @@
 
 package org.mozilla.fenix.components.appstate
 
+import mozilla.components.browser.state.state.BrowserState
 import mozilla.components.concept.storage.BookmarkNode
 import mozilla.components.feature.tab.collections.TabCollection
 import mozilla.components.feature.top.sites.TopSite
@@ -89,6 +90,9 @@ import org.mozilla.fenix.wallpapers.WallpaperState
  * @property blockedTrackersState The [BlockedTrackersState] with data about blocked trackers.
  * @property longfoxEntryPointReady Whether the fox peek animation should play on the next homepage view.
  * @property isTabsTrayVisible Whether TabsTray is shown.
+ * @property lastForegroundCustomTabId The ID of the custom tab shown in front most recently, or null if the main
+ *   browser was shown in front after it. It is kept after the custom tab is closed, so check that the custom tab still
+ *   exists in [BrowserState] before using it.
  */
 data class AppState(
     val isForeground: Boolean = true,
@@ -132,4 +136,5 @@ data class AppState(
     val blockedTrackersState: BlockedTrackersState = BlockedTrackersState(),
     val longfoxEntryPointReady: Boolean = false,
     val isTabsTrayVisible: Boolean = false,
+    val lastForegroundCustomTabId: String? = null,
 ) : State

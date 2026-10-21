@@ -32,6 +32,7 @@ import org.mozilla.fenix.BrowserDirection
 import org.mozilla.fenix.NavGraphDirections
 import org.mozilla.fenix.browser.browsingmode.BrowsingMode
 import org.mozilla.fenix.browser.browsingmode.BrowsingModeManager
+import org.mozilla.fenix.components.AppStore
 import org.mozilla.fenix.ext.components
 import org.mozilla.fenix.ext.getIntentSource
 import org.mozilla.fenix.ext.getNavDirections
@@ -288,6 +289,29 @@ class ExternalAppBrowserActivityTest {
         every { activity.intent } returns Intent(Intent.ACTION_VIEW).apply { putSessionId("mozilla") }
 
         assertNull(activity.getSessionBrowsingMode())
+    }
+
+    @Test
+    fun `WHEN the custom tab becomes the top resumed activity THEN it is the last foreground custom tab`() {
+        val appStore = AppStore()
+        val activity = buildActivityWithCustomTab(private = false)
+        every { activity.components.appStore } returns appStore
+
+        activity.onTopResumedActivityChanged(true)
+
+        assertEquals("mozilla", appStore.state.lastForegroundCustomTabId)
+    }
+
+    @Test
+    fun `WHEN the custom tab stops being the top resumed activity THEN it stays the last foreground custom tab`() {
+        val appStore = AppStore()
+        val activity = buildActivityWithCustomTab(private = false)
+        every { activity.components.appStore } returns appStore
+        activity.onTopResumedActivityChanged(true)
+
+        activity.onTopResumedActivityChanged(false)
+
+        assertEquals("mozilla", appStore.state.lastForegroundCustomTabId)
     }
 
     private fun buildActivityWithCustomTab(private: Boolean): ExternalAppBrowserActivity {

@@ -8,6 +8,8 @@ import io.mockk.every
 import io.mockk.mockk
 import java.util.concurrent.TimeUnit
 import kotlin.random.Random
+import mozilla.components.browser.state.state.BrowserState
+import mozilla.components.browser.state.state.createCustomTab
 import mozilla.components.service.pocket.PocketStory
 import mozilla.components.service.pocket.PocketStory.PocketRecommendedStory
 import mozilla.components.service.pocket.PocketStory.SponsoredContent
@@ -20,6 +22,7 @@ import org.junit.Assert.assertSame
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.mozilla.fenix.TestUtils.getFakeContentRecommendations
+import org.mozilla.fenix.browser.browsingmode.BrowsingMode
 import org.mozilla.fenix.components.appstate.AppState
 import org.mozilla.fenix.components.appstate.recommendations.ContentRecommendationsState
 import org.mozilla.fenix.home.pocket.POCKET_STORIES_DEFAULT_CATEGORY_NAME
@@ -561,6 +564,42 @@ class AppStateTest {
 
         assertTrue(state.shouldShowRecentTabs(settings))
     }
+
+    @Test
+    fun `GIVEN a private custom tab was last in front and normal browsing mode THEN the foreground tab is private`() {
+        val state = AppState(mode = BrowsingMode.Normal, lastForegroundCustomTabId = "private")
+
+        assertTrue(state.isForegroundTabOrCustomTabPrivate(customTabsState))
+    }
+
+    @Test
+    fun `GIVEN a normal custom tab was last in front and private browsing mode THEN the foreground tab is not private`() {
+        val state = AppState(mode = BrowsingMode.Private, lastForegroundCustomTabId = "normal")
+
+        Assert.assertFalse(state.isForegroundTabOrCustomTabPrivate(customTabsState))
+    }
+
+    @Test
+    fun `GIVEN the main browser was last in front THEN the browsing mode decides if the foreground tab is private`() {
+        assertTrue(AppState(mode = BrowsingMode.Private).isForegroundTabOrCustomTabPrivate(customTabsState))
+        Assert.assertFalse(AppState(mode = BrowsingMode.Normal).isForegroundTabOrCustomTabPrivate(customTabsState))
+    }
+
+    @Test
+    fun `GIVEN the custom tab last in front was removed THEN the browsing mode decides if the foreground tab is private`() {
+        val state = AppState(mode = BrowsingMode.Private, lastForegroundCustomTabId = "removed")
+
+        assertTrue(state.isForegroundTabOrCustomTabPrivate(customTabsState))
+    }
+
+    private val customTabsState =
+        BrowserState(
+            customTabs =
+                listOf(
+                    createCustomTab(url = "https://www.mozilla.org", id = "private", private = true),
+                    createCustomTab(url = "https://www.mozilla.org", id = "normal", private = false),
+                )
+        )
 
     private fun assertCombinedStories(
         recommendedStories: List<PocketStory>,

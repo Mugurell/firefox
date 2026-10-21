@@ -565,4 +565,22 @@ class HomeActivityTest {
             browserStore.state.extensions[extension.id]?.activeOptionsPage,
         )
     }
+
+    @Test
+    fun `WHEN the main browser becomes the top resumed activity THEN it is recorded as being in the foreground`() {
+        every { activity.applicationContext } returns testContext
+
+        activity.onTopResumedActivityChanged(true)
+
+        verify { appStore.dispatch(AppAction.MainBrowserMovedToForeground) }
+    }
+
+    @Test
+    fun `WHEN the main browser stops being the top resumed activity THEN nothing is recorded`() {
+        every { activity.applicationContext } returns testContext
+
+        activity.onTopResumedActivityChanged(false)
+
+        verify(exactly = 0) { appStore.dispatch(AppAction.MainBrowserMovedToForeground) }
+    }
 }

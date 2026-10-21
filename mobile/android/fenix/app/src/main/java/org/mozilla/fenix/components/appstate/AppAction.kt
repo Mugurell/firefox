@@ -89,6 +89,16 @@ sealed class AppAction : Action {
     /** Action dispatched when the browsing mode changes inside the BrowsingModeManager. */
     data class BrowsingModeManagerModeChanged(val mode: BrowsingMode) : AppAction()
 
+    /**
+     * The user is now interacting with a specific custom tab.
+     *
+     * @property customTabId The ID of the custom tab.
+     */
+    data class CustomTabMovedToForeground(val customTabId: String) : AppAction()
+
+    /** The user is now interacting with the main browser. */
+    data object MainBrowserMovedToForeground : AppAction()
+
     data class TopSitesChange(val topSites: List<TopSite>) : AppAction()
 
     /**

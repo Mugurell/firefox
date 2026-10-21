@@ -836,6 +836,11 @@ open class HomeActivity : LocaleAwareAppCompatActivity(), NavHostActivity, Crash
         // https://github.com/mozilla-mobile/android-components/issues/7960
         breadcrumb(message = "onResume()")
 
+        // Before Android 10 only the focused activity is resumed.
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
+            onMovedToFront()
+        }
+
         binding.root.doOnLayout {
             if (browsingModeManager.mode.isPrivate) {
                 it.announcePrivateModeForAccessibility()
@@ -1651,6 +1656,19 @@ open class HomeActivity : LocaleAwareAppCompatActivity(), NavHostActivity, Crash
     /** Returns the [BrowsingMode] of the session this activity is bound to, if any. */
     @VisibleForTesting(otherwise = VisibleForTesting.PROTECTED)
     internal open fun getSessionBrowsingMode(): BrowsingMode? = null
+
+    override fun onTopResumedActivityChanged(isTopResumedActivity: Boolean) {
+        super.onTopResumedActivityChanged(isTopResumedActivity)
+        if (isTopResumedActivity) {
+            onMovedToFront()
+        }
+    }
+
+    /** Called when this activity is shown in front of all others, the one the user interacts with. */
+    @VisibleForTesting(otherwise = VisibleForTesting.PROTECTED)
+    internal open fun onMovedToFront() {
+        components.appStore.dispatch(AppAction.MainBrowserMovedToForeground)
+    }
 
     private fun createBrowsingModeManager(intent: Intent?): BrowsingModeManager {
         return DefaultBrowsingModeManager(

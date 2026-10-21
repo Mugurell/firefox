@@ -124,6 +124,7 @@ import org.mozilla.fenix.ext.application
 import org.mozilla.fenix.ext.components
 import org.mozilla.fenix.ext.containsQueryParameters
 import org.mozilla.fenix.ext.isCustomEngine
+import org.mozilla.fenix.ext.isForegroundTabOrCustomTabPrivate
 import org.mozilla.fenix.ext.isKnownSearchDomain
 import org.mozilla.fenix.home.collections.migration.CollectionsToTabGroupsMigrationWorker
 import org.mozilla.fenix.home.topsites.TopSitesConfigConstants.TOP_SITES_PROVIDER_LIMIT
@@ -929,7 +930,9 @@ open class FenixApplication : Application(), Provider, ThemeProvider {
             WebExtensionSupport.initialize(
                 components.core.engine,
                 components.core.store,
-                isInPrivateBrowsingMode = { components.appStore.state.mode.isPrivate },
+                isInPrivateBrowsingMode = {
+                    components.appStore.state.isForegroundTabOrCustomTabPrivate(components.core.store.state)
+                },
                 onNewTabOverride = { _, engineSession, url, selected, isPrivate ->
                     components.useCases.tabsUseCases.addTab(
                         url = url,
