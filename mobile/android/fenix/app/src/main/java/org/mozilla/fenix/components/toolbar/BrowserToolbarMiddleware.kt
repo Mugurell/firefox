@@ -99,13 +99,13 @@ import org.mozilla.fenix.browser.BrowserFragmentDirections
 import org.mozilla.fenix.browser.browsingmode.BrowsingMode
 import org.mozilla.fenix.browser.browsingmode.BrowsingMode.Normal
 import org.mozilla.fenix.browser.browsingmode.BrowsingMode.Private
-import org.mozilla.fenix.browser.browsingmode.BrowsingModeManager
 import org.mozilla.fenix.browser.readermode.ReaderModeController
 import org.mozilla.fenix.browser.store.BrowserScreenAction
 import org.mozilla.fenix.browser.store.BrowserScreenStore
 import org.mozilla.fenix.components.AppStore
 import org.mozilla.fenix.components.NimbusComponents
 import org.mozilla.fenix.components.UseCases
+import org.mozilla.fenix.components.appstate.AppAction
 import org.mozilla.fenix.components.appstate.AppAction.BookmarkAction
 import org.mozilla.fenix.components.appstate.AppAction.CurrentTabClosed
 import org.mozilla.fenix.components.appstate.AppAction.SearchAction.SearchEnded
@@ -253,7 +253,6 @@ internal object BrowserToolbarTestTags {
  * @param translationsFeatureSettings Web content translations availability status.
  * @param navController [NavController] to use for navigating to other in-app destinations.
  * @param summarizationNavigator [SummarizationNavigator] used to navigate to the summarization screen.
- * @param browsingModeManager [BrowsingModeManager] for querying the current browsing mode.
  * @param readerModeController [ReaderModeController] for showing or hiding the reader view UX.
  * @param thumbnailsFeature [BrowserThumbnails] for requesting screenshots of the current tab.
  * @param isWideScreen Callback for checking if the screen is wide.
@@ -282,7 +281,6 @@ class BrowserToolbarMiddleware(
     private val translationsFeatureSettings: TranslationsEnabledSettings,
     private val navController: NavController,
     private val summarizationNavigator: SummarizationNavigator,
-    private val browsingModeManager: BrowsingModeManager,
     private val readerModeController: ReaderModeController,
     private val thumbnailsFeature: () -> BrowserThumbnails?,
     private val isWideScreen: () -> Boolean,
@@ -367,7 +365,7 @@ class BrowserToolbarMiddleware(
                     R.id.browserFragment,
                     BrowserFragmentDirections.actionGlobalTabManagementFragment(
                         page =
-                            when (browsingModeManager.mode) {
+                            when (appStore.state.mode) {
                                 Normal -> Page.NormalTabs
                                 Private -> Page.PrivateTabs
                             }
@@ -496,7 +494,7 @@ class BrowserToolbarMiddleware(
                         searchTermOrURL = it,
                         newTab = false,
                         searchEngine = searchEngine,
-                        private = browsingModeManager.mode == Private,
+                        private = appStore.state.mode == Private,
                     )
                 }
                     ?: run {
@@ -946,7 +944,7 @@ class BrowserToolbarMiddleware(
         } else {
             val focusOnAddressBar = !settings.enableHomepageSearchBar && !settings.enableHomepageTrendingRecentSearch
 
-            browsingModeManager.mode = browsingMode
+            appStore.dispatch(AppAction.BrowsingModeChanged(mode = browsingMode))
             navController.navigate(BrowserFragmentDirections.actionGlobalHome(focusOnAddressBar = focusOnAddressBar))
         }
     }
@@ -1227,13 +1225,13 @@ class BrowserToolbarMiddleware(
                 ActionButtonRes(
                     drawableResId = iconsR.drawable.mozac_ic_plus_24,
                     contentDescription =
-                        if (browsingModeManager.mode == Private) {
+                        if (appStore.state.mode == Private) {
                             R.string.home_screen_shortcut_open_new_private_tab_2
                         } else {
                             R.string.home_screen_shortcut_open_new_tab_2
                         },
                     onClick =
-                        if (browsingModeManager.mode == Private) {
+                        if (appStore.state.mode == Private) {
                             AddNewPrivateTab(source)
                         } else {
                             AddNewTab(source)
@@ -1339,7 +1337,7 @@ class BrowserToolbarMiddleware(
                 )
 
             ToolbarAction.TabCounter -> {
-                val isInPrivateMode = browsingModeManager.mode.isPrivate
+                val isInPrivateMode = appStore.state.mode.isPrivate
                 val tabsCount = browserStore.state.getNormalOrPrivateTabs(isInPrivateMode).size
 
                 val tabCounterDescription =
@@ -1457,7 +1455,7 @@ class BrowserToolbarMiddleware(
                     drawableResId = iconsR.drawable.mozac_ic_lightning_24,
                     contentDescription = summariesR.string.mozac_summarize_settings_summarize_pages,
                     state =
-                        when (browsingModeManager.mode) {
+                        when (appStore.state.mode) {
                             Normal -> DEFAULT
                             Private -> DISABLED
                         },

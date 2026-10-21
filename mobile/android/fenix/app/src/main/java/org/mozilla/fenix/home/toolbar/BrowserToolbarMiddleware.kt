@@ -69,7 +69,6 @@ import org.mozilla.fenix.R
 import org.mozilla.fenix.browser.browsingmode.BrowsingMode
 import org.mozilla.fenix.browser.browsingmode.BrowsingMode.Normal
 import org.mozilla.fenix.browser.browsingmode.BrowsingMode.Private
-import org.mozilla.fenix.browser.browsingmode.BrowsingModeManager
 import org.mozilla.fenix.components.AppStore
 import org.mozilla.fenix.components.appstate.AppAction
 import org.mozilla.fenix.components.appstate.AppAction.SearchAction.SearchStarted
@@ -147,7 +146,6 @@ internal sealed class NavigationInteractions : BrowserToolbarEvent {
  * @param clipboard [ClipboardHandler] to use for reading from device's clipboard.
  * @param fenixBrowserUseCases [FenixBrowserUseCases] for loading URLs and opening new tabs.
  * @param navController [NavController] to use for navigating to other in-app destinations.
- * @param browsingModeManager [BrowsingModeManager] for querying the current browsing mode.
  * @param settings [Settings] for accessing application settings.
  * @param translationsFeatureSettings Web content translations availability status.
  * @param isWideScreen Callback for checking if the screen is wide.
@@ -162,7 +160,6 @@ class BrowserToolbarMiddleware(
     private val clipboard: ClipboardHandler,
     private val fenixBrowserUseCases: FenixBrowserUseCases,
     private val navController: NavController,
-    private val browsingModeManager: BrowsingModeManager,
     private val settings: Settings,
     private val translationsFeatureSettings: TranslationsEnabledSettings,
     private val isWideScreen: () -> Boolean,
@@ -232,7 +229,7 @@ class BrowserToolbarMiddleware(
                     R.id.homeFragment,
                     NavGraphDirections.actionGlobalTabManagementFragment(
                         page =
-                            when (browsingModeManager.mode) {
+                            when (appStore.state.mode) {
                                 Normal -> Page.NormalTabs
                                 Private -> Page.PrivateTabs
                             }
@@ -291,7 +288,7 @@ class BrowserToolbarMiddleware(
                     fenixBrowserUseCases.loadUrlOrSearch(
                         searchTermOrURL = it,
                         newTab = !settings.enableHomepageAsNewTab,
-                        private = browsingModeManager.mode == Private,
+                        private = appStore.state.mode == Private,
                         searchEngine = reconcileSelectedEngine(),
                     )
                     navController.navigate(R.id.browserFragment)
@@ -317,7 +314,7 @@ class BrowserToolbarMiddleware(
     ) {
         if (settings.enableHomepageAsNewTab) {
             fenixBrowserUseCases.addNewHomepageTab(private = browsingMode.isPrivate)
-            browsingModeManager.mode = browsingMode
+            appStore.dispatch(AppAction.BrowsingModeChanged(mode = browsingMode))
         } else {
             openNewTab(store, browsingMode)
         }
@@ -328,7 +325,7 @@ class BrowserToolbarMiddleware(
         browsingMode: BrowsingMode? = null,
         searchTerms: String? = null,
     ) {
-        browsingMode?.let { browsingModeManager.mode = it }
+        browsingMode?.let { appStore.dispatch(AppAction.BrowsingModeChanged(mode = it)) }
         store.dispatch(SearchQueryUpdated(BrowserToolbarQuery(searchTerms ?: ""), true))
         appStore.dispatch(SearchStarted())
     }
@@ -506,7 +503,7 @@ class BrowserToolbarMiddleware(
     }
 
     private fun buildTabCounterMenu(source: Source): CombinedEventAndMenu? {
-        val currentBrowsingMode = browsingModeManager.mode
+        val currentBrowsingMode = appStore.state.mode
 
         return CombinedEventAndMenu(TabCounterLongClicked(source)) {
             when (currentBrowsingMode) {
@@ -604,7 +601,7 @@ class BrowserToolbarMiddleware(
 
     private fun reconcileSelectedEngine(): SearchEngine? =
         appStore.state.searchState.selectedSearchEngine?.searchEngine
-            ?: browserStore.state.search.selectedOrDefaultSearchEngine(private = browsingModeManager.mode.isPrivate)
+            ?: browserStore.state.search.selectedOrDefaultSearchEngine(private = appStore.state.mode.isPrivate)
 
     @VisibleForTesting
     internal enum class HomeToolbarAction {
@@ -672,7 +669,7 @@ class BrowserToolbarMiddleware(
     ): Action =
         when (action) {
             HomeToolbarAction.TabCounter -> {
-                val isInPrivateMode = browsingModeManager.mode.isPrivate
+                val isInPrivateMode = appStore.state.mode.isPrivate
                 val tabsCount = browserStore.state.getNormalOrPrivateTabs(isInPrivateMode).size
 
                 val tabCounterDescription =
@@ -720,13 +717,13 @@ class BrowserToolbarMiddleware(
                 ActionButtonRes(
                     drawableResId = iconsR.drawable.mozac_ic_plus_24,
                     contentDescription =
-                        if (browsingModeManager.mode == Private) {
+                        if (appStore.state.mode == Private) {
                             R.string.home_screen_shortcut_open_new_private_tab_2
                         } else {
                             R.string.home_screen_shortcut_open_new_tab_2
                         },
                     onClick =
-                        if (browsingModeManager.mode == Private) {
+                        if (appStore.state.mode == Private) {
                             AddNewPrivateTab(source)
                         } else {
                             AddNewTab(source)

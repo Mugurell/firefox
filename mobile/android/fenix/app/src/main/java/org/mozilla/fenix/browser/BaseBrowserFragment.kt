@@ -1703,7 +1703,6 @@ abstract class BaseBrowserFragment :
             browserStore = activity.components.core.store,
             browserScreenStore = browserScreenStore,
             components = activity.components,
-            browsingModeManager = activity.browsingModeManager,
             thumbnailsFeature = { thumbnailsFeature.get() },
             readerModeController = readerModeController,
             customTabSession = customTabSessionId?.let { activity.components.core.store.state.findCustomTab(it) },
@@ -2295,7 +2294,7 @@ abstract class BaseBrowserFragment :
     @VisibleForTesting
     internal fun updateThemeForSession(session: SessionState) {
         val sessionMode = BrowsingMode.fromBoolean(session.content.private)
-        (activity as HomeActivity).browsingModeManager.mode = sessionMode
+        requireComponents.appStore.dispatch(AppAction.BrowsingModeChanged(mode = sessionMode))
     }
 
     /** A safe version of [getCurrentTab] that safely checks for context nullability. */
@@ -2365,7 +2364,13 @@ abstract class BaseBrowserFragment :
             (view as? SwipeGestureLayout)?.isSwipeEnabled = true
             (activity as? HomeActivity)?.let { homeActivity ->
                 // ExternalAppBrowserActivity exclusively handles it's own theming unless in private mode.
-                if (homeActivity !is ExternalAppBrowserActivity || homeActivity.browsingModeManager.mode.isPrivate) {
+                if (
+                    homeActivity !is ExternalAppBrowserActivity ||
+                        requireComponents.appStore.state.isCurrentTabPrivate(
+                            requireComponents.core.store.state,
+                            customTabSessionId,
+                        )
+                ) {
                     homeActivity.themeManager.applyStatusBarTheme(homeActivity)
                 }
             }

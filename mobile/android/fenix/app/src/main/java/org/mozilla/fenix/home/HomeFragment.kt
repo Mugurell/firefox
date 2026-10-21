@@ -515,7 +515,6 @@ class HomeFragment : Fragment(), UserInteractionHandler, OnLongPressedListener {
             navController = findNavController(),
             appStore = requireContext().components.appStore,
             browserStore = requireContext().components.core.store,
-            browsingModeManager = activity.browsingModeManager,
         )
 
     private fun initMessagingFeature(view: View) {

@@ -4,8 +4,6 @@
 
 package org.mozilla.fenix.search
 
-import io.mockk.every
-import io.mockk.mockk
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.TestScope
@@ -18,7 +16,6 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.mozilla.fenix.browser.browsingmode.BrowsingMode
-import org.mozilla.fenix.browser.browsingmode.BrowsingModeManager
 import org.mozilla.fenix.components.AppStore
 import org.mozilla.fenix.components.appstate.AppAction.SearchAction.SearchEnded
 import org.mozilla.fenix.components.appstate.AppAction.SearchAction.SearchStarted
@@ -32,7 +29,6 @@ class BrowserToolbarSearchStatusSyncMiddlewareTest {
     private val testScope = TestScope(testDispatcher)
 
     private val appStore = AppStore()
-    private val browsingModeManager: BrowsingModeManager = mockk(relaxed = true)
 
     @Test
     fun `WHEN the toolbar exits search mode THEN synchronize search being ended for the application`() =
@@ -73,7 +69,6 @@ class BrowserToolbarSearchStatusSyncMiddlewareTest {
     fun `GIVEN in private browsing mode WHEN search starts in the application THEN put the toolbar in search mode also`() =
         runTest(testDispatcher) {
             val appStore = AppStore(AppState(mode = BrowsingMode.Private))
-            every { browsingModeManager.mode } returns BrowsingMode.Private
             val (_, toolbarStore) = buildMiddlewareAndAddToSearchStore(appStore)
 
             appStore.dispatch(SearchStarted())
@@ -116,17 +111,15 @@ class BrowserToolbarSearchStatusSyncMiddlewareTest {
 
     private fun buildMiddlewareAndAddToSearchStore(
         appStore: AppStore = this.appStore,
-        browsingModeManager: BrowsingModeManager = this.browsingModeManager,
         scope: CoroutineScope = testScope,
     ): Pair<BrowserToolbarSearchStatusSyncMiddleware, BrowserToolbarStore> {
-        val middleware = buildMiddleware(appStore, browsingModeManager, scope)
+        val middleware = buildMiddleware(appStore, scope)
         val toolbarStore = BrowserToolbarStore(middleware = listOf(middleware))
         return middleware to toolbarStore
     }
 
     private fun buildMiddleware(
         appStore: AppStore = this.appStore,
-        browsingModeManager: BrowsingModeManager = this.browsingModeManager,
         scope: CoroutineScope = testScope,
-    ) = BrowserToolbarSearchStatusSyncMiddleware(appStore, browsingModeManager, scope)
+    ) = BrowserToolbarSearchStatusSyncMiddleware(appStore, scope)
 }

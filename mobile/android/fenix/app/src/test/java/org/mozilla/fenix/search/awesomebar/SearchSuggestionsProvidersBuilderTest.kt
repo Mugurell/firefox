@@ -36,9 +36,10 @@ import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.mozilla.fenix.browser.browsingmode.BrowsingMode
-import org.mozilla.fenix.browser.browsingmode.BrowsingModeManager
+import org.mozilla.fenix.components.AppStore
 import org.mozilla.fenix.components.Components
 import org.mozilla.fenix.components.Core.Companion
+import org.mozilla.fenix.components.appstate.AppState
 import org.mozilla.fenix.search.SearchEngineSource
 import org.mozilla.fenix.search.awesomebar.SearchSuggestionsProvidersBuilder.SearchProviderState
 import org.mozilla.fenix.utils.Settings
@@ -49,7 +50,7 @@ class SearchSuggestionsProvidersBuilderTest {
 
     private lateinit var components: Components
     private lateinit var builder: SearchSuggestionsProvidersBuilder
-    private val browsingModeManager: BrowsingModeManager = mockk(relaxed = true)
+    private val appStore: AppStore = mockk(relaxed = true)
     private lateinit var searchEngineProvider: SearchEngineProvider
     private lateinit var suggestionsStringsProvider: SuggestionsStringsProvider
 
@@ -72,7 +73,7 @@ class SearchSuggestionsProvidersBuilderTest {
             SearchSuggestionsProvidersBuilder(
                 components = components,
                 scope = TestScope(),
-                browsingModeManager = browsingModeManager,
+                appStore = appStore,
                 includeSelectedTab = false,
                 loadUrlUseCase = mockk(),
                 searchUseCase = mockk(),
@@ -826,7 +827,7 @@ class SearchSuggestionsProvidersBuilderTest {
         val settings: Settings = mockk(relaxed = true)
         val url = "https://www.test.com".toUri()
         every { components.settings } returns settings
-        every { browsingModeManager.mode } returns BrowsingMode.Normal
+        every { appStore.state } returns AppState(mode = BrowsingMode.Normal)
         val state =
             getSearchProviderState(
                 showSessionSuggestionsForCurrentEngine = false,
@@ -851,7 +852,7 @@ class SearchSuggestionsProvidersBuilderTest {
         val settings: Settings = mockk(relaxed = true)
         val url = "https://www.test.com".toUri()
         every { components.settings } returns settings
-        every { browsingModeManager.mode } returns BrowsingMode.Normal
+        every { appStore.state } returns AppState(mode = BrowsingMode.Normal)
         val state =
             getSearchProviderState(
                 showSessionSuggestionsForCurrentEngine = false,
@@ -876,7 +877,7 @@ class SearchSuggestionsProvidersBuilderTest {
         val settings: Settings = mockk(relaxed = true)
         val url = "https://www.test.com".toUri()
         every { components.settings } returns settings
-        every { browsingModeManager.mode } returns BrowsingMode.Normal
+        every { appStore.state } returns AppState(mode = BrowsingMode.Normal)
         val state =
             getSearchProviderState(
                 showAllSessionSuggestions = false,
@@ -899,7 +900,7 @@ class SearchSuggestionsProvidersBuilderTest {
     fun `GIVEN private browsing mode and needing to show tabs suggestions WHEN configuring providers THEN don't add the tabs provider`() {
         val settings: Settings = mockk(relaxed = true)
         every { components.settings } returns settings
-        every { browsingModeManager.mode } returns BrowsingMode.Private
+        every { appStore.state } returns AppState(mode = BrowsingMode.Private)
         val state = getSearchProviderState(searchEngineSource = SearchEngineSource.Shortcut(mockk(relaxed = true)))
 
         val result = builder.getProvidersToAdd(state)
@@ -912,7 +913,7 @@ class SearchSuggestionsProvidersBuilderTest {
         val settings: Settings = mockk(relaxed = true)
         val url = "https://www.test.com".toUri()
         every { components.settings } returns settings
-        every { browsingModeManager.mode } returns BrowsingMode.Normal
+        every { appStore.state } returns AppState(mode = BrowsingMode.Normal)
         val state =
             getSearchProviderState(
                 showSyncedTabsSuggestionsForCurrentEngine = false,
@@ -937,7 +938,7 @@ class SearchSuggestionsProvidersBuilderTest {
         val settings: Settings = mockk(relaxed = true)
         val url = "https://www.test.com".toUri()
         every { components.settings } returns settings
-        every { browsingModeManager.mode } returns BrowsingMode.Normal
+        every { appStore.state } returns AppState(mode = BrowsingMode.Normal)
         val state =
             getSearchProviderState(
                 showAllSyncedTabsSuggestions = false,
@@ -962,7 +963,7 @@ class SearchSuggestionsProvidersBuilderTest {
         val settings: Settings = mockk(relaxed = true)
         val url = "https://www.test.com".toUri()
         every { components.settings } returns settings
-        every { browsingModeManager.mode } returns BrowsingMode.Normal
+        every { appStore.state } returns AppState(mode = BrowsingMode.Normal)
         val state =
             getSearchProviderState(
                 showSyncedTabsSuggestionsForCurrentEngine = false,
@@ -987,7 +988,7 @@ class SearchSuggestionsProvidersBuilderTest {
         val settings: Settings = mockk(relaxed = true)
         val url = "https://www.test.com".toUri()
         every { components.settings } returns settings
-        every { browsingModeManager.mode } returns BrowsingMode.Normal
+        every { appStore.state } returns AppState(mode = BrowsingMode.Normal)
         val state =
             getSearchProviderState(
                 showBookmarksSuggestionsForCurrentEngine = false,
@@ -1012,7 +1013,7 @@ class SearchSuggestionsProvidersBuilderTest {
         val settings: Settings = mockk(relaxed = true)
         val url = "https://www.test.com".toUri()
         every { components.settings } returns settings
-        every { browsingModeManager.mode } returns BrowsingMode.Normal
+        every { appStore.state } returns AppState(mode = BrowsingMode.Normal)
         val state =
             getSearchProviderState(
                 showBookmarksSuggestionsForCurrentEngine = false,
@@ -1037,7 +1038,7 @@ class SearchSuggestionsProvidersBuilderTest {
         val settings: Settings = mockk(relaxed = true)
         val url = "https://www.test.com".toUri()
         every { components.settings } returns settings
-        every { browsingModeManager.mode } returns BrowsingMode.Normal
+        every { appStore.state } returns AppState(mode = BrowsingMode.Normal)
         val state =
             getSearchProviderState(
                 showAllBookmarkSuggestions = false,
@@ -1072,7 +1073,7 @@ class SearchSuggestionsProvidersBuilderTest {
         val settings: Settings = mockk(relaxed = true)
         val url = "https://www.test.com".toUri()
         every { components.settings } returns settings
-        every { browsingModeManager.mode } returns BrowsingMode.Normal
+        every { appStore.state } returns AppState(mode = BrowsingMode.Normal)
         val state =
             getSearchProviderState(
                 searchEngineSource =
@@ -1115,7 +1116,7 @@ class SearchSuggestionsProvidersBuilderTest {
         val settings: Settings = mockk(relaxed = true)
         val url = "https://www.test.com".toUri()
         every { components.settings } returns settings
-        every { browsingModeManager.mode } returns BrowsingMode.Normal
+        every { appStore.state } returns AppState(mode = BrowsingMode.Normal)
         val state =
             getSearchProviderState(
                 searchEngineSource =
@@ -1157,7 +1158,7 @@ class SearchSuggestionsProvidersBuilderTest {
     fun `GIVEN a search from the default engine with no suggestions asked WHEN configuring providers THEN retain explicit search`() {
         val settings: Settings = mockk(relaxed = true)
         every { components.settings } returns settings
-        every { browsingModeManager.mode } returns BrowsingMode.Normal
+        every { appStore.state } returns AppState(mode = BrowsingMode.Normal)
         val state =
             getSearchProviderState(
                 showHistorySuggestionsForCurrentEngine = false,

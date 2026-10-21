@@ -89,7 +89,7 @@ private fun Modifier.awesomeBarContentWidth(useAddressBarFocusMode: Boolean) =
 /**
  * Wrapper over a [Composable] to show search suggestions, responsible for its setup.
  *
- * @param activity [HomeActivity] providing the ability to open URLs and querying the current browsing mode.
+ * @param activity [HomeActivity] providing the ability to open URLs.
  * @param fragment [Fragment] to the lifecycle of which long running operations and objects will be tied to.
  * @param modifier [Modifier] to be applied to the [Composable].
  * @param components [Components] for accessing other functionalities of the application.
@@ -156,7 +156,7 @@ class AwesomeBarComposable(
         val clipboardBarBackground =
             edgeToEdgeClipboardBarBackground(
                 shouldUseEdgeToEdgeColors = isEdgeToEdgeBackgroundEnabled,
-                isPrivateMode = activity.browsingModeManager.mode == BrowsingMode.Private,
+                isPrivateMode = appStore.state.mode == BrowsingMode.Private,
             )
         val showCurrentTabData = remember { components.settings.showAddressBarInFocusMode }
         val view = LocalView.current
@@ -330,7 +330,7 @@ class AwesomeBarComposable(
                     listOf(
                         BrowserToolbarToFenixSearchMapperMiddleware(
                             toolbarStore = toolbarStore,
-                            browsingModeManager = activity.browsingModeManager,
+                            appStore = appStore,
                             scope = lifecycleScope,
                             browserStore = browserStore,
                         ),
@@ -349,7 +349,6 @@ class AwesomeBarComposable(
                             browserStore = browserStore,
                             toolbarStore = toolbarStore,
                             navController = navController,
-                            browsingModeManager = activity.browsingModeManager,
                             shareUseCases = components.useCases.shareUseCases,
                             clipboardHandler = components.clipboardHandler,
                         ),

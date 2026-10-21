@@ -768,7 +768,6 @@ class HistoryFragment :
                         BrowserToolbarSyncToHistoryMiddleware(historyStore),
                         BrowserToolbarSearchStatusSyncMiddleware(
                             appStore = requireComponents.appStore,
-                            browsingModeManager = (requireActivity() as HomeActivity).browsingModeManager,
                             scope = lifecycleScope,
                         ),
                         BrowserToolbarSearchMiddleware(
@@ -777,7 +776,6 @@ class HistoryFragment :
                             browserStore = requireComponents.core.store,
                             components = requireComponents,
                             navController = findNavController(),
-                            browsingModeManager = (requireActivity() as HomeActivity).browsingModeManager,
                             settings = requireComponents.settings,
                             scope = lifecycleScope,
                         ),
@@ -807,7 +805,7 @@ class HistoryFragment :
                     listOf(
                         BrowserToolbarToFenixSearchMapperMiddleware(
                             toolbarStore = toolbarStore,
-                            browsingModeManager = (requireActivity() as HomeActivity).browsingModeManager,
+                            appStore = requireComponents.appStore,
                             scope = lifecycleScope,
                         ),
                         BrowserStoreToFenixSearchMapperMiddleware(
@@ -825,7 +823,6 @@ class HistoryFragment :
                             browserStore = requireComponents.core.store,
                             toolbarStore = toolbarStore,
                             navController = findNavController(),
-                            browsingModeManager = (requireActivity() as HomeActivity).browsingModeManager,
                             shareUseCases = requireComponents.useCases.shareUseCases,
                             clipboardHandler = requireComponents.clipboardHandler,
                         ),

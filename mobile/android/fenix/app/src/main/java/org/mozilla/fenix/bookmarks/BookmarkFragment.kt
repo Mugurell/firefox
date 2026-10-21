@@ -24,7 +24,6 @@ import mozilla.components.compose.browser.toolbar.store.BrowserToolbarStore
 import mozilla.components.compose.browser.toolbar.store.Mode
 import mozilla.components.lib.state.helpers.StoreProvider.Companion.fragmentStore
 import mozilla.components.support.base.feature.ViewBoundFeatureWrapper
-import org.mozilla.fenix.HomeActivity
 import org.mozilla.fenix.R
 import org.mozilla.fenix.bookmarks.importer.FenixImporterEvent
 import org.mozilla.fenix.components.LensFeature
@@ -240,7 +239,6 @@ class BookmarkFragment : Fragment(), SystemInsetsPaddedFragment {
                         listOf(
                             BrowserToolbarSearchStatusSyncMiddleware(
                                 appStore = requireComponents.appStore,
-                                browsingModeManager = (requireActivity() as HomeActivity).browsingModeManager,
                                 scope = lifecycleScope,
                             ),
                             BrowserToolbarSearchMiddleware(
@@ -249,7 +247,6 @@ class BookmarkFragment : Fragment(), SystemInsetsPaddedFragment {
                                 browserStore = requireComponents.core.store,
                                 components = requireComponents,
                                 navController = findNavController(),
-                                browsingModeManager = (requireActivity() as HomeActivity).browsingModeManager,
                                 settings = requireComponents.settings,
                                 scope = lifecycleScope,
                             ),

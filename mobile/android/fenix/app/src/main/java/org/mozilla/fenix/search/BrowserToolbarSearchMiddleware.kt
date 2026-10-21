@@ -82,7 +82,6 @@ import org.mozilla.fenix.GleanMetrics.Events
 import org.mozilla.fenix.NavGraphDirections
 import org.mozilla.fenix.R
 import org.mozilla.fenix.browser.BrowserFragmentDirections
-import org.mozilla.fenix.browser.browsingmode.BrowsingModeManager
 import org.mozilla.fenix.components.AppStore
 import org.mozilla.fenix.components.Components
 import org.mozilla.fenix.components.appstate.AppAction
@@ -143,7 +142,6 @@ internal sealed class EditPageEndActionsInteractions : BrowserToolbarEvent {
  * @param browserStore [BrowserStore] used for querying and updating browser state.
  * @param components [Components] for accessing other functionalities of the application.
  * @param navController [NavController] to use for navigating to other in-app destinations.
- * @param browsingModeManager [BrowsingModeManager] for querying the current browsing mode.
  * @param settings [Settings] for accessing application settings.
  * @param scope [CoroutineScope] used for running long running operations in background.
  * @param autocompleteDispatcher [CoroutineContext] used for querying autocomplete suggestions.
@@ -154,7 +152,6 @@ class BrowserToolbarSearchMiddleware(
     private val browserStore: BrowserStore,
     private val components: Components,
     private val navController: NavController,
-    private val browsingModeManager: BrowsingModeManager,
     private val settings: Settings,
     private val scope: CoroutineScope,
     private val autocompleteDispatcher: CoroutineContext = defaultAutocompleteDispatcher,
@@ -327,9 +324,7 @@ class BrowserToolbarSearchMiddleware(
         val searchEngine = reconcileSelectedEngine()
         val isDefaultEngine =
             (searchEngine?.id ==
-                browserStore.state.search
-                    .selectedOrDefaultSearchEngine(private = browsingModeManager.mode.isPrivate)
-                    ?.id)
+                browserStore.state.search.selectedOrDefaultSearchEngine(private = appStore.state.mode.isPrivate)?.id)
         val newTab =
             if (settings.enableHomepageAsNewTab) {
                 false
@@ -346,7 +341,7 @@ class BrowserToolbarSearchMiddleware(
             searchTermOrURL = text,
             newTab = newTab,
             forceSearch = !isDefaultEngine,
-            private = browsingModeManager.mode.isPrivate,
+            private = appStore.state.mode.isPrivate,
             searchEngine = searchEngine,
         )
 
@@ -384,7 +379,7 @@ class BrowserToolbarSearchMiddleware(
         engine: SearchEngine?,
     ) {
         val defaultEngine =
-            browserStore.state.search.selectedOrDefaultSearchEngine(private = browsingModeManager.mode.isPrivate)
+            browserStore.state.search.selectedOrDefaultSearchEngine(private = appStore.state.mode.isPrivate)
         val hintRes = engine.toolbarHintRes(defaultEngine)
         store.dispatch(HintUpdated(hintRes))
     }
@@ -413,7 +408,7 @@ class BrowserToolbarSearchMiddleware(
 
     private fun buildAutocompleteProvidersList(selectedSearchEngine: SearchEngine?): List<AutocompleteProvider> {
         val defaultEngineId =
-            browserStore.state.search.selectedOrDefaultSearchEngine(private = browsingModeManager.mode.isPrivate)?.id
+            browserStore.state.search.selectedOrDefaultSearchEngine(private = appStore.state.mode.isPrivate)?.id
         return when (selectedSearchEngine?.id) {
             defaultEngineId ->
                 listOfNotNull(
@@ -512,7 +507,7 @@ class BrowserToolbarSearchMiddleware(
 
     private fun reconcileSelectedEngine(): SearchEngine? =
         appStore.state.searchState.selectedSearchEngine?.searchEngine
-            ?: browserStore.state.search.selectedOrDefaultSearchEngine(private = browsingModeManager.mode.isPrivate)
+            ?: browserStore.state.search.selectedOrDefaultSearchEngine(private = appStore.state.mode.isPrivate)
 
     private fun updateSearchEndPageActions(
         store: Store<BrowserToolbarState, BrowserToolbarAction>,
@@ -559,7 +554,7 @@ class BrowserToolbarSearchMiddleware(
     private fun buildCameraAction(selectedSearchEngine: SearchEngine?): ActionButtonRes {
         val isLensEnabled = settings.googleLensIntegrationEnabled && settings.googleLensIntegrationUserEnabled
 
-        if (!isLensEnabled || browsingModeManager.mode.isPrivate || !selectedSearchEngine.isGoogleSearchEngine()) {
+        if (!isLensEnabled || appStore.state.mode.isPrivate || !selectedSearchEngine.isGoogleSearchEngine()) {
             return ActionButtonRes(
                 drawableResId = iconsR.drawable.mozac_ic_qr_code_24,
                 contentDescription = qrR.string.mozac_feature_qr_scanner,
@@ -611,7 +606,7 @@ class BrowserToolbarSearchMiddleware(
                                     appStore.state.searchState.sourceTabId == null
                                 },
                             flags = EngineSession.LoadUrlFlags.external(),
-                            private = browsingModeManager.mode.isPrivate,
+                            private = appStore.state.mode.isPrivate,
                         )
                         navController.navigate(R.id.action_global_browser)
                     }
