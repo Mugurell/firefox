@@ -14,6 +14,7 @@ import org.mozilla.fenix.compose.core.Action
 import org.mozilla.fenix.compose.snackbar.Snackbar
 import org.mozilla.fenix.compose.snackbar.SnackbarState
 import org.mozilla.fenix.ext.components
+import org.mozilla.fenix.ext.isForegroundTabOrCustomTabPrivate
 import org.mozilla.fenix.ext.openToBrowser
 import org.mozilla.fenix.settings.SupportUtils
 
@@ -76,6 +77,8 @@ internal fun View.openLearnMoreLink(
     context.components.useCases.fenixBrowserUseCases.loadUrlOrSearch(
         searchTermOrURL = url,
         newTab = true,
+        private =
+            context.components.appStore.state.isForegroundTabOrCustomTabPrivate(context.components.core.store.state),
     )
 }
 

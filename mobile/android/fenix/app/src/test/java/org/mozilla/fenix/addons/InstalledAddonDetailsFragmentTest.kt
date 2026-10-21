@@ -22,6 +22,8 @@ import io.mockk.spyk
 import io.mockk.verify
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.runTest
+import mozilla.components.browser.state.state.BrowserState
+import mozilla.components.browser.state.state.createCustomTab
 import mozilla.components.concept.base.profiler.Profiler
 import mozilla.components.concept.engine.EngineSession
 import mozilla.components.concept.engine.webextension.EnableSource
@@ -63,6 +65,8 @@ class InstalledAddonDetailsFragmentTest {
     @Before
     fun setup() {
         fragment = spyk(InstalledAddonDetailsFragment())
+        every { testContext.components.appStore.state } returns AppState()
+        every { testContext.components.core.store.state } returns BrowserState()
         tabsUseCases = mockk(relaxed = true)
         loadUrlUseCase = mockk(relaxed = true)
         searchUseCases = mockk(relaxed = true)
@@ -334,15 +338,7 @@ class InstalledAddonDetailsFragmentTest {
         val navController = mockk<NavController>(relaxed = true)
         Navigation.setViewNavController(fragment.binding.root, navController)
 
-        val appStore = mockk<AppStore>()
-        val appState = mockk<AppState>()
-        every { appState.mode } returns
-            mockk(relaxed = true) {
-                every { isPrivate } returns false // or true
-            }
-
-        every { appStore.state } returns appState
-        every { testContext.components.appStore } returns appStore
+        every { testContext.components.appStore.state } returns AppState(mode = BrowsingMode.Normal)
 
         // Click the report button.
         fragment.binding.reportAddOn.performClick()
@@ -368,7 +364,7 @@ class InstalledAddonDetailsFragmentTest {
         every { selectOrAddTab.invoke(any(), any(), any(), any(), any()) } returns "some-tab-id"
         every { useCases.selectOrAddTab } returns selectOrAddTab
         every { testContext.components.useCases.tabsUseCases } returns useCases
-        every { testContext.components.appStore.state.mode.isPrivate } returns true
+        every { testContext.components.appStore.state } returns AppState(mode = BrowsingMode.Private)
         // We create the `binding` instance and bind the UI here because `onCreateView()` checks a late init variable
         // and we cannot easily mock it to skip the check.
         fragment.setBindingAndBindUI(
@@ -393,6 +389,44 @@ class InstalledAddonDetailsFragmentTest {
         }
         verify {
             navController.navigate(InstalledAddonDetailsFragmentDirections.actionGlobalBrowser(null))
+        }
+    }
+
+    @Test
+    fun `GIVEN an add-on and a private custom tab is focused in normal mode WHEN clicking the report button THEN a new private tab is open`() {
+        val addon = mockAddon()
+        every { fragment.addon } returns addon
+        val useCases = mockk<TabsUseCases>()
+        val selectOrAddTab = mockk<TabsUseCases.SelectOrAddUseCase>()
+        every { selectOrAddTab.invoke(any(), any(), any(), any(), any()) } returns "some-tab-id"
+        every { useCases.selectOrAddTab } returns selectOrAddTab
+        every { testContext.components.useCases.tabsUseCases } returns useCases
+        every { testContext.components.appStore.state } returns
+            AppState(
+                mode = BrowsingMode.Normal,
+                lastForegroundCustomTabId = "customTab",
+            )
+        every { testContext.components.core.store.state } returns
+            BrowserState(
+                customTabs = listOf(createCustomTab(url = "https://mozilla.org", id = "customTab", private = true))
+            )
+        fragment.setBindingAndBindUI(
+            FragmentInstalledAddOnDetailsBinding.inflate(
+                LayoutInflater.from(testContext),
+                mockk(relaxed = true),
+                false,
+            )
+        )
+        Navigation.setViewNavController(fragment.binding.root, mockk<NavController>(relaxed = true))
+
+        fragment.binding.reportAddOn.performClick()
+
+        verify {
+            selectOrAddTab.invoke(
+                url = "https://addons.mozilla.org/android/feedback/addon/some-addon-id/",
+                private = true,
+                ignoreFragment = true,
+            )
         }
     }
 
