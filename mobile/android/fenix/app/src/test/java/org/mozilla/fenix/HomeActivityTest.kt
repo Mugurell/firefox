@@ -33,7 +33,6 @@ import org.junit.runner.RunWith
 import org.mozilla.fenix.GleanMetrics.Metrics
 import org.mozilla.fenix.GleanMetrics.NativeShareSheet
 import org.mozilla.fenix.browser.browsingmode.BrowsingMode
-import org.mozilla.fenix.browser.browsingmode.BrowsingModeManager
 import org.mozilla.fenix.components.AppStore
 import org.mozilla.fenix.components.appstate.AppAction
 import org.mozilla.fenix.components.share.QR_CODE_URI_KEY
@@ -111,14 +110,12 @@ class HomeActivityTest {
 
     @Test
     fun `navigateToBrowserOnColdStart in normal mode navigates to browser`() {
-        val browsingModeManager: BrowsingModeManager = mockk()
-        every { browsingModeManager.mode } returns BrowsingMode.Normal
+        every { activity.windowBrowsingMode } returns BrowsingMode.Normal
 
         every { settings.shouldReturnToBrowser } returns true
         every { activity.components.settings.shouldReturnToBrowser } returns true
         every { activity.openToBrowser(any(), any()) } just Runs
 
-        activity.browsingModeManager = browsingModeManager
         activity.navigateToBrowserOnColdStart()
 
         verify(exactly = 1) { activity.openToBrowser(BrowserDirection.FromGlobal, null) }
@@ -126,14 +123,12 @@ class HomeActivityTest {
 
     @Test
     fun `navigateToBrowserOnColdStart in private mode does not navigate to browser`() {
-        val browsingModeManager: BrowsingModeManager = mockk()
-        every { browsingModeManager.mode } returns BrowsingMode.Private
+        every { activity.windowBrowsingMode } returns BrowsingMode.Private
 
         every { settings.shouldReturnToBrowser } returns true
         every { activity.components.settings.shouldReturnToBrowser } returns true
         every { activity.openToBrowser(any(), any()) } just Runs
 
-        activity.browsingModeManager = browsingModeManager
         activity.navigateToBrowserOnColdStart()
 
         verify(exactly = 0) { activity.openToBrowser(BrowserDirection.FromGlobal, null) }
@@ -570,17 +565,17 @@ class HomeActivityTest {
     }
 
     @Test
-    fun `WHEN the browsing mode is set THEN it is only published to the app state`() {
+    fun `WHEN the browsing mode of the regular tabs window is resolved THEN it is only published to the app state`() {
         val window: Window = mockk(relaxed = true)
         every { activity.applicationContext } returns testContext
         every { activity.window } returns window
-        val intent = Intent().apply { putExtra(HomeActivity.PRIVATE_BROWSING_MODE, true) }
+        every { settings.lastKnownMode } returns BrowsingMode.Normal
 
-        val browsingModeManager = activity.createBrowsingModeManager(intent)
+        activity.resolveWindowBrowsingMode(Intent().apply { putExtra(HomeActivity.PRIVATE_BROWSING_MODE, true) })
 
         verify { appStore.dispatch(AppAction.BrowsingModeChanged(mode = BrowsingMode.Private)) }
 
-        browsingModeManager.mode = BrowsingMode.Normal
+        activity.resolveWindowBrowsingMode(intent = null)
 
         verify { appStore.dispatch(AppAction.BrowsingModeChanged(mode = BrowsingMode.Normal)) }
         verify(exactly = 0) { window.addFlags(any()) }

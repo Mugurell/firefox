@@ -6,8 +6,6 @@ package org.mozilla.fenix.customtabs
 
 import android.content.Intent
 import android.os.Bundle
-import android.view.Window
-import android.view.WindowManager.LayoutParams.FLAG_SECURE
 import androidx.lifecycle.Lifecycle
 import androidx.navigation.NavController
 import io.mockk.Called
@@ -31,9 +29,9 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.mozilla.fenix.BrowserDirection
+import org.mozilla.fenix.HomeActivity
 import org.mozilla.fenix.NavGraphDirections
 import org.mozilla.fenix.browser.browsingmode.BrowsingMode
-import org.mozilla.fenix.browser.browsingmode.BrowsingModeManager
 import org.mozilla.fenix.components.AppStore
 import org.mozilla.fenix.ext.components
 import org.mozilla.fenix.ext.getIntentSource
@@ -66,15 +64,12 @@ class ExternalAppBrowserActivityTest {
     @Test
     fun `navigateToBrowserOnColdStart does nothing for external app browser activity`() {
         val activity = spyk(ExternalAppBrowserActivity())
-        val browsingModeManager: BrowsingModeManager = mockk()
-        every { browsingModeManager.mode } returns BrowsingMode.Normal
 
         val settings: Settings = mockk()
         every { settings.shouldReturnToBrowser } returns true
         every { activity.components.settings.shouldReturnToBrowser } returns true
         every { activity.openToBrowser(any(), any()) } just Runs
 
-        activity.browsingModeManager = browsingModeManager
         activity.navigateToBrowserOnColdStart()
 
         verify(exactly = 0) { activity.openToBrowser(BrowserDirection.FromGlobal, null) }
@@ -294,37 +289,30 @@ class ExternalAppBrowserActivityTest {
     }
 
     @Test
-    fun `WHEN the browsing mode of a custom tab is set THEN it is not saved as the last known mode`() {
-        val settings: Settings = mockk(relaxed = true)
+    fun `GIVEN a private custom tab WHEN its browsing mode is resolved THEN it follows the session and is neither saved nor published`() {
+        val settings: Settings = mockk(relaxed = true) { every { lastKnownMode } returns BrowsingMode.Normal }
+        val appStore: AppStore = mockk(relaxed = true)
         val activity = buildActivityWithCustomTab(private = true)
         every { activity.components.settings } returns settings
-        every { activity.components.appStore } returns mockk(relaxed = true)
-        every { activity.window } returns mockk(relaxed = true)
+        every { activity.components.appStore } returns appStore
 
-        val browsingModeManager = activity.createBrowsingModeManager(intent = null)
-        browsingModeManager.mode = BrowsingMode.Normal
+        activity.resolveWindowBrowsingMode(Intent().putExtra(HomeActivity.PRIVATE_BROWSING_MODE, false))
 
-        assertEquals(BrowsingMode.Normal, browsingModeManager.mode)
+        assertEquals(BrowsingMode.Private, activity.windowBrowsingMode)
         verify(exactly = 0) { settings.lastKnownMode = any() }
+        verify(exactly = 0) { appStore.dispatch(any()) }
     }
 
     @Test
-    fun `WHEN the browsing mode of a custom tab is set THEN only its secure flag is updated`() {
-        val appStore: AppStore = mockk(relaxed = true)
-        val window: Window = mockk(relaxed = true)
-        val activity = buildActivityWithCustomTab(private = true)
-        every { activity.components.settings } returns mockk(relaxed = true)
-        every { activity.components.appStore } returns appStore
-        every { activity.window } returns window
+    fun `GIVEN a normal custom tab and a private last known mode WHEN its browsing mode is resolved THEN it is normal`() {
+        val settings: Settings = mockk(relaxed = true) { every { lastKnownMode } returns BrowsingMode.Private }
+        val activity = buildActivityWithCustomTab(private = false)
+        every { activity.components.settings } returns settings
+        every { activity.components.appStore } returns mockk(relaxed = true)
 
-        val browsingModeManager = activity.createBrowsingModeManager(intent = null)
+        activity.resolveWindowBrowsingMode(intent = null)
 
-        verify { window.addFlags(FLAG_SECURE) }
-
-        browsingModeManager.mode = BrowsingMode.Normal
-
-        verify { window.clearFlags(FLAG_SECURE) }
-        verify(exactly = 0) { appStore.dispatch(any()) }
+        assertEquals(BrowsingMode.Normal, activity.windowBrowsingMode)
     }
 
     @Test

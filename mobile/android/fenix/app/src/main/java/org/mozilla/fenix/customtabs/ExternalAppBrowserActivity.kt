@@ -5,6 +5,7 @@
 package org.mozilla.fenix.customtabs
 
 import android.app.assist.AssistContent
+import android.content.Intent
 import android.os.Bundle
 import android.view.MotionEvent
 import androidx.annotation.VisibleForTesting
@@ -18,6 +19,7 @@ import mozilla.components.support.utils.OnEnterAnimationCompleteListener
 import mozilla.components.support.utils.SafeIntent
 import org.mozilla.fenix.HomeActivity
 import org.mozilla.fenix.browser.browsingmode.BrowsingMode
+import org.mozilla.fenix.browser.browsingmode.resolveBrowsingMode
 import org.mozilla.fenix.components.appstate.AppAction
 import org.mozilla.fenix.ext.components
 import org.mozilla.fenix.ext.getIntentSessionId
@@ -32,12 +34,23 @@ const val EXTRA_IS_SANDBOX_CUSTOM_TAB = "org.mozilla.fenix.customtabs.EXTRA_IS_S
 open class ExternalAppBrowserActivity : HomeActivity() {
     private var isFinishedAnimating = false
 
+    private var browsingMode = BrowsingMode.Normal
+
+    /** The privacy of the custom tab, kept only for this window's theme, secure flag and accessibility. */
+    override val windowBrowsingMode: BrowsingMode
+        get() = browsingMode
+
     override fun onMovedToFront() {
         getExternalTabId()?.let { components.appStore.dispatch(AppAction.CustomTabMovedToForeground(it)) }
     }
 
     override fun getSessionBrowsingMode(): BrowsingMode? =
         getExternalTab()?.content?.private?.let { BrowsingMode.fromBoolean(isPrivate = it) }
+
+    /** Resolves the custom tab's browsing mode, session first, without publishing it to the app state. */
+    override fun resolveWindowBrowsingMode(intent: Intent?) {
+        browsingMode = resolveBrowsingMode(getSessionBrowsingMode(), intent, components.settings.lastKnownMode)
+    }
 
     override fun onResume() {
         super.onResume()

@@ -110,10 +110,8 @@ import org.mozilla.fenix.bindings.SummarizeToolbarHighlightBinding
 import org.mozilla.fenix.bookmarks.DesktopFolders
 import org.mozilla.fenix.browser.BrowserFragment
 import org.mozilla.fenix.browser.BrowserFragmentDirections
-import org.mozilla.fenix.browser.browsingmode.AppStoreBrowsingModeManager
 import org.mozilla.fenix.browser.browsingmode.BrowsingMode
-import org.mozilla.fenix.browser.browsingmode.BrowsingModeManager
-import org.mozilla.fenix.browser.browsingmode.DefaultBrowsingModeManager
+import org.mozilla.fenix.browser.browsingmode.resolveBrowsingMode
 import org.mozilla.fenix.components.DefaultHomepageAsANewTabPreferenceRepository
 import org.mozilla.fenix.components.DefaultShortcutManagerCompatWrapper
 import org.mozilla.fenix.components.accounts.FenixFxAEntryPoint
@@ -218,7 +216,6 @@ import org.mozilla.fenix.utils.changeAppLauncherIcon
 open class HomeActivity : LocaleAwareAppCompatActivity(), NavHostActivity, CrashActionDispatcher {
     @VisibleForTesting internal lateinit var binding: ActivityHomeBinding
     lateinit var themeManager: ThemeManager
-    lateinit var browsingModeManager: BrowsingModeManager
 
     private var isVisuallyComplete = false
 
@@ -306,7 +303,7 @@ open class HomeActivity : LocaleAwareAppCompatActivity(), NavHostActivity, Crash
     private val browsingModeBinding by lazy {
         BrowsingModeBinding(
             appStore = components.appStore,
-            initialMode = browsingModeManager.mode,
+            initialMode = windowBrowsingMode,
             onModeChanged = ::applyBrowsingMode,
             // Apply the secure flag before any private content of the new mode can be drawn.
             mainDispatcher = Main.immediate,
@@ -485,7 +482,7 @@ open class HomeActivity : LocaleAwareAppCompatActivity(), NavHostActivity, Crash
         // There is disk read violations on some devices such as samsung and pixel for android 9/10
         components.strictMode.allowViolation(StrictMode::allowThreadDiskReads) {
             // Browsing mode & theme setup should always be called before super.onCreate.
-            browsingModeManager = createBrowsingModeManager(intent)
+            resolveWindowBrowsingMode(intent)
             setupTheme()
             updateSecureWindowFlags()
             if (this !is ExternalAppBrowserActivity) {
@@ -858,7 +855,7 @@ open class HomeActivity : LocaleAwareAppCompatActivity(), NavHostActivity, Crash
         }
 
         binding.root.doOnLayout {
-            if (browsingModeManager.mode.isPrivate) {
+            if (windowBrowsingMode.isPrivate) {
                 it.announcePrivateModeForAccessibility()
             }
         }
@@ -904,7 +901,7 @@ open class HomeActivity : LocaleAwareAppCompatActivity(), NavHostActivity, Crash
     override fun onRestart() {
         super.onRestart()
 
-        browsingModeManager.updateMode(intent)
+        resolveWindowBrowsingMode(intent)
         updateSecureWindowFlags()
     }
 
@@ -1115,7 +1112,7 @@ open class HomeActivity : LocaleAwareAppCompatActivity(), NavHostActivity, Crash
             val intentProcessors =
                 listOf(CrashReporterIntentProcessor(components.appStore)) + externalSourceIntentProcessors
             intentProcessors.forEach { it.process(intent, navHost.navController, this.intent, components.settings) }
-            browsingModeManager.updateMode(intent)
+            resolveWindowBrowsingMode(intent)
             updateSecureWindowFlags()
         }
     }
@@ -1508,7 +1505,7 @@ open class HomeActivity : LocaleAwareAppCompatActivity(), NavHostActivity, Crash
     private fun setupTheme() {
         themeManager = createThemeManager()
         // ExternalAppBrowserActivity exclusively handles it's own theming unless in private mode.
-        if (this !is ExternalAppBrowserActivity || browsingModeManager.mode.isPrivate) {
+        if (this !is ExternalAppBrowserActivity || windowBrowsingMode.isPrivate) {
             themeManager.setActivityTheme(this)
             themeManager.applyStatusBarTheme(this)
         }
@@ -1594,7 +1591,7 @@ open class HomeActivity : LocaleAwareAppCompatActivity(), NavHostActivity, Crash
             searchTermOrURL = searchTermOrURL,
             newTab = newTab,
             forceSearch = forceSearch,
-            private = browsingModeManager.mode.isPrivate,
+            private = windowBrowsingMode.isPrivate,
             searchEngine = engine,
             flags = flags,
             historyMetadata = historyMetadata,
@@ -1626,7 +1623,7 @@ open class HomeActivity : LocaleAwareAppCompatActivity(), NavHostActivity, Crash
 
         // Normal tabs + cold start -> Should go back to browser if we had any tabs open when we left last
         // except for PBM + Cold Start there won't be any tabs since they're evicted so we never will navigate
-        if (components.settings.shouldReturnToBrowser && !browsingModeManager.mode.isPrivate) {
+        if (components.settings.shouldReturnToBrowser && !windowBrowsingMode.isPrivate) {
             // Navigate to home first (without rendering it) to add it to the back stack.
             openToBrowser(BrowserDirection.FromGlobal, null)
         }
@@ -1688,20 +1685,19 @@ open class HomeActivity : LocaleAwareAppCompatActivity(), NavHostActivity, Crash
         components.appStore.dispatch(AppAction.MainBrowserMovedToForeground)
     }
 
-    @VisibleForTesting
-    internal fun createBrowsingModeManager(intent: Intent?): BrowsingModeManager {
-        if (this is ExternalAppBrowserActivity) {
-            return DefaultBrowsingModeManager(
-                intent = intent,
-                settings = components.settings,
-                getSessionMode = ::getSessionBrowsingMode,
-                onModeChange = { newMode -> updateSecureWindowFlags(newMode) },
-            )
-        }
+    /** The browsing mode of this window: the mode of the app state for the regular tabs window. */
+    @VisibleForTesting(otherwise = VisibleForTesting.PROTECTED)
+    internal open val windowBrowsingMode: BrowsingMode
+        get() = components.appStore.state.mode
 
-        return AppStoreBrowsingModeManager(appStore = components.appStore, settings = components.settings).apply {
-            updateMode(intent)
-        }
+    /**
+     * Resolves the browsing mode of this window when it is created, restarted or gets a new [intent]. The regular tabs
+     * window publishes it to the app state.
+     */
+    @VisibleForTesting(otherwise = VisibleForTesting.PROTECTED)
+    internal open fun resolveWindowBrowsingMode(intent: Intent?) {
+        val mode = resolveBrowsingMode(null, intent, components.settings.lastKnownMode)
+        components.appStore.dispatch(AppAction.BrowsingModeChanged(mode = mode))
     }
 
     /** Applies a new browsing mode of the regular tabs window to its secure window flag and theme. */
@@ -1711,7 +1707,7 @@ open class HomeActivity : LocaleAwareAppCompatActivity(), NavHostActivity, Crash
         themeManager.currentTheme = mode
     }
 
-    private fun updateSecureWindowFlags(mode: BrowsingMode = browsingModeManager.mode) {
+    private fun updateSecureWindowFlags(mode: BrowsingMode = windowBrowsingMode) {
         if (mode == BrowsingMode.Private && !components.settings.shouldSecureModeBeOverridden) {
             window.addFlags(FLAG_SECURE)
         } else {
@@ -1720,7 +1716,7 @@ open class HomeActivity : LocaleAwareAppCompatActivity(), NavHostActivity, Crash
     }
 
     private fun createThemeManager(): ThemeManager {
-        return DefaultThemeManager(browsingModeManager.mode, this)
+        return DefaultThemeManager(windowBrowsingMode, this)
     }
 
     private fun openPopup(webExtensionState: WebExtensionState) {
