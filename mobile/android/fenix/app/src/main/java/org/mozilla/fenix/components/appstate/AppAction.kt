@@ -86,8 +86,8 @@ sealed class AppAction : Action {
 
     data class CollectionsChange(val collections: List<TabCollection>) : AppAction()
 
-    /** Action dispatched when the browsing mode changes inside the BrowsingModeManager. */
-    data class BrowsingModeManagerModeChanged(val mode: BrowsingMode) : AppAction()
+    /** Action dispatched when the browsing mode of the regular tabs window changes. */
+    data class BrowsingModeChanged(val mode: BrowsingMode) : AppAction()
 
     /**
      * The user is now interacting with a specific custom tab.

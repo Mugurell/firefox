@@ -105,11 +105,11 @@ class AppStoreTest {
         assertEquals(BrowsingMode.Normal, appStore.state.mode)
 
         // Change the AppStore to Private mode.
-        appStore.dispatch(AppAction.BrowsingModeManagerModeChanged(BrowsingMode.Private))
+        appStore.dispatch(AppAction.BrowsingModeChanged(BrowsingMode.Private))
         assertEquals(BrowsingMode.Private, appStore.state.mode)
 
         // Change the AppStore back to Normal mode.
-        appStore.dispatch(AppAction.BrowsingModeManagerModeChanged(BrowsingMode.Normal))
+        appStore.dispatch(AppAction.BrowsingModeChanged(BrowsingMode.Normal))
         assertEquals(BrowsingMode.Normal, appStore.state.mode)
     }
 

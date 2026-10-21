@@ -611,7 +611,7 @@ class PrivateBrowsingLockFeatureTest {
         assertFalse(appStore.state.isPrivateScreenLocked)
 
         // verify that going to normal mode doesn't lock private mode
-        appStore.dispatch(AppAction.BrowsingModeManagerModeChanged(mode = BrowsingMode.Normal))
+        appStore.dispatch(AppAction.BrowsingModeChanged(mode = BrowsingMode.Normal))
 
         assertTrue(browserStore.state.privateTabs.isNotEmpty())
         assertFalse(appStore.state.isPrivateScreenLocked)
@@ -679,7 +679,7 @@ class PrivateBrowsingLockFeatureTest {
         assertFalse(appStore.state.isPrivateScreenLocked)
 
         // verify that going to normal mode doesn't lock private mode
-        appStore.dispatch(AppAction.BrowsingModeManagerModeChanged(mode = BrowsingMode.Normal))
+        appStore.dispatch(AppAction.BrowsingModeChanged(mode = BrowsingMode.Normal))
 
         assertTrue(appStore.state.mode == BrowsingMode.Normal)
         assertFalse(appStore.state.isPrivateScreenLocked)
@@ -698,7 +698,7 @@ class PrivateBrowsingLockFeatureTest {
         assertTrue(appStore.state.mode == BrowsingMode.Private)
         assertFalse(appStore.state.isPrivateScreenLocked)
 
-        appStore.dispatch(AppAction.BrowsingModeManagerModeChanged(mode = BrowsingMode.Normal))
+        appStore.dispatch(AppAction.BrowsingModeChanged(mode = BrowsingMode.Normal))
         testDispatcher.scheduler.advanceUntilIdle()
         feature.onResume(activity)
 
@@ -718,7 +718,7 @@ class PrivateBrowsingLockFeatureTest {
         assertTrue(appStore.state.mode == BrowsingMode.Private)
         assertFalse(appStore.state.isPrivateScreenLocked)
 
-        appStore.dispatch(AppAction.BrowsingModeManagerModeChanged(mode = BrowsingMode.Normal))
+        appStore.dispatch(AppAction.BrowsingModeChanged(mode = BrowsingMode.Normal))
         testDispatcher.scheduler.advanceUntilIdle()
         feature.onResume(activity)
 
@@ -738,7 +738,7 @@ class PrivateBrowsingLockFeatureTest {
         assertTrue(appStore.state.mode == BrowsingMode.Private)
         assertFalse(appStore.state.isPrivateScreenLocked)
 
-        appStore.dispatch(AppAction.BrowsingModeManagerModeChanged(mode = BrowsingMode.Normal))
+        appStore.dispatch(AppAction.BrowsingModeChanged(mode = BrowsingMode.Normal))
         testDispatcher.scheduler.advanceUntilIdle()
         feature.onResume(activity)
 

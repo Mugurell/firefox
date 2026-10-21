@@ -593,12 +593,12 @@ class HomeActivityTest {
         val browsingModeManager = activity.createBrowsingModeManager(intent)
 
         verify { window.addFlags(FLAG_SECURE) }
-        verify { appStore.dispatch(AppAction.BrowsingModeManagerModeChanged(mode = BrowsingMode.Private)) }
+        verify { appStore.dispatch(AppAction.BrowsingModeChanged(mode = BrowsingMode.Private)) }
 
         browsingModeManager.mode = BrowsingMode.Normal
 
         verify { window.clearFlags(FLAG_SECURE) }
-        verify { appStore.dispatch(AppAction.BrowsingModeManagerModeChanged(mode = BrowsingMode.Normal)) }
+        verify { appStore.dispatch(AppAction.BrowsingModeChanged(mode = BrowsingMode.Normal)) }
     }
 
     @Test

@@ -203,7 +203,7 @@ class LensFeatureTest {
     @Test
     fun `GIVEN private browsing WHEN LensRequested is dispatched THEN the camera is launched in private mode`() =
         runTest(testDispatcher) {
-            appStore.dispatch(AppAction.BrowsingModeManagerModeChanged(BrowsingMode.Private))
+            appStore.dispatch(AppAction.BrowsingModeChanged(BrowsingMode.Private))
             val intentSlot = slot<Intent>()
             every { lensLauncher.launch(capture(intentSlot)) } returns Unit
 

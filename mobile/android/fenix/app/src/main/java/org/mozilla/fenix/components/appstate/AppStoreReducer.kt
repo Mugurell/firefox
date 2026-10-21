@@ -70,7 +70,7 @@ internal object AppStoreReducer {
                 state.copy(expandedCollections = newExpandedCollection)
             }
             is AppAction.CollectionsChange -> state.copy(collections = action.collections)
-            is AppAction.BrowsingModeManagerModeChanged -> state.copy(mode = action.mode)
+            is AppAction.BrowsingModeChanged -> state.copy(mode = action.mode)
             is AppAction.CustomTabMovedToForeground -> state.copy(lastForegroundCustomTabId = action.customTabId)
             is AppAction.MainBrowserMovedToForeground -> state.copy(lastForegroundCustomTabId = null)
             is AppAction.OrientationChange -> state.copy(orientation = action.orientation)

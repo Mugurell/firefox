@@ -1686,7 +1686,7 @@ open class HomeActivity : LocaleAwareAppCompatActivity(), NavHostActivity, Crash
                         themeManager.currentTheme = newMode
                     }
 
-                    components.appStore.dispatch(AppAction.BrowsingModeManagerModeChanged(mode = newMode))
+                    components.appStore.dispatch(AppAction.BrowsingModeChanged(mode = newMode))
                 }
             },
         )

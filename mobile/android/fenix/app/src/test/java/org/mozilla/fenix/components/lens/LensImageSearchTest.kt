@@ -53,7 +53,7 @@ class LensImageSearchTest {
         )
 
     private fun setPrivateMode() {
-        appStore.dispatch(AppAction.BrowsingModeManagerModeChanged(BrowsingMode.Private))
+        appStore.dispatch(AppAction.BrowsingModeChanged(BrowsingMode.Private))
         testDispatcher.scheduler.advanceUntilIdle()
     }
 
