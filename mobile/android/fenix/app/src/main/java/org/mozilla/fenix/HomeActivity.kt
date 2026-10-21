@@ -1677,17 +1677,17 @@ open class HomeActivity : LocaleAwareAppCompatActivity(), NavHostActivity, Crash
             settings = components.settings,
             getSessionMode = ::getSessionBrowsingMode,
             onModeChange = { newMode ->
-                if (this !is ExternalAppBrowserActivity) {
-                    components.settings.lastKnownMode = newMode
-                }
-
                 updateSecureWindowFlags(newMode)
 
-                if (::themeManager.isInitialized) {
-                    themeManager.currentTheme = newMode
-                }
+                if (this !is ExternalAppBrowserActivity) {
+                    components.settings.lastKnownMode = newMode
 
-                components.appStore.dispatch(AppAction.BrowsingModeManagerModeChanged(mode = newMode))
+                    if (::themeManager.isInitialized) {
+                        themeManager.currentTheme = newMode
+                    }
+
+                    components.appStore.dispatch(AppAction.BrowsingModeManagerModeChanged(mode = newMode))
+                }
             },
         )
     }

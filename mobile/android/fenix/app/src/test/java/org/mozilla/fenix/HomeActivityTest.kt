@@ -6,6 +6,8 @@ package org.mozilla.fenix
 
 import android.content.Intent
 import android.os.Bundle
+import android.view.Window
+import android.view.WindowManager.LayoutParams.FLAG_SECURE
 import androidx.fragment.app.FragmentManager
 import io.mockk.Runs
 import io.mockk.every
@@ -579,6 +581,24 @@ class HomeActivityTest {
         browsingModeManager.mode = BrowsingMode.Normal
 
         verify { settings.lastKnownMode = BrowsingMode.Normal }
+    }
+
+    @Test
+    fun `WHEN the browsing mode is set THEN the secure flag is updated and the mode is published to the app state`() {
+        val window: Window = mockk(relaxed = true)
+        every { activity.applicationContext } returns testContext
+        every { activity.window } returns window
+        val intent = Intent().apply { putExtra(HomeActivity.PRIVATE_BROWSING_MODE, true) }
+
+        val browsingModeManager = activity.createBrowsingModeManager(intent)
+
+        verify { window.addFlags(FLAG_SECURE) }
+        verify { appStore.dispatch(AppAction.BrowsingModeManagerModeChanged(mode = BrowsingMode.Private)) }
+
+        browsingModeManager.mode = BrowsingMode.Normal
+
+        verify { window.clearFlags(FLAG_SECURE) }
+        verify { appStore.dispatch(AppAction.BrowsingModeManagerModeChanged(mode = BrowsingMode.Normal)) }
     }
 
     @Test

@@ -6,6 +6,8 @@ package org.mozilla.fenix.customtabs
 
 import android.content.Intent
 import android.os.Bundle
+import android.view.Window
+import android.view.WindowManager.LayoutParams.FLAG_SECURE
 import androidx.lifecycle.Lifecycle
 import androidx.navigation.NavController
 import io.mockk.Called
@@ -304,6 +306,25 @@ class ExternalAppBrowserActivityTest {
 
         assertEquals(BrowsingMode.Normal, browsingModeManager.mode)
         verify(exactly = 0) { settings.lastKnownMode = any() }
+    }
+
+    @Test
+    fun `WHEN the browsing mode of a custom tab is set THEN only its secure flag is updated`() {
+        val appStore: AppStore = mockk(relaxed = true)
+        val window: Window = mockk(relaxed = true)
+        val activity = buildActivityWithCustomTab(private = true)
+        every { activity.components.settings } returns mockk(relaxed = true)
+        every { activity.components.appStore } returns appStore
+        every { activity.window } returns window
+
+        val browsingModeManager = activity.createBrowsingModeManager(intent = null)
+
+        verify { window.addFlags(FLAG_SECURE) }
+
+        browsingModeManager.mode = BrowsingMode.Normal
+
+        verify { window.clearFlags(FLAG_SECURE) }
+        verify(exactly = 0) { appStore.dispatch(any()) }
     }
 
     @Test
