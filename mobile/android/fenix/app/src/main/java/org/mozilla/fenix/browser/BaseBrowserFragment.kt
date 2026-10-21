@@ -1364,7 +1364,11 @@ abstract class BaseBrowserFragment :
                     onShouldShowRequestPermissionRationale = {
                         shouldShowRequestPermissionRationale(it)
                     },
-                    shouldShowDoNotAskAgainCheckBox = context.components.appStore.state.mode != BrowsingMode.Private,
+                    shouldShowDoNotAskAgainCheckBox =
+                        !context.components.appStore.state.isCurrentTabPrivate(
+                            context.components.core.store.state,
+                            customTabSessionId,
+                        ),
                     store = store,
                     coroutineScope = requireComponents.applicationScope,
                     shouldHide = {
@@ -1374,7 +1378,8 @@ abstract class BaseBrowserFragment :
                             true
                         } else {
                             val state = requireComponents.appStore.state
-                            state.isPrivateScreenLocked && state.mode.isPrivate
+                            state.isPrivateScreenLocked &&
+                                state.isCurrentTabPrivate(requireComponents.core.store.state, customTabSessionId)
                         }
                     },
                 ),
