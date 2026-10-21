@@ -23,6 +23,7 @@ import org.mozilla.fenix.GleanMetrics.TrackingProtection
 import org.mozilla.fenix.R
 import org.mozilla.fenix.e2e.SystemInsetsPaddedFragment
 import org.mozilla.fenix.ext.components
+import org.mozilla.fenix.ext.isForegroundTabOrCustomTabPrivate
 import org.mozilla.fenix.ext.nav
 import org.mozilla.fenix.ext.openToBrowser
 import org.mozilla.fenix.ext.requireComponents
@@ -109,6 +110,10 @@ class TrackingProtectionFragment : PreferenceFragmentCompat(), SystemInsetsPadde
             requireComponents.useCases.fenixBrowserUseCases.loadUrlOrSearch(
                 searchTermOrURL = SupportUtils.getGenericSumoURLForTopic(SupportUtils.SumoTopic.TRACKING_PROTECTION),
                 newTab = true,
+                private =
+                    requireComponents.appStore.state.isForegroundTabOrCustomTabPrivate(
+                        requireComponents.core.store.state
+                    ),
             )
             true
         }
@@ -403,6 +408,8 @@ class TrackingProtectionFragment : PreferenceFragmentCompat(), SystemInsetsPadde
         requireComponents.useCases.fenixBrowserUseCases.loadUrlOrSearch(
             searchTermOrURL = SupportUtils.getGenericSumoURLForTopic(SupportUtils.SumoTopic.TRACKING_PROTECTION),
             newTab = true,
+            private =
+                requireComponents.appStore.state.isForegroundTabOrCustomTabPrivate(requireComponents.core.store.state),
         )
     }
 

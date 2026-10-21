@@ -6,16 +6,23 @@ package org.mozilla.fenix.settings
 
 import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.FragmentActivity
+import androidx.navigation.NavController
+import androidx.navigation.Navigation
 import io.mockk.Runs
 import io.mockk.every
 import io.mockk.just
 import io.mockk.mockk
 import io.mockk.spyk
 import io.mockk.verify
+import mozilla.components.browser.state.state.BrowserState
+import mozilla.components.browser.state.state.createCustomTab
 import mozilla.components.support.test.robolectric.testContext
 import org.junit.Assert.assertEquals
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.mozilla.fenix.browser.browsingmode.BrowsingMode
+import org.mozilla.fenix.components.appstate.AppState
+import org.mozilla.fenix.components.usecases.FenixBrowserUseCases
 import org.mozilla.fenix.ext.components
 import org.mozilla.fenix.utils.Settings
 import org.robolectric.Robolectric
@@ -137,5 +144,82 @@ class TrackingProtectionFragmentTest {
         fragmentSpy.onDialogCancel(true, dialog)
 
         verify { mockSettings.strictAllowListBaselineTrackingProtection = true }
+    }
+
+    @Test
+    fun `GIVEN a private custom tab is focused in normal mode WHEN the allow list learn more is clicked THEN open it in a private tab`() {
+        val fenixBrowserUseCases = setUpLearnMore(mode = BrowsingMode.Normal, customTabPrivate = true)
+
+        clickAllowListLearnMore()
+
+        verifyLearnMoreOpened(fenixBrowserUseCases, private = true)
+    }
+
+    @Test
+    fun `GIVEN a normal custom tab is focused in private mode WHEN the allow list learn more is clicked THEN open it in a normal tab`() {
+        val fenixBrowserUseCases = setUpLearnMore(mode = BrowsingMode.Private, customTabPrivate = false)
+
+        clickAllowListLearnMore()
+
+        verifyLearnMoreOpened(fenixBrowserUseCases, private = false)
+    }
+
+    @Test
+    fun `GIVEN no custom tab is focused in private mode WHEN the allow list learn more is clicked THEN open it in a private tab`() {
+        val fenixBrowserUseCases = setUpLearnMore(mode = BrowsingMode.Private, customTabPrivate = null)
+
+        clickAllowListLearnMore()
+
+        verifyLearnMoreOpened(fenixBrowserUseCases, private = true)
+    }
+
+    private fun setUpLearnMore(mode: BrowsingMode, customTabPrivate: Boolean?): FenixBrowserUseCases {
+        val fenixBrowserUseCases: FenixBrowserUseCases = mockk(relaxed = true)
+        every { testContext.components.analytics } returns mockk(relaxed = true)
+        every { testContext.components.settings } returns Settings(testContext)
+        every { testContext.components.useCases.fenixBrowserUseCases } returns fenixBrowserUseCases
+        every { testContext.components.appStore.state } returns
+            AppState(
+                mode = mode,
+                lastForegroundCustomTabId = customTabPrivate?.let { "customTab" },
+            )
+        every { testContext.components.core.store.state } returns
+            BrowserState(
+                customTabs =
+                    listOfNotNull(
+                        customTabPrivate?.let {
+                            createCustomTab(url = "https://mozilla.org", id = "customTab", private = it)
+                        }
+                    )
+            )
+        return fenixBrowserUseCases
+    }
+
+    private fun clickAllowListLearnMore() {
+        val settingsFragment = TrackingProtectionFragment()
+        val activity = Robolectric.buildActivity(FragmentActivity::class.java).create().get()
+        activity.supportFragmentManager
+            .beginTransaction()
+            .add(android.R.id.content, settingsFragment, "settingsFragment")
+            .commitNow()
+        Navigation.setViewNavController(settingsFragment.requireView(), mockk<NavController>(relaxed = true))
+
+        val subheader = settingsFragment.strictAllowListTrackingProtectionSubheader
+        subheader.onPreferenceClickListener?.onPreferenceClick(subheader)
+    }
+
+    private fun verifyLearnMoreOpened(fenixBrowserUseCases: FenixBrowserUseCases, private: Boolean) {
+        verify {
+            fenixBrowserUseCases.loadUrlOrSearch(
+                searchTermOrURL = any(),
+                newTab = true,
+                private = private,
+                forceSearch = any(),
+                searchEngine = any(),
+                flags = any(),
+                historyMetadata = any(),
+                additionalHeaders = any(),
+            )
+        }
     }
 }
