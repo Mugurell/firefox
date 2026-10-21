@@ -6,6 +6,8 @@ package org.mozilla.fenix.browser.browsingmode
 
 import android.content.Intent
 import org.mozilla.fenix.components.AppStore
+import org.mozilla.fenix.components.appstate.AppAction
+import org.mozilla.fenix.components.appstate.AppState
 import org.mozilla.fenix.utils.Settings
 
 /** Enum that represents whether or not private browsing is active. */
@@ -66,4 +68,26 @@ class DefaultBrowsingModeManager(
     }
 
     private fun resolveMode(intent: Intent?) = resolveBrowsingMode(getSessionMode(), intent, settings.lastKnownMode)
+}
+
+/**
+ * [BrowsingModeManager] of the regular tabs window, backed by [AppState.mode]: reading the mode reads the [AppStore]
+ * and setting it dispatches [AppAction.BrowsingModeChanged].
+ *
+ * @param appStore [AppStore] holding the browsing mode.
+ * @param settings [Settings] used to read the last known browsing mode.
+ */
+class AppStoreBrowsingModeManager(
+    private val appStore: AppStore,
+    private val settings: Settings,
+) : BrowsingModeManager {
+    override var mode: BrowsingMode
+        get() = appStore.state.mode
+        set(value) {
+            appStore.dispatch(AppAction.BrowsingModeChanged(mode = value))
+        }
+
+    override fun updateMode(intent: Intent?) {
+        mode = resolveBrowsingMode(sessionMode = null, intent = intent, lastKnownMode = settings.lastKnownMode)
+    }
 }

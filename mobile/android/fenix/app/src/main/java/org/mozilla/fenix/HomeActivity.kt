@@ -110,6 +110,7 @@ import org.mozilla.fenix.bindings.SummarizeToolbarHighlightBinding
 import org.mozilla.fenix.bookmarks.DesktopFolders
 import org.mozilla.fenix.browser.BrowserFragment
 import org.mozilla.fenix.browser.BrowserFragmentDirections
+import org.mozilla.fenix.browser.browsingmode.AppStoreBrowsingModeManager
 import org.mozilla.fenix.browser.browsingmode.BrowsingMode
 import org.mozilla.fenix.browser.browsingmode.BrowsingModeManager
 import org.mozilla.fenix.browser.browsingmode.DefaultBrowsingModeManager
@@ -1689,18 +1690,18 @@ open class HomeActivity : LocaleAwareAppCompatActivity(), NavHostActivity, Crash
 
     @VisibleForTesting
     internal fun createBrowsingModeManager(intent: Intent?): BrowsingModeManager {
-        return DefaultBrowsingModeManager(
-            intent = intent,
-            settings = components.settings,
-            getSessionMode = ::getSessionBrowsingMode,
-            onModeChange = { newMode ->
-                if (this is ExternalAppBrowserActivity) {
-                    updateSecureWindowFlags(newMode)
-                } else {
-                    components.appStore.dispatch(AppAction.BrowsingModeChanged(mode = newMode))
-                }
-            },
-        )
+        if (this is ExternalAppBrowserActivity) {
+            return DefaultBrowsingModeManager(
+                intent = intent,
+                settings = components.settings,
+                getSessionMode = ::getSessionBrowsingMode,
+                onModeChange = { newMode -> updateSecureWindowFlags(newMode) },
+            )
+        }
+
+        return AppStoreBrowsingModeManager(appStore = components.appStore, settings = components.settings).apply {
+            updateMode(intent)
+        }
     }
 
     /** Applies a new browsing mode of the regular tabs window to its secure window flag and theme. */
