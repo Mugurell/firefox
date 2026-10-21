@@ -43,6 +43,7 @@ import org.mozilla.fenix.ext.components
 import org.mozilla.fenix.ext.getIntentSource
 import org.mozilla.fenix.helpers.FenixGleanTestRule
 import org.mozilla.fenix.helpers.perf.TestStrictModeManager
+import org.mozilla.fenix.theme.ThemeManager
 import org.mozilla.fenix.utils.Settings
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
@@ -569,7 +570,7 @@ class HomeActivityTest {
     }
 
     @Test
-    fun `WHEN the browsing mode is set THEN the secure flag is updated and the mode is published to the app state`() {
+    fun `WHEN the browsing mode is set THEN it is only published to the app state`() {
         val window: Window = mockk(relaxed = true)
         every { activity.applicationContext } returns testContext
         every { activity.window } returns window
@@ -577,13 +578,32 @@ class HomeActivityTest {
 
         val browsingModeManager = activity.createBrowsingModeManager(intent)
 
-        verify { window.addFlags(FLAG_SECURE) }
         verify { appStore.dispatch(AppAction.BrowsingModeChanged(mode = BrowsingMode.Private)) }
 
         browsingModeManager.mode = BrowsingMode.Normal
 
-        verify { window.clearFlags(FLAG_SECURE) }
         verify { appStore.dispatch(AppAction.BrowsingModeChanged(mode = BrowsingMode.Normal)) }
+        verify(exactly = 0) { window.addFlags(any()) }
+        verify(exactly = 0) { window.clearFlags(any()) }
+    }
+
+    @Test
+    fun `WHEN a browsing mode is applied THEN the secure flag and the theme follow it`() {
+        val window: Window = mockk(relaxed = true)
+        val themeManager: ThemeManager = mockk(relaxed = true)
+        every { activity.applicationContext } returns testContext
+        every { activity.window } returns window
+        activity.themeManager = themeManager
+
+        activity.applyBrowsingMode(BrowsingMode.Private)
+
+        verify { window.addFlags(FLAG_SECURE) }
+        verify { themeManager.currentTheme = BrowsingMode.Private }
+
+        activity.applyBrowsingMode(BrowsingMode.Normal)
+
+        verify { window.clearFlags(FLAG_SECURE) }
+        verify { themeManager.currentTheme = BrowsingMode.Normal }
     }
 
     @Test
