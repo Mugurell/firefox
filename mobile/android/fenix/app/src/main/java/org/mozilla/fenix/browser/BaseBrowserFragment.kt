@@ -625,7 +625,8 @@ abstract class BaseBrowserFragment :
                     tabId = customTabSessionId,
                     shouldHide = {
                         val state = requireComponents.appStore.state
-                        state.isPrivateScreenLocked && state.mode.isPrivate
+                        state.isPrivateScreenLocked &&
+                            state.isCurrentTabPrivate(requireComponents.core.store.state, customTabSessionId)
                     },
                 ),
             owner = this,
