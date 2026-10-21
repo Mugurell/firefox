@@ -37,6 +37,7 @@ import org.mozilla.fenix.HomeActivity
 import org.mozilla.fenix.R
 import org.mozilla.fenix.addons.showSnackBar
 import org.mozilla.fenix.browser.browsingmode.BrowsingMode
+import org.mozilla.fenix.components.appstate.AppAction
 import org.mozilla.fenix.databinding.FragmentHistoryMetadataGroupBinding
 import org.mozilla.fenix.e2e.SystemInsetsPaddedFragment
 import org.mozilla.fenix.ext.components
@@ -229,10 +230,8 @@ class HistoryMetadataGroupFragment :
             selectedItem.url
         }
 
-        (activity as HomeActivity).apply {
-            browsingModeManager.mode = BrowsingMode.Private
-            supportActionBar?.hide()
-        }
+        requireComponents.appStore.dispatch(AppAction.BrowsingModeChanged(mode = BrowsingMode.Private))
+        (activity as HomeActivity).supportActionBar?.hide()
 
         showTabTray(openInPrivate = true)
     }

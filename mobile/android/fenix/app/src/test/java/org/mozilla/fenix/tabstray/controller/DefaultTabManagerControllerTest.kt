@@ -62,7 +62,6 @@ import org.mozilla.fenix.GleanMetrics.TabsTray
 import org.mozilla.fenix.GleanMetrics.TrackingProtection
 import org.mozilla.fenix.R
 import org.mozilla.fenix.browser.browsingmode.BrowsingMode
-import org.mozilla.fenix.browser.browsingmode.BrowsingModeManager
 import org.mozilla.fenix.components.AppStore
 import org.mozilla.fenix.components.TabCollectionStorage
 import org.mozilla.fenix.components.accounts.FenixFxAEntryPoint
@@ -94,8 +93,6 @@ class DefaultTabManagerControllerTest {
     @RelaxedMockK private lateinit var trayStore: TabsTrayStore
 
     @RelaxedMockK private lateinit var browserStore: BrowserStore
-
-    @RelaxedMockK private lateinit var browsingModeManager: BrowsingModeManager
 
     @RelaxedMockK private lateinit var navController: NavController
 
@@ -3403,7 +3400,6 @@ class DefaultTabManagerControllerTest {
             tabsTrayStore = trayStore,
             browserStore = browserStore,
             settings = settings,
-            browsingModeManager = browsingModeManager,
             navController = navController,
             navigateToHomeAndDeleteSession = navigateToHomeAndDeleteSession,
             profiler = profiler,

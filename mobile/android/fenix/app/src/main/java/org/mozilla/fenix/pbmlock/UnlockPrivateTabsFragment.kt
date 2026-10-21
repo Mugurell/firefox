@@ -25,6 +25,7 @@ import org.mozilla.fenix.GleanMetrics.PrivateBrowsingLocked
 import org.mozilla.fenix.HomeActivity
 import org.mozilla.fenix.R
 import org.mozilla.fenix.browser.browsingmode.BrowsingMode
+import org.mozilla.fenix.components.appstate.AppAction
 import org.mozilla.fenix.e2e.SystemInsetsPaddedFragment
 import org.mozilla.fenix.ext.registerForActivityResult
 import org.mozilla.fenix.ext.requireComponents
@@ -115,7 +116,7 @@ class UnlockPrivateTabsFragment : Fragment(), UserInteractionHandler, SystemInse
             // to normal mode. If they have opened regular tabs, we open the tabs tray as well.
             NavigationOrigin.TAB,
             NavigationOrigin.HOME_PAGE -> {
-                (activity as HomeActivity).browsingModeManager.mode = BrowsingMode.Normal
+                requireComponents.appStore.dispatch(AppAction.BrowsingModeChanged(mode = BrowsingMode.Normal))
                 findNavController().navigate(UnlockPrivateTabsFragmentDirections.actionGlobalHome())
 
                 val hasNormalTabs = requireComponents.core.store.state.normalTabs.isNotEmpty()

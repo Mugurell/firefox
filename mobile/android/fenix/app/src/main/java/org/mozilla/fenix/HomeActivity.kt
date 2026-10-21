@@ -317,7 +317,6 @@ open class HomeActivity : LocaleAwareAppCompatActivity(), NavHostActivity, Crash
         HomepageTabBinding(
             browserStore = components.core.store,
             appStore = components.appStore,
-            browsingModeManager = browsingModeManager,
             fenixBrowserUseCases = components.useCases.fenixBrowserUseCases,
             repository = DefaultHomepageAsANewTabPreferenceRepository(components.settings),
         )

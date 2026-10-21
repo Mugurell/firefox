@@ -556,10 +556,8 @@ class HistoryFragment :
             (selectedItem as? History.Regular)?.url ?: (selectedItem as? History.Metadata)?.url
         }
 
-        (activity as HomeActivity).apply {
-            browsingModeManager.mode = BrowsingMode.Private
-            supportActionBar?.hide()
-        }
+        requireComponents.appStore.dispatch(AppAction.BrowsingModeChanged(mode = BrowsingMode.Private))
+        (activity as HomeActivity).supportActionBar?.hide()
 
         showTabTray(openInPrivate = true)
         historyStore.dispatch(HistoryFragmentAction.ExitEditMode)
@@ -619,7 +617,7 @@ class HistoryFragment :
         requireComponents.useCases.fenixBrowserUseCases.loadUrlOrSearch(
             searchTermOrURL = item.url,
             newTab = requireComponents.settings.enableHomepageAsNewTab.not(),
-            private = (requireActivity() as HomeActivity).browsingModeManager.mode.isPrivate,
+            private = requireComponents.appStore.state.mode.isPrivate,
         )
         findNavController().navigate(R.id.browserFragment)
     }

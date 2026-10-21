@@ -15,8 +15,8 @@ import mozilla.components.feature.ipprotection.IPProtectionUnavailableDialog
 import mozilla.components.feature.ipprotection.store.IPProtectionAction
 import mozilla.components.feature.ipprotection.store.state.Authorized
 import mozilla.components.lib.state.ext.observeAsComposableState
-import org.mozilla.fenix.HomeActivity
 import org.mozilla.fenix.components.components
+import org.mozilla.fenix.ext.isForegroundTabOrCustomTabPrivate
 import org.mozilla.fenix.ext.requireComponents
 import org.mozilla.fenix.tabstray.redux.state.Page
 import org.mozilla.fenix.theme.FirefoxTheme
@@ -30,7 +30,7 @@ import org.mozilla.fenix.theme.FirefoxTheme
 class IPProtectionUnavailableDialogFragment : AppCompatDialogFragment() {
 
     private val isPrivateMode by lazy {
-        (requireActivity() as HomeActivity).browsingModeManager.mode.isPrivate
+        requireComponents.appStore.state.isForegroundTabOrCustomTabPrivate(requireComponents.core.store.state)
     }
 
     override fun onCreateView(

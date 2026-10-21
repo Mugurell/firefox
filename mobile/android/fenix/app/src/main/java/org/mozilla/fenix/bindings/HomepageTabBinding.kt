@@ -16,7 +16,6 @@ import mozilla.components.browser.state.state.BrowserState
 import mozilla.components.browser.state.store.BrowserStore
 import mozilla.components.lib.state.ext.flow
 import mozilla.components.lib.state.helpers.AbstractBinding
-import org.mozilla.fenix.browser.browsingmode.BrowsingModeManager
 import org.mozilla.fenix.components.AppStore
 import org.mozilla.fenix.components.HomepageAsANewTabPreferencesRepository
 import org.mozilla.fenix.components.usecases.FenixBrowserUseCases
@@ -29,7 +28,6 @@ import org.mozilla.fenix.components.usecases.FenixBrowserUseCases
  *
  * @param browserStore The [BrowserStore] to observe the tabs state from.
  * @param appStore The [AppStore] used to determine if the tabs tray is visible.
- * @param browsingModeManager [BrowsingModeManager] used to determine the current browsing mode.
  * @param fenixBrowserUseCases [FenixBrowserUseCases] used to add the homepage tab.
  * @param repository [HomepageAsANewTabPreferencesRepository] used to access the homepage as a new tab preferences.
  * @param mainDispatcher The [CoroutineDispatcher] used to observe the [browserStore].
@@ -37,14 +35,13 @@ import org.mozilla.fenix.components.usecases.FenixBrowserUseCases
 class HomepageTabBinding(
     browserStore: BrowserStore,
     private val appStore: AppStore,
-    private val browsingModeManager: BrowsingModeManager,
     private val fenixBrowserUseCases: FenixBrowserUseCases,
     private val repository: HomepageAsANewTabPreferencesRepository,
     mainDispatcher: CoroutineDispatcher = Dispatchers.Main,
 ) : AbstractBinding<BrowserState>(browserStore, mainDispatcher) {
 
     private val isPrivate: Boolean
-        get() = browsingModeManager.mode.isPrivate
+        get() = appStore.state.mode.isPrivate
 
     override suspend fun onState(flow: Flow<BrowserState>) {
         combine(
