@@ -15,8 +15,8 @@ import org.mozilla.fenix.components.AppStore
 import org.mozilla.fenix.components.appstate.AppState
 
 /**
- * A binding that reports every new browsing mode of the regular tabs window, so that the window can apply it.
- * A mode published while the binding is stopped is reported once it starts again.
+ * A binding that reports every new browsing mode of the regular tabs window, so that the window can apply it. A mode
+ * published while the binding is stopped is reported once it starts again.
  *
  * @param appStore The [AppStore] to observe the browsing mode from.
  * @param initialMode The browsing mode the window already applied.

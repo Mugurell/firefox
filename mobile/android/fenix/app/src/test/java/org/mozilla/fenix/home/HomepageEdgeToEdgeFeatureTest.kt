@@ -26,7 +26,6 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.mozilla.fenix.R
 import org.mozilla.fenix.browser.browsingmode.BrowsingMode
-import org.mozilla.fenix.browser.browsingmode.BrowsingModeManager
 import org.mozilla.fenix.components.AppStore
 import org.mozilla.fenix.components.appstate.AppAction
 import org.mozilla.fenix.components.appstate.AppState
@@ -42,13 +41,9 @@ class HomepageEdgeToEdgeFeatureTest {
 
     private val testDispatcher = StandardTestDispatcher()
     private val settings: Settings = mockk(relaxed = true)
-    private val browsingModeManager: BrowsingModeManager =
-        mockk(relaxed = true) {
-            every { mode } returns BrowsingMode.Normal
-        }
 
-    private fun appStoreWith(wallpaper: Wallpaper) =
-        AppStore(AppState(wallpaperState = WallpaperState.default.copy(currentWallpaper = wallpaper)))
+    private fun appStoreWith(wallpaper: Wallpaper, mode: BrowsingMode = BrowsingMode.Normal) =
+        AppStore(AppState(mode = mode, wallpaperState = WallpaperState.default.copy(currentWallpaper = wallpaper)))
 
     @Test
     fun `GIVEN feature is disabled WHEN feature starts THEN wallpaper updates are not observed`() =
@@ -63,7 +58,6 @@ class HomepageEdgeToEdgeFeatureTest {
                     appStore = appStore,
                     activity = activity,
                     settings = settings,
-                    browsingModeManager = browsingModeManager,
                     toolbarStore = BrowserToolbarStore(),
                     mainDispatcher = testDispatcher,
                 )
@@ -90,7 +84,6 @@ class HomepageEdgeToEdgeFeatureTest {
                     appStore = appStore,
                     activity = activity,
                     settings = settings,
-                    browsingModeManager = browsingModeManager,
                     toolbarStore = BrowserToolbarStore(),
                     mainDispatcher = testDispatcher,
                 )
@@ -121,7 +114,6 @@ class HomepageEdgeToEdgeFeatureTest {
                     appStore = appStoreWith(Wallpaper.EdgeToEdge),
                     activity = activity,
                     settings = settings,
-                    browsingModeManager = browsingModeManager,
                     toolbarStore = BrowserToolbarStore(),
                     mainDispatcher = testDispatcher,
                 )
@@ -146,7 +138,6 @@ class HomepageEdgeToEdgeFeatureTest {
                     appStore = appStore,
                     activity = activity,
                     settings = settings,
-                    browsingModeManager = browsingModeManager,
                     toolbarStore = BrowserToolbarStore(),
                     mainDispatcher = testDispatcher,
                 )
@@ -172,7 +163,6 @@ class HomepageEdgeToEdgeFeatureTest {
                     appStore = appStoreWith(Wallpaper.EdgeToEdge),
                     activity = activity,
                     settings = settings,
-                    browsingModeManager = browsingModeManager,
                     toolbarStore = BrowserToolbarStore(),
                     mainDispatcher = testDispatcher,
                 )
@@ -195,7 +185,6 @@ class HomepageEdgeToEdgeFeatureTest {
                     appStore = appStoreWith(Wallpaper.Default),
                     activity = activity,
                     settings = settings,
-                    browsingModeManager = browsingModeManager,
                     toolbarStore = BrowserToolbarStore(),
                     mainDispatcher = testDispatcher,
                 )
@@ -222,7 +211,6 @@ class HomepageEdgeToEdgeFeatureTest {
                     appStore = appStoreWith(Wallpaper.EdgeToEdge),
                     activity = activity,
                     settings = settings,
-                    browsingModeManager = browsingModeManager,
                     toolbarStore = BrowserToolbarStore(),
                     mainDispatcher = testDispatcher,
                 )
@@ -254,7 +242,6 @@ class HomepageEdgeToEdgeFeatureTest {
                     appStore = appStore,
                     activity = activity,
                     settings = settings,
-                    browsingModeManager = browsingModeManager,
                     toolbarStore = BrowserToolbarStore(),
                     mainDispatcher = testDispatcher,
                 )
@@ -287,7 +274,6 @@ class HomepageEdgeToEdgeFeatureTest {
                     appStore = appStoreWith(Wallpaper.EdgeToEdge),
                     activity = activity,
                     settings = settings,
-                    browsingModeManager = browsingModeManager,
                     toolbarStore = BrowserToolbarStore(),
                     mainDispatcher = testDispatcher,
                 )
@@ -309,14 +295,12 @@ class HomepageEdgeToEdgeFeatureTest {
         runTest(testDispatcher) {
             every { settings.enableHomepageEdgeToEdgeBackgroundFeature } returns true
             every { settings.shouldUseBottomToolbar } returns false
-            every { browsingModeManager.mode } returns BrowsingMode.Private
             val activity = Robolectric.buildActivity(Activity::class.java).create().get()
 
             HomepageEdgeToEdgeFeature(
-                    appStore = appStoreWith(Wallpaper.EdgeToEdge),
+                    appStore = appStoreWith(Wallpaper.EdgeToEdge, mode = BrowsingMode.Private),
                     activity = activity,
                     settings = settings,
-                    browsingModeManager = browsingModeManager,
                     toolbarStore = BrowserToolbarStore(),
                     mainDispatcher = testDispatcher,
                 )
@@ -343,7 +327,6 @@ class HomepageEdgeToEdgeFeatureTest {
                     appStore = appStore,
                     activity = activity,
                     settings = settings,
-                    browsingModeManager = browsingModeManager,
                     toolbarStore = BrowserToolbarStore(),
                     mainDispatcher = testDispatcher,
                 )
@@ -387,7 +370,6 @@ class HomepageEdgeToEdgeFeatureTest {
                     appStore = appStore,
                     activity = activity,
                     settings = settings,
-                    browsingModeManager = browsingModeManager,
                     toolbarStore = BrowserToolbarStore(),
                     mainDispatcher = testDispatcher,
                 )
@@ -418,7 +400,6 @@ class HomepageEdgeToEdgeFeatureTest {
                     appStore = appStore,
                     activity = activity,
                     settings = settings,
-                    browsingModeManager = browsingModeManager,
                     toolbarStore = BrowserToolbarStore(),
                     mainDispatcher = testDispatcher,
                 )
@@ -437,18 +418,16 @@ class HomepageEdgeToEdgeFeatureTest {
         runTest(testDispatcher) {
             every { settings.enableHomepageEdgeToEdgeBackgroundFeature } returns true
             every { settings.shouldUseBottomToolbar } returns false
-            every { browsingModeManager.mode } returns BrowsingMode.Private
             val activity = Robolectric.buildActivity(Activity::class.java).create().get()
             val decorView = activity.window.decorView as ViewGroup
             val initialChildCount = decorView.childCount
-            val appStore = AppStore()
+            val appStore = AppStore(AppState(mode = BrowsingMode.Private))
             appStore.dispatch(AppAction.WallpaperAction.UpdateCurrentWallpaper(Wallpaper.EdgeToEdge))
 
             HomepageEdgeToEdgeFeature(
                     appStore = appStore,
                     activity = activity,
                     settings = settings,
-                    browsingModeManager = browsingModeManager,
                     toolbarStore = BrowserToolbarStore(),
                     mainDispatcher = testDispatcher,
                 )
@@ -483,7 +462,6 @@ class HomepageEdgeToEdgeFeatureTest {
                     appStore = appStore,
                     activity = activity,
                     settings = settings,
-                    browsingModeManager = browsingModeManager,
                     toolbarStore = toolbarStore,
                     mainDispatcher = testDispatcher,
                 )
@@ -521,7 +499,6 @@ class HomepageEdgeToEdgeFeatureTest {
                     appStore = appStore,
                     activity = activity,
                     settings = settings,
-                    browsingModeManager = browsingModeManager,
                     toolbarStore = toolbarStore,
                     mainDispatcher = testDispatcher,
                 )
@@ -558,7 +535,6 @@ class HomepageEdgeToEdgeFeatureTest {
                     appStore = appStore,
                     activity = activity,
                     settings = settings,
-                    browsingModeManager = browsingModeManager,
                     toolbarStore = toolbarStore,
                     mainDispatcher = testDispatcher,
                 )
@@ -590,7 +566,6 @@ class HomepageEdgeToEdgeFeatureTest {
                     appStore = appStore,
                     activity = activity,
                     settings = settings,
-                    browsingModeManager = browsingModeManager,
                     toolbarStore = BrowserToolbarStore(),
                     mainDispatcher = testDispatcher,
                 )
@@ -618,7 +593,6 @@ class HomepageEdgeToEdgeFeatureTest {
                     appStore = appStore,
                     activity = activity,
                     settings = settings,
-                    browsingModeManager = browsingModeManager,
                     toolbarStore = BrowserToolbarStore(),
                     mainDispatcher = testDispatcher,
                 )
@@ -658,7 +632,6 @@ class HomepageEdgeToEdgeFeatureTest {
                     appStore = appStore,
                     activity = activity,
                     settings = settings,
-                    browsingModeManager = browsingModeManager,
                     toolbarStore = BrowserToolbarStore(),
                     mainDispatcher = testDispatcher,
                 )
@@ -687,7 +660,6 @@ class HomepageEdgeToEdgeFeatureTest {
                     appStore = appStore,
                     activity = activity,
                     settings = settings,
-                    browsingModeManager = browsingModeManager,
                     toolbarStore = toolbarStore,
                     mainDispatcher = testDispatcher,
                 )

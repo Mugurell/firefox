@@ -34,7 +34,9 @@ import org.mozilla.fenix.GleanMetrics.TrackingProtection
 import org.mozilla.fenix.HomeActivity
 import org.mozilla.fenix.NavGraphDirections
 import org.mozilla.fenix.browser.browsingmode.BrowsingMode
+import org.mozilla.fenix.components.AppStore
 import org.mozilla.fenix.components.accounts.FenixFxAEntryPoint
+import org.mozilla.fenix.components.appstate.AppAction
 import org.mozilla.fenix.components.share.ShareSource
 import org.mozilla.fenix.components.usecases.ShareUseCases
 import org.mozilla.fenix.helpers.FenixGleanTestRule
@@ -53,6 +55,7 @@ class HomeDeepLinkIntentProcessorTest {
     private lateinit var processorHome: HomeDeepLinkIntentProcessor
     private val settings: Settings = mockk(relaxed = true)
     private val shareUseCases: ShareUseCases = mockk(relaxed = true)
+    private val appStore: AppStore = mockk(relaxed = true)
 
     @Before
     fun setup() {
@@ -62,6 +65,7 @@ class HomeDeepLinkIntentProcessorTest {
         processorHome =
             HomeDeepLinkIntentProcessor(
                 activity = activity,
+                appStore = appStore,
                 showAddSearchWidgetPrompt = ::showAddSearchWidgetPrompt,
                 shareUseCases = shareUseCases,
             )
@@ -222,7 +226,7 @@ class HomeDeepLinkIntentProcessorTest {
     fun `process enable_private_browsing deep link`() {
         assertTrue(processorHome.process(testIntent("enable_private_browsing"), navController, out, settings))
 
-        verify { activity.browsingModeManager.mode = BrowsingMode.Private }
+        verify { appStore.dispatch(AppAction.BrowsingModeChanged(mode = BrowsingMode.Private)) }
         verify { navController.navigate(NavGraphDirections.actionGlobalHome()) }
         verify { out wasNot Called }
     }
@@ -330,7 +334,7 @@ class HomeDeepLinkIntentProcessorTest {
 
     @Test
     fun `process invalid open deep link`() {
-        val invalidProcessor = HomeDeepLinkIntentProcessor(activity, shareUseCases)
+        val invalidProcessor = HomeDeepLinkIntentProcessor(activity, appStore, shareUseCases)
 
         assertTrue(invalidProcessor.process(testIntent("open"), navController, out, settings))
 

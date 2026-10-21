@@ -12,7 +12,6 @@ import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.res.colorResource
 import mozilla.components.compose.browser.toolbar.store.BrowserToolbarState
 import org.mozilla.fenix.R
-import org.mozilla.fenix.browser.browsingmode.BrowsingModeManager
 import org.mozilla.fenix.theme.FirefoxTheme
 import org.mozilla.fenix.utils.Settings
 import org.mozilla.fenix.wallpapers.Wallpaper
@@ -61,7 +60,7 @@ data class TabStripColors(
          * Builds a [TabStripColors] instance based on the provided parameters.
          *
          * @param toolbarState The current state of the browser toolbar.
-         * @param browsingModeManager The browsing mode manager.
+         * @param isPrivate Whether the tab strip is shown in private browsing mode.
          * @param settings The application settings.
          * @param isOverEdgeToEdgeWallpaper Whether the tab strip is drawn directly over a universal edge-to-edge
          *   wallpaper.
@@ -70,7 +69,7 @@ data class TabStripColors(
         @Composable
         internal fun build(
             toolbarState: BrowserToolbarState?,
-            browsingModeManager: BrowsingModeManager,
+            isPrivate: Boolean,
             settings: Settings,
             isOverEdgeToEdgeWallpaper: Boolean,
         ): TabStripColors {
@@ -78,7 +77,6 @@ data class TabStripColors(
                 return edgeToEdgeWallpaper()
             }
 
-            val isPrivate = browsingModeManager.mode.isPrivate
             val isEdgeToEdgeBackgroundEnabled =
                 settings.enableHomepageEdgeToEdgeBackgroundFeature &&
                     settings.currentWallpaperName == Wallpaper.EDGE_TO_EDGE

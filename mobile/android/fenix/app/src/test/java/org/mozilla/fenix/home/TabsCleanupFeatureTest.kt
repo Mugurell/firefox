@@ -28,7 +28,9 @@ import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.mozilla.fenix.R
-import org.mozilla.fenix.browser.browsingmode.BrowsingModeManager
+import org.mozilla.fenix.browser.browsingmode.BrowsingMode
+import org.mozilla.fenix.components.AppStore
+import org.mozilla.fenix.components.appstate.AppState
 import org.mozilla.fenix.components.usecases.FenixBrowserUseCases
 import org.mozilla.fenix.ext.tabsClosedUndoMessage
 import org.mozilla.fenix.home.HomeScreenViewModel.Companion.ALL_ACTIVE_NORMAL_TABS
@@ -47,7 +49,7 @@ class TabsCleanupFeatureTest {
 
     @RelaxedMockK private lateinit var browserStore: BrowserStore
 
-    @RelaxedMockK private lateinit var browsingModeManager: BrowsingModeManager
+    @RelaxedMockK private lateinit var appStore: AppStore
 
     @RelaxedMockK private lateinit var navController: NavController
 
@@ -64,6 +66,7 @@ class TabsCleanupFeatureTest {
     @Before
     fun setup() {
         MockKAnnotations.init(this)
+        every { appStore.state } returns AppState()
 
         feature =
             spyk(
@@ -71,7 +74,7 @@ class TabsCleanupFeatureTest {
                     context = testContext,
                     viewModel = viewModel,
                     browserStore = browserStore,
-                    browsingModeManager = browsingModeManager,
+                    appStore = appStore,
                     navController = navController,
                     settings = settings,
                     tabsUseCases = tabsUseCases,
@@ -208,7 +211,7 @@ class TabsCleanupFeatureTest {
         verifyOrder {
             tabsUseCases.removeNormalTabs()
 
-            fenixBrowserUseCases.addNewHomepageTab(private = browsingModeManager.mode.isPrivate)
+            fenixBrowserUseCases.addNewHomepageTab(private = false)
 
             feature.showUndoSnackbar(
                 testContext.tabsClosedUndoMessage(2),
@@ -233,7 +236,7 @@ class TabsCleanupFeatureTest {
             }
 
         every { browserStore.state } returns BrowserState(tabs = mockTabs)
-        every { browsingModeManager.mode.isPrivate } returns true
+        every { appStore.state } returns AppState(mode = BrowsingMode.fromBoolean(true))
 
         feature.start()
 
@@ -317,7 +320,7 @@ class TabsCleanupFeatureTest {
         }
 
         every { settings.enableHomepageAsNewTab } returns true
-        every { browsingModeManager.mode.isPrivate } returns private
+        every { appStore.state } returns AppState(mode = BrowsingMode.fromBoolean(private))
         every { viewModel.sessionToDelete } returns sessionId
 
         every { browserStore.state.tabs } returns listOf(tab)
@@ -355,7 +358,7 @@ class TabsCleanupFeatureTest {
         }
 
         every { settings.enableHomepageAsNewTab } returns true
-        every { browsingModeManager.mode.isPrivate } returns private
+        every { appStore.state } returns AppState(mode = BrowsingMode.fromBoolean(private))
         every { viewModel.sessionToDelete } returns sessionId
 
         every { browserStore.state.tabs } returns listOf(tab, secondTab)

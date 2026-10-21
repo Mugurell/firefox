@@ -22,6 +22,8 @@ import org.mozilla.fenix.GlobalDirections
 import org.mozilla.fenix.HomeActivity
 import org.mozilla.fenix.NavGraphDirections
 import org.mozilla.fenix.browser.browsingmode.BrowsingMode
+import org.mozilla.fenix.components.AppStore
+import org.mozilla.fenix.components.appstate.AppAction
 import org.mozilla.fenix.components.share.ShareSource
 import org.mozilla.fenix.components.usecases.ShareUseCases
 import org.mozilla.fenix.ext.alreadyOnDestination
@@ -39,6 +41,7 @@ private const val EXTRA_TAB_TRAY_ANIMATION = "EXTRA_TAB_TRAY_ANIMATION"
 /** Deep links in the form of `fenix://host` open different parts of the app. */
 class HomeDeepLinkIntentProcessor(
     private val activity: HomeActivity,
+    private val appStore: AppStore,
     private val shareUseCases: ShareUseCases,
     private val showAddSearchWidgetPrompt: (Activity) -> Unit = ::maybeShowAddSearchWidgetPrompt,
 ) : HomeIntentProcessor {
@@ -117,7 +120,7 @@ class HomeDeepLinkIntentProcessor(
                 }
             }
             "enable_private_browsing" -> {
-                activity.browsingModeManager.mode = BrowsingMode.Private
+                appStore.dispatch(AppAction.BrowsingModeChanged(mode = BrowsingMode.Private))
             }
             "make_default_browser" -> {
                 activity.openSetDefaultBrowserOption(

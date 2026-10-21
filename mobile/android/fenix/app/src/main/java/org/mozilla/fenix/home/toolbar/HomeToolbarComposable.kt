@@ -46,7 +46,6 @@ import mozilla.components.compose.browser.toolbar.ui.BrowserToolbarQuery
 import mozilla.components.lib.state.ext.observeAsComposableState
 import mozilla.components.support.ktx.util.URLStringUtils
 import org.mozilla.fenix.R
-import org.mozilla.fenix.browser.browsingmode.BrowsingModeManager
 import org.mozilla.fenix.components.AppStore
 import org.mozilla.fenix.components.appstate.AppAction.SearchAction.SearchEnded
 import org.mozilla.fenix.components.appstate.AppAction.SearchAction.SearchStarted
@@ -68,8 +67,6 @@ import org.mozilla.fenix.wallpapers.WallpaperTheme
  * @param toolbarStore [BrowserToolbarStore] containing the composable toolbar state.
  * @param appStore [AppStore] to sync from.
  * @param browserStore [BrowserStore] to sync from.
- * @param browsingModeManager [BrowsingModeManager] Manager holding current state of whether the browser is in private
- *   mode or not.
  * @param settings [Settings] for querying various application settings.
  * @param directToSearchConfig [DirectToSearchConfig] configuration for starting with the toolbar in search mode.
  * @param coroutineScope Coroutine scope used for delaying actions.
@@ -85,7 +82,6 @@ internal class HomeToolbarComposable(
     private val toolbarStore: BrowserToolbarStore,
     private val appStore: AppStore,
     private val browserStore: BrowserStore,
-    private val browsingModeManager: BrowsingModeManager,
     private val settings: Settings,
     private val directToSearchConfig: DirectToSearchConfig,
     private val coroutineScope: CoroutineScope,
@@ -111,7 +107,7 @@ internal class HomeToolbarComposable(
                 }
                 .value
         val currentQuery = toolbarStore.observeAsComposableState { it.editState.query.current }.value
-        val isPrivateMode = browsingModeManager.mode.isPrivate
+        val isPrivateMode = appStore.state.mode.isPrivate
         val isUniversalEdgeToEdge = settings.enableUniversalEdgeToEdgeWallpapers
         val hasWallpaperBackground =
             hasWallpaperBackground(appStore = appStore, settings = settings, isPrivateMode = isPrivateMode)

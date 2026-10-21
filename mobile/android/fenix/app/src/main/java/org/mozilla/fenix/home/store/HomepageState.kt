@@ -9,7 +9,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalWindowInfo
 import org.mozilla.fenix.browser.browsingmode.BrowsingMode
-import org.mozilla.fenix.browser.browsingmode.BrowsingModeManager
 import org.mozilla.fenix.components.appstate.AppState
 import org.mozilla.fenix.components.appstate.setup.checklist.SetupChecklistState
 import org.mozilla.fenix.components.components
@@ -132,7 +131,6 @@ internal sealed class HomepageState {
          * @param appState State to build the [HomepageState] from.
          * @param privacyNoticeBannerState State of the privacy notice banner.
          * @param collectionsMigrationCardState State of the collections migration card.
-         * @param browsingModeManager Manager holding current state of whether the browser is in private mode or not.
          * @param settings [Settings] corresponding to how the homepage should be displayed.
          */
         @Composable
@@ -140,10 +138,9 @@ internal sealed class HomepageState {
             appState: AppState,
             privacyNoticeBannerState: PrivacyNoticeBannerState,
             collectionsMigrationCardState: CollectionsMigrationCardState,
-            browsingModeManager: BrowsingModeManager,
             settings: Settings,
         ): HomepageState {
-            return if (browsingModeManager.mode.isPrivate) {
+            return if (appState.mode.isPrivate) {
                 buildPrivateState(
                     appState = appState,
                     settings = settings,

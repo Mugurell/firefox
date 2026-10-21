@@ -10,7 +10,9 @@ import mozilla.telemetry.glean.private.NoExtras
 import org.mozilla.fenix.GleanMetrics.SearchWidget
 import org.mozilla.fenix.HomeActivity
 import org.mozilla.fenix.NavGraphDirections
-import org.mozilla.fenix.browser.browsingmode.BrowsingModeManager
+import org.mozilla.fenix.browser.browsingmode.resolveBrowsingMode
+import org.mozilla.fenix.components.AppStore
+import org.mozilla.fenix.components.appstate.AppAction
 import org.mozilla.fenix.components.metrics.MetricsUtils
 import org.mozilla.fenix.components.usecases.FenixBrowserUseCases
 import org.mozilla.fenix.ext.nav
@@ -22,12 +24,12 @@ import org.mozilla.fenix.utils.Settings
  *
  * @param fenixBrowserUseCases [FenixBrowserUseCases] used to add a new homepage tab when the homepage as a new tab
  *   feature is enabled.
- * @param browsingModeManager [BrowsingModeManager] used to get and set the browsing mode of the new tab.
+ * @param appStore [AppStore] used to set the browsing mode of the new tab.
  * @param userHasBeenOnboarded Returns whether the user has completed onboarding.
  */
 class StartSearchIntentProcessor(
     private val fenixBrowserUseCases: FenixBrowserUseCases,
-    private val browsingModeManager: BrowsingModeManager,
+    private val appStore: AppStore,
     private val userHasBeenOnboarded: () -> Boolean,
 ) : HomeIntentProcessor {
 
@@ -63,8 +65,9 @@ class StartSearchIntentProcessor(
 
             source?.let {
                 if (settings.enableHomepageAsNewTab) {
-                    browsingModeManager.updateMode(intent)
-                    fenixBrowserUseCases.addNewHomepageTab(private = browsingModeManager.mode.isPrivate)
+                    val mode = resolveBrowsingMode(null, intent, settings.lastKnownMode)
+                    appStore.dispatch(AppAction.BrowsingModeChanged(mode = mode))
+                    fenixBrowserUseCases.addNewHomepageTab(private = mode.isPrivate)
                 }
 
                 navController.nav(

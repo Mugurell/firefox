@@ -44,7 +44,6 @@ import org.mozilla.fenix.GleanMetrics.ShortcutsLibrary
 import org.mozilla.fenix.GleanMetrics.TopSites
 import org.mozilla.fenix.R
 import org.mozilla.fenix.browser.browsingmode.BrowsingMode
-import org.mozilla.fenix.browser.browsingmode.SimpleBrowsingModeManager
 import org.mozilla.fenix.components.Analytics
 import org.mozilla.fenix.components.AppStore
 import org.mozilla.fenix.components.appstate.AppAction
@@ -66,7 +65,6 @@ class DefaultTopSiteControllerTest {
     private val activity: Activity = mockk(relaxed = true)
     private val navController: NavController = mockk(relaxed = true)
     private val appStore: AppStore = mockk(relaxed = true)
-    private val browsingModeManager = SimpleBrowsingModeManager(BrowsingMode.Normal)
     private val tabsUseCases: TabsUseCases = mockk(relaxed = true)
     private val selectTabUseCase: TabsUseCases = mockk(relaxed = true)
     private val topSitesUseCases: TopSitesUseCases = mockk(relaxed = true)
@@ -1440,7 +1438,7 @@ class DefaultTopSiteControllerTest {
 
             createController(this).handleOpenInPrivateTabClicked(topSite)
 
-            assertEquals(BrowsingMode.Private, browsingModeManager.mode)
+            verify { appStore.dispatch(AppAction.BrowsingModeChanged(mode = BrowsingMode.Private)) }
         }
 
     fun `WHEN screen is shown THEN impression is logged`() = runTest {
@@ -1481,7 +1479,6 @@ class DefaultTopSiteControllerTest {
             navControllerRef = WeakReference(navController),
             store = store,
             appStore = appStore,
-            browsingModeManager = browsingModeManager,
             settings = settings,
             addTabUseCase = tabsUseCases.addTab,
             selectTabUseCase = selectTabUseCase.selectTab,

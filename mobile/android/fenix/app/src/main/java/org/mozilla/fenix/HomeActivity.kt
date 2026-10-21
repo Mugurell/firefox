@@ -392,19 +392,20 @@ open class HomeActivity : LocaleAwareAppCompatActivity(), NavHostActivity, Crash
         listOf(
             HomeDeepLinkIntentProcessor(
                 activity = this,
+                appStore = components.appStore,
                 shareUseCases = components.useCases.shareUseCases,
             ),
             SpeechProcessingIntentProcessor(this, components.core.store),
             AssistIntentProcessor(),
             StartSearchIntentProcessor(
                 fenixBrowserUseCases = components.useCases.fenixBrowserUseCases,
-                browsingModeManager = browsingModeManager,
+                appStore = components.appStore,
                 userHasBeenOnboarded = { components.fenixOnboarding.userHasBeenOnboarded() },
             ),
             LensResultIntentProcessor(this),
             OpenHomeIntentProcessor(
                 fenixBrowserUseCases = components.useCases.fenixBrowserUseCases,
-                browsingModeManager = browsingModeManager,
+                appStore = components.appStore,
             ),
             OpenBrowserIntentProcessor(this, ::getIntentSessionId),
             OpenSpecificTabIntentProcessor(this),
