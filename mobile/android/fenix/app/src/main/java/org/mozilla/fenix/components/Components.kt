@@ -53,6 +53,7 @@ import org.mozilla.fenix.R
 import org.mozilla.fenix.autofill.AutofillConfirmActivity
 import org.mozilla.fenix.autofill.AutofillSearchActivity
 import org.mozilla.fenix.autofill.AutofillUnlockActivity
+import org.mozilla.fenix.browser.browsingmode.BrowsingModePersistenceMiddleware
 import org.mozilla.fenix.browser.relay.ErrorMessages
 import org.mozilla.fenix.browser.relay.RelayFeatureIntegration
 import org.mozilla.fenix.components.appstate.AppAction
@@ -373,6 +374,7 @@ class Components(
                                 settings.migrateLastReviewPromptTimePrefIfNeeded(nimbus.events)
                             },
                         AppVisualCompletenessMiddleware(performance.visualCompletenessQueue),
+                        BrowsingModePersistenceMiddleware(settings),
                     ),
             )
             .also {

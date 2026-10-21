@@ -569,21 +569,6 @@ class HomeActivityTest {
     }
 
     @Test
-    fun `WHEN the browsing mode is set THEN it is saved as the last known mode`() {
-        every { activity.applicationContext } returns testContext
-        every { activity.window } returns mockk(relaxed = true)
-        val intent = Intent().apply { putExtra(HomeActivity.PRIVATE_BROWSING_MODE, true) }
-
-        val browsingModeManager = activity.createBrowsingModeManager(intent)
-
-        verify { settings.lastKnownMode = BrowsingMode.Private }
-
-        browsingModeManager.mode = BrowsingMode.Normal
-
-        verify { settings.lastKnownMode = BrowsingMode.Normal }
-    }
-
-    @Test
     fun `WHEN the browsing mode is set THEN the secure flag is updated and the mode is published to the app state`() {
         val window: Window = mockk(relaxed = true)
         every { activity.applicationContext } returns testContext

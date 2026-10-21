@@ -1680,8 +1680,6 @@ open class HomeActivity : LocaleAwareAppCompatActivity(), NavHostActivity, Crash
                 updateSecureWindowFlags(newMode)
 
                 if (this !is ExternalAppBrowserActivity) {
-                    components.settings.lastKnownMode = newMode
-
                     if (::themeManager.isInitialized) {
                         themeManager.currentTheme = newMode
                     }
