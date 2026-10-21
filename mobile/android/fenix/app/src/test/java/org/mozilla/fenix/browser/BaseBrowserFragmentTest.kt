@@ -23,6 +23,7 @@ import kotlin.test.assertNotNull
 import mozilla.components.browser.state.state.BrowserState
 import mozilla.components.browser.state.state.SessionState
 import mozilla.components.browser.state.state.content.DownloadState
+import mozilla.components.browser.state.state.createCustomTab
 import mozilla.components.browser.state.state.createTab
 import mozilla.components.concept.engine.EngineView
 import mozilla.components.concept.engine.permission.SitePermissions
@@ -812,6 +813,36 @@ class BaseBrowserFragmentTest {
         every { testContext.components.appStore.state.mode.isPrivate } returns true
         every { testContext.components.core.store.state } returns BrowserState(systemPermissionRequestInProgress = true)
         fragment.blackScreenOverlay = mockk()
+
+        assertFalse(fragment.shouldAddBlackScreen())
+    }
+
+    @Test
+    fun `shouldAddBlackScreen returns true for a private custom tab when in normal mode`() {
+        every { testContext.components.settings.privateBrowsingModeLocked } returns true
+        every { testContext.components.appStore.state.mode.isPrivate } returns false
+        every { testContext.components.core.store.state } returns
+            BrowserState(
+                customTabs = listOf(createCustomTab(url = "https://mozilla.org", id = "customTab", private = true)),
+                systemPermissionRequestInProgress = true,
+            )
+        fragment.customTabSessionId = "customTab"
+        fragment.blackScreenOverlay = null
+
+        assertTrue(fragment.shouldAddBlackScreen())
+    }
+
+    @Test
+    fun `shouldAddBlackScreen returns false for a normal custom tab when in private mode`() {
+        every { testContext.components.settings.privateBrowsingModeLocked } returns true
+        every { testContext.components.appStore.state.mode.isPrivate } returns true
+        every { testContext.components.core.store.state } returns
+            BrowserState(
+                customTabs = listOf(createCustomTab(url = "https://mozilla.org", id = "customTab", private = false)),
+                systemPermissionRequestInProgress = true,
+            )
+        fragment.customTabSessionId = "customTab"
+        fragment.blackScreenOverlay = null
 
         assertFalse(fragment.shouldAddBlackScreen())
     }

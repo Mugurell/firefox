@@ -353,7 +353,7 @@ abstract class BaseBrowserFragment :
     private var pipFeature: PictureInPictureFeature? = null
 
     var customTabSessionId: String? = null
-        private set
+        @VisibleForTesting internal set
 
     @VisibleForTesting internal var browserInitialized: Boolean = false
 
@@ -1573,7 +1573,10 @@ abstract class BaseBrowserFragment :
     @VisibleForTesting
     internal fun shouldAddBlackScreen(): Boolean =
         requireComponents.settings.privateBrowsingModeLocked &&
-            requireComponents.appStore.state.mode.isPrivate &&
+            requireComponents.appStore.state.isCurrentTabPrivate(
+                requireComponents.core.store.state,
+                customTabSessionId,
+            ) &&
             requireComponents.core.store.state.systemPermissionRequestInProgress &&
             blackScreenOverlay == null
 
