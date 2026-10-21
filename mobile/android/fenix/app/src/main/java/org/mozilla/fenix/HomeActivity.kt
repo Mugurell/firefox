@@ -1670,12 +1670,17 @@ open class HomeActivity : LocaleAwareAppCompatActivity(), NavHostActivity, Crash
         components.appStore.dispatch(AppAction.MainBrowserMovedToForeground)
     }
 
-    private fun createBrowsingModeManager(intent: Intent?): BrowsingModeManager {
+    @VisibleForTesting
+    internal fun createBrowsingModeManager(intent: Intent?): BrowsingModeManager {
         return DefaultBrowsingModeManager(
             intent = intent,
             settings = components.settings,
             getSessionMode = ::getSessionBrowsingMode,
             onModeChange = { newMode ->
+                if (this !is ExternalAppBrowserActivity) {
+                    components.settings.lastKnownMode = newMode
+                }
+
                 updateSecureWindowFlags(newMode)
 
                 if (::themeManager.isInitialized) {

@@ -292,6 +292,21 @@ class ExternalAppBrowserActivityTest {
     }
 
     @Test
+    fun `WHEN the browsing mode of a custom tab is set THEN it is not saved as the last known mode`() {
+        val settings: Settings = mockk(relaxed = true)
+        val activity = buildActivityWithCustomTab(private = true)
+        every { activity.components.settings } returns settings
+        every { activity.components.appStore } returns mockk(relaxed = true)
+        every { activity.window } returns mockk(relaxed = true)
+
+        val browsingModeManager = activity.createBrowsingModeManager(intent = null)
+        browsingModeManager.mode = BrowsingMode.Normal
+
+        assertEquals(BrowsingMode.Normal, browsingModeManager.mode)
+        verify(exactly = 0) { settings.lastKnownMode = any() }
+    }
+
+    @Test
     fun `WHEN the custom tab becomes the top resumed activity THEN it is the last foreground custom tab`() {
         val appStore = AppStore()
         val activity = buildActivityWithCustomTab(private = false)

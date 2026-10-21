@@ -36,11 +36,11 @@ interface BrowsingModeManager {
 }
 
 /**
- * Default implementation of [BrowsingModeManager] that tracks the current [BrowsingMode], persists it to [Settings],
- * and synchronizes it with [AppStore].
+ * Default implementation of [BrowsingModeManager] that tracks the current [BrowsingMode] and synchronizes it with
+ * [AppStore].
  *
  * @param intent The [Intent] that started the activity.
- * @param settings [Settings] used to persist the current browsing mode in storage.
+ * @param settings [Settings] used to read the last known browsing mode.
  * @param getSessionMode Returns the [BrowsingMode] of the session this activity is bound to, if any. It takes
  *   precedence over the [Intent] and the last known [BrowsingMode].
  * @param onModeChange Callback invoked when the browsing mode changes.
@@ -54,7 +54,6 @@ class DefaultBrowsingModeManager(
     override var mode: BrowsingMode = BrowsingMode.Normal
         set(value) {
             field = value
-            settings.lastKnownMode = value
             onModeChange(value)
         }
 
