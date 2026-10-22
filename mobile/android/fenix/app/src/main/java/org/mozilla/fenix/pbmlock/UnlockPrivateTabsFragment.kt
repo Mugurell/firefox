@@ -20,7 +20,6 @@ import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
 import kotlinx.coroutines.launch
 import mozilla.components.browser.state.selector.normalTabs
-import mozilla.components.feature.customtabs.isCustomTabIntent
 import mozilla.components.support.base.feature.UserInteractionHandler
 import org.mozilla.fenix.GleanMetrics.PrivateBrowsingLocked
 import org.mozilla.fenix.HomeActivity
@@ -51,9 +50,6 @@ class UnlockPrivateTabsFragment : Fragment(), UserInteractionHandler, SystemInse
                 onFailure = { onAuthFailure() },
             )
 
-        val isCustomPrivateTab =
-            isCustomTabIntent(requireActivity().intent) && requireComponents.appStore.state.mode.isPrivate
-
         return content {
             FirefoxTheme {
                 UnlockPrivateTabsScreen(
@@ -62,7 +58,7 @@ class UnlockPrivateTabsFragment : Fragment(), UserInteractionHandler, SystemInse
                         PrivateBrowsingLocked.seeOtherTabsClicked.record()
                         closeFragment()
                     },
-                    showNegativeButton = !isCustomPrivateTab,
+                    showNegativeButton = navigationOrigin != NavigationOrigin.CUSTOM_TAB,
                 )
             }
         }

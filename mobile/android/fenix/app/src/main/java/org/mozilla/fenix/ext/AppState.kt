@@ -5,7 +5,7 @@
 package org.mozilla.fenix.ext
 
 import androidx.annotation.VisibleForTesting
-import mozilla.components.browser.state.selector.findCustomTab
+import mozilla.components.browser.state.selector.findTabOrCustomTab
 import mozilla.components.browser.state.state.BrowserState
 import mozilla.components.service.pocket.PocketStory
 import mozilla.components.service.pocket.PocketStory.PocketRecommendedStory
@@ -239,10 +239,23 @@ fun AppState.shouldShowRecentSyncedTabs(settings: Settings): Boolean {
 }
 
 /**
- * Whether the foreground tab - a regular tab or a custom tab - is private or not. This is useful for features outliving
- * a custom tab.
+ * Whether the foreground tab - a regular tab or a custom tab - is private or not.
+ *
+ * This is useful for features outliving a custom tab. Otherwise prefer using:
+ * - BrowserState.content.private to get the private mode of a custom tab
+ * - AppState.mode.isPrivate to get the private mode of a regulat tab
  *
  * @param browserState The [BrowserState] holding the custom tabs.
+ * @see [isCurrentTabPrivate]
  */
 fun AppState.isForegroundTabOrCustomTabPrivate(browserState: BrowserState): Boolean =
-    lastForegroundCustomTabId?.let { browserState.findCustomTab(it) }?.content?.private ?: mode.isPrivate
+    isCurrentTabPrivate(browserState, lastForegroundCustomTabId)
+
+/**
+ * Whether the tab the user is on is private or not.
+ *
+ * @param browserState The [BrowserState] holding the tabs.
+ * @param customTabId The ID of the custom tab shown in the window, or null for the main browser.
+ */
+fun AppState.isCurrentTabPrivate(browserState: BrowserState, customTabId: String?): Boolean =
+    customTabId?.let { browserState.findTabOrCustomTab(it) }?.content?.private ?: mode.isPrivate

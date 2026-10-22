@@ -10,6 +10,7 @@ import java.util.concurrent.TimeUnit
 import kotlin.random.Random
 import mozilla.components.browser.state.state.BrowserState
 import mozilla.components.browser.state.state.createCustomTab
+import mozilla.components.browser.state.state.createTab
 import mozilla.components.service.pocket.PocketStory
 import mozilla.components.service.pocket.PocketStory.PocketRecommendedStory
 import mozilla.components.service.pocket.PocketStory.SponsoredContent
@@ -17,6 +18,7 @@ import mozilla.components.service.pocket.PocketStory.SponsoredContentCallbacks
 import mozilla.components.service.pocket.PocketStory.SponsoredContentFrequencyCaps
 import org.junit.Assert
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertSame
 import org.junit.Assert.assertTrue
@@ -592,13 +594,48 @@ class AppStateTest {
         assertTrue(state.isForegroundTabOrCustomTabPrivate(customTabsState))
     }
 
+    @Test
+    fun `GIVEN the custom tab last in front was moved to a private tab and normal browsing mode THEN the foreground tab is private`() {
+        val state = AppState(mode = BrowsingMode.Normal, lastForegroundCustomTabId = "moved")
+
+        assertTrue(state.isForegroundTabOrCustomTabPrivate(customTabsState))
+    }
+
+    @Test
+    fun `GIVEN a window showing a private custom tab and normal browsing mode THEN the current tab is private`() {
+        assertTrue(AppState(mode = BrowsingMode.Normal).isCurrentTabPrivate(customTabsState, "private"))
+    }
+
+    @Test
+    fun `GIVEN a window showing a normal custom tab and private browsing mode THEN the current tab is not private`() {
+        assertFalse(AppState(mode = BrowsingMode.Private).isCurrentTabPrivate(customTabsState, "normal"))
+    }
+
+    @Test
+    fun `GIVEN the main browser window THEN the browsing mode decides if the current tab is private`() {
+        assertTrue(AppState(mode = BrowsingMode.Private).isCurrentTabPrivate(customTabsState, null))
+        assertFalse(AppState(mode = BrowsingMode.Normal).isCurrentTabPrivate(customTabsState, null))
+    }
+
+    @Test
+    fun `GIVEN the custom tab of a window was removed THEN the browsing mode decides if the current tab is private`() {
+        assertTrue(AppState(mode = BrowsingMode.Private).isCurrentTabPrivate(customTabsState, "removed"))
+        assertFalse(AppState(mode = BrowsingMode.Normal).isCurrentTabPrivate(customTabsState, "removed"))
+    }
+
+    @Test
+    fun `GIVEN the custom tab of a window was moved to a private tab and normal browsing mode THEN the current tab is private`() {
+        assertTrue(AppState(mode = BrowsingMode.Normal).isCurrentTabPrivate(customTabsState, "moved"))
+    }
+
     private val customTabsState =
         BrowserState(
+            tabs = listOf(createTab(url = "https://www.mozilla.org", id = "moved", private = true)),
             customTabs =
                 listOf(
                     createCustomTab(url = "https://www.mozilla.org", id = "private", private = true),
                     createCustomTab(url = "https://www.mozilla.org", id = "normal", private = false),
-                )
+                ),
         )
 
     private fun assertCombinedStories(

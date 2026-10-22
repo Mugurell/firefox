@@ -251,6 +251,36 @@ class PrivateBrowsingLockFeatureTest {
             assertFalse(result)
         }
 
+    @Test
+    fun `GIVEN a private window in normal mode and enabled lock WHEN observePrivateModeLock is triggered THEN observing lock triggers`() =
+        runTest {
+            var result = false
+            val appState = AppState(mode = BrowsingMode.Normal, isPrivateScreenLocked = true)
+
+            observePrivateModeLock(
+                flow = flowOf(appState),
+                isPrivate = { true },
+                onPrivateModeLocked = { result = true },
+            )
+
+            assertTrue(result)
+        }
+
+    @Test
+    fun `GIVEN a normal window in private mode and enabled lock WHEN observePrivateModeLock is triggered THEN observing lock doesn't trigger`() =
+        runTest {
+            var result = false
+            val appState = AppState(mode = BrowsingMode.Private, isPrivateScreenLocked = true)
+
+            observePrivateModeLock(
+                flow = flowOf(appState),
+                isPrivate = { false },
+                onPrivateModeLocked = { result = true },
+            )
+
+            assertFalse(result)
+        }
+
     // on stop tests
     @Test
     fun `GIVEN feature is on and mode is private and there are unlocked private tabs WHEN Activity stops without config change THEN we lock private mode`() {

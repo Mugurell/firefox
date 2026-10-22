@@ -220,6 +220,7 @@ import org.mozilla.fenix.ext.getBottomToolbarHeight
 import org.mozilla.fenix.ext.getPreferenceKey
 import org.mozilla.fenix.ext.getTopToolbarHeight
 import org.mozilla.fenix.ext.hideToolbar
+import org.mozilla.fenix.ext.isCurrentTabPrivate
 import org.mozilla.fenix.ext.isMicrosurveyPromptVisible
 import org.mozilla.fenix.ext.isOnline
 import org.mozilla.fenix.ext.isToolbarAtBottom
@@ -484,7 +485,9 @@ abstract class BaseBrowserFragment :
             tabGroupsStripStore.dispatch(TabGroupsStripAction.InitializeDataObservation)
         }
 
-        observePrivateModeLock {
+        observePrivateModeLock(
+            isPrivate = { it.isCurrentTabPrivate(requireComponents.core.store.state, customTabSessionId) }
+        ) {
             findNavController()
                 .navigate(
                     NavGraphDirections.actionGlobalUnlockPrivateTabsFragment(
