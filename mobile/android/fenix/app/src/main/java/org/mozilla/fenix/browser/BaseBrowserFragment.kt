@@ -484,7 +484,7 @@ abstract class BaseBrowserFragment :
             tabGroupsStripStore.dispatch(TabGroupsStripAction.InitializeDataObservation)
         }
 
-        observePrivateModeLock {
+        observePrivateModeLock(isPrivate = { requireComponents.activityPrivacy.isPrivate(customTabSessionId) }) {
             findNavController()
                 .navigate(
                     NavGraphDirections.actionGlobalUnlockPrivateTabsFragment(
@@ -621,8 +621,8 @@ abstract class BaseBrowserFragment :
                     useCases = context.components.useCases.contextMenuUseCases,
                     tabId = customTabSessionId,
                     shouldHide = {
-                        val state = requireComponents.appStore.state
-                        state.isPrivateScreenLocked && state.mode.isPrivate
+                        requireComponents.appStore.state.isPrivateScreenLocked &&
+                            requireComponents.activityPrivacy.isPrivate(customTabSessionId)
                     },
                 ),
             owner = this,
@@ -1360,7 +1360,7 @@ abstract class BaseBrowserFragment :
                     onShouldShowRequestPermissionRationale = {
                         shouldShowRequestPermissionRationale(it)
                     },
-                    shouldShowDoNotAskAgainCheckBox = context.components.appStore.state.mode != BrowsingMode.Private,
+                    shouldShowDoNotAskAgainCheckBox = !context.components.activityPrivacy.isPrivate(customTabSessionId),
                     store = store,
                     coroutineScope = requireComponents.applicationScope,
                     shouldHide = {
@@ -1369,8 +1369,8 @@ abstract class BaseBrowserFragment :
                         if (this.context == null) {
                             true
                         } else {
-                            val state = requireComponents.appStore.state
-                            state.isPrivateScreenLocked && state.mode.isPrivate
+                            requireComponents.appStore.state.isPrivateScreenLocked &&
+                                requireComponents.activityPrivacy.isPrivate(customTabSessionId)
                         }
                     },
                 ),
@@ -1564,7 +1564,7 @@ abstract class BaseBrowserFragment :
     @VisibleForTesting
     internal fun shouldAddBlackScreen(): Boolean =
         requireComponents.settings.privateBrowsingModeLocked &&
-            requireComponents.appStore.state.mode.isPrivate &&
+            requireComponents.activityPrivacy.isPrivate(customTabSessionId) &&
             requireComponents.core.store.state.systemPermissionRequestInProgress &&
             blackScreenOverlay == null
 

@@ -203,6 +203,7 @@ class PrivateBrowsingLockFeatureTest {
 
             observePrivateModeLock(
                 flow = flowOf(appState),
+                isPrivate = { false },
                 onPrivateModeLocked = { result = true },
             )
 
@@ -217,6 +218,7 @@ class PrivateBrowsingLockFeatureTest {
 
             observePrivateModeLock(
                 flow = flowOf(appState),
+                isPrivate = { false },
                 onPrivateModeLocked = { result = true },
             )
 
@@ -231,6 +233,7 @@ class PrivateBrowsingLockFeatureTest {
 
             observePrivateModeLock(
                 flow = flowOf(appState),
+                isPrivate = { true },
                 onPrivateModeLocked = { result = true },
             )
 
@@ -245,10 +248,27 @@ class PrivateBrowsingLockFeatureTest {
 
             observePrivateModeLock(
                 flow = flowOf(appState),
+                isPrivate = { true },
                 onPrivateModeLocked = { result = true },
             )
 
             assertFalse(result)
+        }
+
+    @Test
+    fun `GIVEN normal mode and enabled lock and lockNormalMode is true WHEN observePrivateModeLock is triggered THEN observing lock triggers`() =
+        runTest {
+            var result = false
+            val appState = AppState(mode = BrowsingMode.Normal, isPrivateScreenLocked = true)
+
+            observePrivateModeLock(
+                flow = flowOf(appState),
+                lockNormalMode = true,
+                isPrivate = { false },
+                onPrivateModeLocked = { result = true },
+            )
+
+            assertTrue(result)
         }
 
     // on stop tests

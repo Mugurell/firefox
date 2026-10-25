@@ -285,6 +285,8 @@
 
 
     <style name="PrivateThemeBase" parent="Theme.Material3.DayNight.NoActionBar">
+        <item name="isPrivateTheme">true</item>
+
         <!-- Android system styling -->
         <item name="materialTimePickerTheme">@style/Private.MaterialTimePicker</item>
         <item name="materialCalendarTheme">@style/MaterialCalendar</item>

@@ -308,6 +308,8 @@ class Components(
 
     val appLinkIntentLaunchTypeProvider by lazyMonitored { AppLinkIntentLaunchTypeProvider(appStartReasonProvider) }
 
+    val activityPrivacy by lazyMonitored { ActivityPrivacy(core.store, settings) }
+
     val appStore by lazyMonitored {
         val blocklistHandler = BlocklistHandler(settings)
 

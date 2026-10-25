@@ -297,16 +297,23 @@ class PrivateBrowsingLockUseCases(appStore: AppStore) {
  * Observes the app state and triggers a callback when the user enters a locked private browsing session.
  *
  * @param lockNormalMode If true, the callback will also be triggered in normal mode.
+ * @param isPrivate Whether the fragment shows private content.
  * @param onPrivateModeLocked A callback invoked when private browsing mode is locked.
  */
 fun Fragment.observePrivateModeLock(
     lockNormalMode: Boolean = false,
+    isPrivate: () -> Boolean = { requireComponents.appStore.state.mode.isPrivate },
     onPrivateModeLocked: () -> Unit,
 ) {
     viewLifecycleOwner.run {
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.RESUMED) {
-                observePrivateModeLock(requireComponents.appStore.flow(), lockNormalMode, onPrivateModeLocked)
+                observePrivateModeLock(
+                    flow = requireComponents.appStore.flow(),
+                    lockNormalMode = lockNormalMode,
+                    isPrivate = isPrivate,
+                    onPrivateModeLocked = onPrivateModeLocked,
+                )
             }
         }
     }
@@ -316,11 +323,12 @@ fun Fragment.observePrivateModeLock(
 internal suspend fun observePrivateModeLock(
     flow: Flow<AppState>,
     lockNormalMode: Boolean = false,
+    isPrivate: () -> Boolean,
     onPrivateModeLocked: () -> Unit,
 ) {
     flow
         .filter { state ->
-            state.isPrivateScreenLocked && (state.mode == BrowsingMode.Private || lockNormalMode)
+            state.isPrivateScreenLocked && (isPrivate() || lockNormalMode)
         }
         .distinctUntilChanged()
         .collect {
