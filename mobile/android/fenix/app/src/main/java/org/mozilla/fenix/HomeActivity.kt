@@ -1651,18 +1651,28 @@ open class HomeActivity : LocaleAwareAppCompatActivity(), NavHostActivity, Crash
         return super.getSystemService(name)
     }
 
-    private fun createBrowsingModeManager(intent: Intent?): BrowsingModeManager {
+    /** Returns the [BrowsingMode] of the session this activity is bound to, if any. */
+    @VisibleForTesting(otherwise = VisibleForTesting.PROTECTED)
+    internal open fun getSessionBrowsingMode(): BrowsingMode? = null
+
+    @VisibleForTesting
+    internal fun createBrowsingModeManager(intent: Intent?): BrowsingModeManager {
         return DefaultBrowsingModeManager(
             intent = intent,
             settings = components.settings,
+            getSessionMode = ::getSessionBrowsingMode,
             onModeChange = { newMode ->
                 updateSecureWindowFlags(newMode)
 
-                if (::themeManager.isInitialized) {
-                    themeManager.currentTheme = newMode
-                }
+                if (this !is ExternalAppBrowserActivity) {
+                    components.settings.lastKnownMode = newMode
 
-                components.appStore.dispatch(AppAction.BrowsingModeManagerModeChanged(mode = newMode))
+                    if (::themeManager.isInitialized) {
+                        themeManager.currentTheme = newMode
+                    }
+
+                    components.appStore.dispatch(AppAction.BrowsingModeManagerModeChanged(mode = newMode))
+                }
             },
         )
     }

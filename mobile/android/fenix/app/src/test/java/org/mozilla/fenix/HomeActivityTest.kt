@@ -6,6 +6,7 @@ package org.mozilla.fenix
 
 import android.content.Intent
 import android.os.Bundle
+import android.view.WindowManager.LayoutParams.FLAG_SECURE
 import androidx.fragment.app.FragmentManager
 import io.mockk.Runs
 import io.mockk.every
@@ -42,6 +43,7 @@ import org.mozilla.fenix.ext.getIntentSource
 import org.mozilla.fenix.helpers.FenixGleanTestRule
 import org.mozilla.fenix.helpers.perf.TestStrictModeManager
 import org.mozilla.fenix.utils.Settings
+import org.robolectric.Robolectric
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
@@ -565,5 +567,27 @@ class HomeActivityTest {
             activeOptionsPage,
             browserStore.state.extensions[extension.id]?.activeOptionsPage,
         )
+    }
+
+    @Test
+    fun `WHEN the regular tabs activity changes its browsing mode THEN it saves it, publishes it and applies it to its window`() {
+        val settings = Settings(testContext).apply { lastKnownMode = BrowsingMode.Normal }
+        val appStore = AppStore()
+        every { testContext.components.settings } returns settings
+        every { testContext.components.appStore } returns appStore
+        val intent = Intent().putExtra(HomeActivity.PRIVATE_BROWSING_MODE, true)
+        val homeActivity = Robolectric.buildActivity(HomeActivity::class.java, intent).get()
+
+        val browsingModeManager = homeActivity.createBrowsingModeManager(intent)
+
+        assertEquals(BrowsingMode.Private, settings.lastKnownMode)
+        assertEquals(BrowsingMode.Private, appStore.state.mode)
+        assertTrue(homeActivity.window.attributes.flags and FLAG_SECURE != 0)
+
+        browsingModeManager.mode = BrowsingMode.Normal
+
+        assertEquals(BrowsingMode.Normal, settings.lastKnownMode)
+        assertEquals(BrowsingMode.Normal, appStore.state.mode)
+        assertFalse(homeActivity.window.attributes.flags and FLAG_SECURE != 0)
     }
 }

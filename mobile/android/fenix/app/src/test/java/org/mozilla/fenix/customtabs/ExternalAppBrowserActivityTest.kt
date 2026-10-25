@@ -6,6 +6,7 @@ package org.mozilla.fenix.customtabs
 
 import android.content.Intent
 import android.os.Bundle
+import android.view.WindowManager.LayoutParams.FLAG_SECURE
 import androidx.lifecycle.Lifecycle
 import androidx.navigation.NavController
 import io.mockk.Called
@@ -32,9 +33,12 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.mozilla.fenix.BrowserDirection
+import org.mozilla.fenix.HomeActivity
 import org.mozilla.fenix.NavGraphDirections
 import org.mozilla.fenix.browser.browsingmode.BrowsingMode
 import org.mozilla.fenix.browser.browsingmode.BrowsingModeManager
+import org.mozilla.fenix.components.AppStore
+import org.mozilla.fenix.components.appstate.AppState
 import org.mozilla.fenix.ext.components
 import org.mozilla.fenix.ext.getIntentSource
 import org.mozilla.fenix.ext.getNavDirections
@@ -290,5 +294,72 @@ class ExternalAppBrowserActivityTest {
         val directions = activity.createOpenOptionsPageDirections(activeOptionsPage)
 
         assertEquals("custom-tab-id", directions?.arguments?.getString("customTabSessionId"))
+    }
+
+    @Test
+    fun `GIVEN a private custom tab, a normal intent and normal last known mode WHEN its activity starts THEN it is private and blocks screenshots`() {
+        val activity = buildCustomTabActivity(customTabPrivate = true, intentPrivate = false)
+
+        val browsingModeManager = activity.createBrowsingModeManager(activity.intent)
+
+        assertEquals(BrowsingMode.Private, browsingModeManager.mode)
+        assertTrue(activity.window.attributes.flags and FLAG_SECURE != 0)
+    }
+
+    @Test
+    fun `GIVEN a normal custom tab and a private intent WHEN its activity starts THEN it is normal`() {
+        val activity = buildCustomTabActivity(customTabPrivate = false, intentPrivate = true)
+
+        assertEquals(BrowsingMode.Normal, activity.createBrowsingModeManager(activity.intent).mode)
+    }
+
+    @Test
+    fun `GIVEN the custom tab is gone and a private intent WHEN its activity starts THEN it is private`() {
+        val activity = buildCustomTabActivity(customTabPrivate = null, intentPrivate = true)
+
+        assertEquals(BrowsingMode.Private, activity.createBrowsingModeManager(activity.intent).mode)
+    }
+
+    @Test
+    fun `GIVEN the regular tabs activity is private WHEN a normal custom tab activity starts and changes its mode THEN the last known mode and the app state stay private`() {
+        val settings = Settings(testContext).apply { lastKnownMode = BrowsingMode.Private }
+        val appStore = AppStore(AppState(mode = BrowsingMode.Private))
+        val activity =
+            buildCustomTabActivity(
+                customTabPrivate = false,
+                intentPrivate = null,
+                settings = settings,
+                appStore = appStore,
+            )
+
+        val browsingModeManager = activity.createBrowsingModeManager(activity.intent)
+        browsingModeManager.mode = BrowsingMode.Normal
+
+        assertEquals(BrowsingMode.Private, settings.lastKnownMode)
+        assertEquals(BrowsingMode.Private, appStore.state.mode)
+    }
+
+    private fun buildCustomTabActivity(
+        customTabPrivate: Boolean?,
+        intentPrivate: Boolean?,
+        settings: Settings = Settings(testContext).apply { lastKnownMode = BrowsingMode.Normal },
+        appStore: AppStore = AppStore(),
+    ): ExternalAppBrowserActivity {
+        val customTabs =
+            listOfNotNull(
+                customTabPrivate?.let {
+                    createCustomTab(url = "https://www.mozilla.org", id = "mozilla", private = it)
+                }
+            )
+        every { testContext.components.core.store } returns BrowserStore(BrowserState(customTabs = customTabs))
+        every { testContext.components.settings } returns settings
+        every { testContext.components.appStore } returns appStore
+        val intent =
+            Intent(Intent.ACTION_VIEW).apply {
+                putSessionId("mozilla")
+                intentPrivate?.let { putExtra(HomeActivity.PRIVATE_BROWSING_MODE, it) }
+            }
+        every { testContext.components.strictMode } returns TestStrictModeManager()
+        return Robolectric.buildActivity(ExternalAppBrowserActivity::class.java, intent).get()
     }
 }
