@@ -93,6 +93,7 @@ class BrowserFragmentTest {
         every { context.components.settings } returns settings
 
         every { context.components.appStore } returns appStore
+        every { context.components.activityPrivacy.isPrivate(any()) } returns false
         every { browserFragment.requireContext() } returns context
         every { browserFragment.initializeUI(any(), any()) } returns mockk()
         every { browserFragment.fullScreenChanged(any()) } just Runs

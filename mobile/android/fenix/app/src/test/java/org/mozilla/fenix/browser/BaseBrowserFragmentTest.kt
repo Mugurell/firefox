@@ -768,7 +768,7 @@ class BaseBrowserFragmentTest {
     @Test
     fun `shouldAddBlackScreen returns true when all conditions are met`() {
         every { testContext.components.settings.privateBrowsingModeLocked } returns true
-        every { testContext.components.appStore.state.mode.isPrivate } returns true
+        every { testContext.components.activityPrivacy.isPrivate(any()) } returns true
         every { testContext.components.core.store.state } returns BrowserState(systemPermissionRequestInProgress = true)
         fragment.blackScreenOverlay = null
 
@@ -778,7 +778,7 @@ class BaseBrowserFragmentTest {
     @Test
     fun `shouldAddBlackScreen returns false when private mode lock feature is off`() {
         every { testContext.components.settings.privateBrowsingModeLocked } returns false
-        every { testContext.components.appStore.state.mode.isPrivate } returns true
+        every { testContext.components.activityPrivacy.isPrivate(any()) } returns true
         every { testContext.components.core.store.state } returns BrowserState(systemPermissionRequestInProgress = true)
         fragment.blackScreenOverlay = null
 
@@ -788,7 +788,7 @@ class BaseBrowserFragmentTest {
     @Test
     fun `shouldAddBlackScreen returns false when not in private mode`() {
         every { testContext.components.settings.privateBrowsingModeLocked } returns true
-        every { testContext.components.appStore.state.mode.isPrivate } returns false
+        every { testContext.components.activityPrivacy.isPrivate(any()) } returns false
         every { testContext.components.core.store.state } returns BrowserState(systemPermissionRequestInProgress = true)
         fragment.blackScreenOverlay = null
 
@@ -798,7 +798,7 @@ class BaseBrowserFragmentTest {
     @Test
     fun `shouldAddBlackScreen returns false when permission request is not in progress`() {
         every { testContext.components.settings.privateBrowsingModeLocked } returns true
-        every { testContext.components.appStore.state.mode.isPrivate } returns true
+        every { testContext.components.activityPrivacy.isPrivate(any()) } returns true
         every { testContext.components.core.store.state } returns
             BrowserState(systemPermissionRequestInProgress = false)
         fragment.blackScreenOverlay = null
@@ -809,7 +809,7 @@ class BaseBrowserFragmentTest {
     @Test
     fun `shouldAddBlackScreen returns false when black screen overlay already exists`() {
         every { testContext.components.settings.privateBrowsingModeLocked } returns true
-        every { testContext.components.appStore.state.mode.isPrivate } returns true
+        every { testContext.components.activityPrivacy.isPrivate(any()) } returns true
         every { testContext.components.core.store.state } returns BrowserState(systemPermissionRequestInProgress = true)
         fragment.blackScreenOverlay = mockk()
 

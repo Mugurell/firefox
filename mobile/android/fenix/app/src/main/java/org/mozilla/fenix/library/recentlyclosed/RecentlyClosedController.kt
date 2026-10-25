@@ -17,8 +17,6 @@ import mozilla.components.feature.tabs.TabsUseCases
 import mozilla.telemetry.glean.private.NoExtras
 import org.mozilla.fenix.GleanMetrics.RecentlyClosedTabs
 import org.mozilla.fenix.R
-import org.mozilla.fenix.browser.browsingmode.BrowsingMode
-import org.mozilla.fenix.components.AppStore
 import org.mozilla.fenix.components.share.ShareSheetChooserAction
 import org.mozilla.fenix.components.share.ShareSource
 import org.mozilla.fenix.components.usecases.ShareUseCases
@@ -51,7 +49,7 @@ interface RecentlyClosedController {
 
 @Suppress("TooManyFunctions")
 class DefaultRecentlyClosedController(
-    private val appStore: AppStore,
+    private val isPrivate: () -> Boolean,
     private val navController: NavController,
     private val browserStore: BrowserStore,
     private val recentlyClosedStore: RecentlyClosedFragmentStore,
@@ -66,9 +64,9 @@ class DefaultRecentlyClosedController(
     }
 
     override fun handleOpen(tabs: Set<TabState>) {
-        if (appStore.state.mode == BrowsingMode.Normal) {
+        if (!isPrivate()) {
             RecentlyClosedTabs.menuOpenInNormalTab.record(NoExtras())
-        } else if (appStore.state.mode == BrowsingMode.Private) {
+        } else {
             RecentlyClosedTabs.menuOpenInPrivateTab.record(NoExtras())
         }
         recentlyClosedStore.dispatch(RecentlyClosedFragmentAction.DeselectAll)
@@ -148,8 +146,7 @@ class DefaultRecentlyClosedController(
     override fun handleRestore(item: TabState) {
         lifecycleScope.launch {
             RecentlyClosedTabs.openTab.record(NoExtras())
-            val isPrivate = appStore.state.mode.isPrivate
-            if (!isPrivate) {
+            if (!isPrivate()) {
                 tabsUseCases.restore(item, recentlyClosedTabsStorage.engineStateStorage())
                 browserStore.dispatch(RecentlyClosedAction.RemoveClosedTabAction(item))
                 navController.openToBrowser()

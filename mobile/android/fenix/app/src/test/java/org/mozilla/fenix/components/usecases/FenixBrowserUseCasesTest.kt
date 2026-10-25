@@ -31,9 +31,6 @@ import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.mozilla.fenix.R
-import org.mozilla.fenix.browser.browsingmode.BrowsingMode
-import org.mozilla.fenix.components.AppStore
-import org.mozilla.fenix.components.appstate.AppState
 
 @RunWith(AndroidJUnit4::class)
 class FenixBrowserUseCasesTest {
@@ -47,7 +44,6 @@ class FenixBrowserUseCasesTest {
     private lateinit var defaultSearchUseCase: SearchUseCases.DefaultSearchUseCase
     private lateinit var useCases: FenixBrowserUseCases
     private lateinit var homepageTitle: String
-    private lateinit var appStore: AppStore
 
     @Before
     fun setup() {
@@ -95,8 +91,6 @@ class FenixBrowserUseCasesTest {
 
         homepageTitle = testContext.getString(R.string.tab_tray_homepage_tab)
 
-        appStore = AppStore(AppState())
-
         useCases =
             FenixBrowserUseCases(
                 tabsUseCases = tabsUseCases,
@@ -104,7 +98,7 @@ class FenixBrowserUseCasesTest {
                 searchUseCases = searchUseCases,
                 homepageTitle = homepageTitle,
                 profiler = profiler,
-                appStore = appStore,
+                isPrivate = { false },
             )
     }
 
@@ -421,12 +415,11 @@ class FenixBrowserUseCasesTest {
     }
 
     @Test
-    fun `GIVEN store is normal WHEN normal omitted and loading URL in new tab THEN open new normal tab`() {
+    fun `GIVEN the regular tabs activity is normal WHEN private omitted and loading URL in new tab THEN open new normal tab`() {
         val url = "https://www.mozilla.org"
-        appStore = AppStore(initialState = AppState(mode = BrowsingMode.Normal))
         useCases =
             FenixBrowserUseCases(
-                appStore = appStore,
+                isPrivate = { false },
                 tabsUseCases = tabsUseCases,
                 loadUrlUseCase = loadUrlUseCase,
                 searchUseCases = searchUseCases,
@@ -452,12 +445,11 @@ class FenixBrowserUseCasesTest {
     }
 
     @Test
-    fun `GIVEN store is private WHEN private omitted and loading URL in new tab THEN open new private tab`() {
+    fun `GIVEN the regular tabs activity is private WHEN private omitted and loading URL in new tab THEN open new private tab`() {
         val url = "https://www.mozilla.org"
-        appStore = AppStore(initialState = AppState(mode = BrowsingMode.Private))
         useCases =
             FenixBrowserUseCases(
-                appStore = appStore,
+                isPrivate = { true },
                 tabsUseCases = tabsUseCases,
                 loadUrlUseCase = loadUrlUseCase,
                 searchUseCases = searchUseCases,

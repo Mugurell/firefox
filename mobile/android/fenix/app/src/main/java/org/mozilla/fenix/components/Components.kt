@@ -394,6 +394,7 @@ class Components(
     val lensImageSearch by lazyMonitored {
         LensImageSearch(
             appStore = appStore,
+            isPrivate = { activityPrivacy.isPrivate(customTabSessionId = null) },
             uploader = { lensImageUploader },
             browserUseCases = { useCases.fenixBrowserUseCases },
         )

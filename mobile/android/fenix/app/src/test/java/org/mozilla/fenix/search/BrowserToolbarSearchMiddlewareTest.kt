@@ -68,9 +68,6 @@ import org.mozilla.fenix.GleanMetrics.Toolbar
 import org.mozilla.fenix.NavGraphDirections
 import org.mozilla.fenix.R
 import org.mozilla.fenix.browser.BrowserFragmentDirections
-import org.mozilla.fenix.browser.browsingmode.BrowsingMode.Normal
-import org.mozilla.fenix.browser.browsingmode.BrowsingMode.Private
-import org.mozilla.fenix.browser.browsingmode.BrowsingModeManager
 import org.mozilla.fenix.components.AppStore
 import org.mozilla.fenix.components.Components
 import org.mozilla.fenix.components.appstate.AppAction
@@ -135,9 +132,7 @@ class BrowserToolbarSearchMiddlewareTest {
         every { navigate(any<NavDirections>()) } just Runs
         every { navigate(any<Int>()) } just Runs
     }
-    val browsingModeManager: BrowsingModeManager = mockk {
-        every { mode } returns Normal
-    }
+    private var isPrivateMode = false
 
     @Test
     fun `WHEN the toolbar enters in edit mode THEN a new search selector button is added`() {
@@ -955,15 +950,12 @@ class BrowserToolbarSearchMiddlewareTest {
             mockk(relaxed = true) {
                 every { useCases.fenixBrowserUseCases } returns browserUseCases
             }
-        val browsingModeManager: BrowsingModeManager =
-            mockk(relaxed = true) {
-                every { mode } returns Normal
-            }
+        val isPrivateMode = false
         val (_, store) =
             buildMiddlewareAndAddToStore(
                 appStore = appStore,
                 components = components,
-                browsingModeManager = browsingModeManager,
+                isPrivate = { isPrivateMode },
             )
 
         assertNull(Events.enteredUrl.testGetValue())
@@ -1020,16 +1012,13 @@ class BrowserToolbarSearchMiddlewareTest {
             mockk(relaxed = true) {
                 every { enableHomepageAsNewTab } returns true
             }
-        val browsingModeManager: BrowsingModeManager =
-            mockk(relaxed = true) {
-                every { mode } returns Normal
-            }
+        val isPrivateMode = false
         val (_, store) =
             buildMiddlewareAndAddToStore(
                 appStore = appStore,
                 components = components,
                 settings = settings,
-                browsingModeManager = browsingModeManager,
+                isPrivate = { isPrivateMode },
             )
 
         assertNull(Events.enteredUrl.testGetValue())
@@ -1072,16 +1061,13 @@ class BrowserToolbarSearchMiddlewareTest {
             mockk(relaxed = true) {
                 every { enableHomepageAsNewTab } returns true
             }
-        val browsingModeManager: BrowsingModeManager =
-            mockk(relaxed = true) {
-                every { mode } returns Normal
-            }
+        val isPrivateMode = false
         val (_, store) =
             buildMiddlewareAndAddToStore(
                 appStore = appStore,
                 components = components,
                 settings = settings,
-                browsingModeManager = browsingModeManager,
+                isPrivate = { isPrivateMode },
             )
 
         store.dispatch(CommitUrl(searchTerm))
@@ -1115,10 +1101,7 @@ class BrowserToolbarSearchMiddlewareTest {
             mockk(relaxed = true) {
                 every { enableHomepageAsNewTab } returns false
             }
-        val browsingModeManager: BrowsingModeManager =
-            mockk(relaxed = true) {
-                every { mode } returns Normal
-            }
+        val isPrivateMode = false
         val appStore =
             AppStore(
                 initialState = AppState(searchState = AppSearchState.EMPTY.copy(sourceTabId = "test")),
@@ -1138,7 +1121,7 @@ class BrowserToolbarSearchMiddlewareTest {
                 browserStore = browserStore,
                 components = components,
                 settings = settings,
-                browsingModeManager = browsingModeManager,
+                isPrivate = { isPrivateMode },
             )
 
         store.dispatch(CommitUrl(searchTerm))
@@ -1172,10 +1155,7 @@ class BrowserToolbarSearchMiddlewareTest {
             mockk(relaxed = true) {
                 every { enableHomepageAsNewTab } returns false
             }
-        val browsingModeManager: BrowsingModeManager =
-            mockk(relaxed = true) {
-                every { mode } returns Normal
-            }
+        val isPrivateMode = false
         val appStore =
             AppStore(
                 initialState = AppState(searchState = AppSearchState.EMPTY.copy(sourceTabId = "test")),
@@ -1186,7 +1166,7 @@ class BrowserToolbarSearchMiddlewareTest {
                 appStore = appStore,
                 components = components,
                 settings = settings,
-                browsingModeManager = browsingModeManager,
+                isPrivate = { isPrivateMode },
             )
 
         store.dispatch(CommitUrl(searchTerm))
@@ -1240,15 +1220,12 @@ class BrowserToolbarSearchMiddlewareTest {
         val appStore = AppStore(middlewares = listOf(appStoreActionsCaptor))
         val browserUseCases: FenixBrowserUseCases = mockk(relaxed = true)
         every { components.useCases.fenixBrowserUseCases } returns browserUseCases
-        val browsingModeManager: BrowsingModeManager =
-            mockk(relaxed = true) {
-                every { mode } returns Normal
-            }
+        val isPrivateMode = false
         val (_, store) =
             buildMiddlewareAndAddToStore(
                 appStore = appStore,
                 components = components,
-                browsingModeManager = browsingModeManager,
+                isPrivate = { isPrivateMode },
             )
         store.dispatch(EnterEditMode(false))
         val qrScannerButton = store.state.editState.editActionsEnd.last() as ActionButtonRes
@@ -1277,15 +1254,12 @@ class BrowserToolbarSearchMiddlewareTest {
         val appStore = AppStore(middlewares = listOf(appStoreActionsCaptor))
         val browserUseCases: FenixBrowserUseCases = mockk(relaxed = true)
         every { components.useCases.fenixBrowserUseCases } returns browserUseCases
-        val browsingModeManager: BrowsingModeManager =
-            mockk(relaxed = true) {
-                every { mode } returns Private
-            }
+        val isPrivateMode = true
         val (_, store) =
             buildMiddlewareAndAddToStore(
                 appStore = appStore,
                 components = components,
-                browsingModeManager = browsingModeManager,
+                isPrivate = { isPrivateMode },
             )
         store.dispatch(EnterEditMode(true))
         val qrScannerButton = store.state.editState.editActionsEnd.last() as ActionButtonRes
@@ -1322,16 +1296,13 @@ class BrowserToolbarSearchMiddlewareTest {
             mockk(relaxed = true) {
                 every { enableHomepageAsNewTab } returns false
             }
-        val browsingModeManager: BrowsingModeManager =
-            mockk(relaxed = true) {
-                every { mode } returns Normal
-            }
+        val isPrivateMode = false
         val (_, store) =
             buildMiddlewareAndAddToStore(
                 appStore = appStore,
                 components = components,
                 settings = settings,
-                browsingModeManager = browsingModeManager,
+                isPrivate = { isPrivateMode },
             )
         store.dispatch(EnterEditMode(false))
         val qrScannerButton = store.state.editState.editActionsEnd.last() as ActionButtonRes
@@ -1368,16 +1339,13 @@ class BrowserToolbarSearchMiddlewareTest {
             mockk(relaxed = true) {
                 every { enableHomepageAsNewTab } returns false
             }
-        val browsingModeManager: BrowsingModeManager =
-            mockk(relaxed = true) {
-                every { mode } returns Normal
-            }
+        val isPrivateMode = false
         val (_, store) =
             buildMiddlewareAndAddToStore(
                 appStore = appStore,
                 components = components,
                 settings = settings,
-                browsingModeManager = browsingModeManager,
+                isPrivate = { isPrivateMode },
             )
         store.dispatch(EnterEditMode(false))
         val qrScannerButton = store.state.editState.editActionsEnd.last() as ActionButtonRes
@@ -1414,16 +1382,13 @@ class BrowserToolbarSearchMiddlewareTest {
             mockk(relaxed = true) {
                 every { enableHomepageAsNewTab } returns true
             }
-        val browsingModeManager: BrowsingModeManager =
-            mockk(relaxed = true) {
-                every { mode } returns Normal
-            }
+        val isPrivateMode = false
         val (_, store) =
             buildMiddlewareAndAddToStore(
                 appStore = appStore,
                 components = components,
                 settings = settings,
-                browsingModeManager = browsingModeManager,
+                isPrivate = { isPrivateMode },
             )
         store.dispatch(EnterEditMode(false))
         val qrScannerButton = store.state.editState.editActionsEnd.last() as ActionButtonRes
@@ -1460,16 +1425,13 @@ class BrowserToolbarSearchMiddlewareTest {
             mockk(relaxed = true) {
                 every { enableHomepageAsNewTab } returns true
             }
-        val browsingModeManager: BrowsingModeManager =
-            mockk(relaxed = true) {
-                every { mode } returns Normal
-            }
+        val isPrivateMode = false
         val (_, store) =
             buildMiddlewareAndAddToStore(
                 appStore = appStore,
                 components = components,
                 settings = settings,
-                browsingModeManager = browsingModeManager,
+                isPrivate = { isPrivateMode },
             )
         store.dispatch(EnterEditMode(false))
         val qrScannerButton = store.state.editState.editActionsEnd.last() as ActionButtonRes
@@ -1581,9 +1543,7 @@ class BrowserToolbarSearchMiddlewareTest {
     fun `GIVEN Google search engine and Lens enabled WHEN in private mode THEN the QR scanner button is shown instead of the Lens button`() {
         every { settings.googleLensIntegrationEnabled } returns true
         every { settings.googleLensIntegrationUserEnabled } returns true
-        val browsingModeManager: BrowsingModeManager = mockk {
-            every { mode } returns Private
-        }
+        val isPrivateMode = true
         val appStore: AppStore =
             mockk(relaxed = true) {
                 every { state.searchState.selectedSearchEngine?.searchEngine } returns googleSearchEngine()
@@ -1591,7 +1551,7 @@ class BrowserToolbarSearchMiddlewareTest {
         val (_, store) =
             buildMiddlewareAndAddToStore(
                 appStore = appStore,
-                browsingModeManager = browsingModeManager,
+                isPrivate = { isPrivateMode },
             )
 
         store.dispatch(EnterEditMode(false))
@@ -1690,15 +1650,12 @@ class BrowserToolbarSearchMiddlewareTest {
         every { components.useCases.fenixBrowserUseCases } returns browserUseCases
         every { settings.googleLensIntegrationEnabled } returns true
         every { settings.googleLensIntegrationUserEnabled } returns true
-        val browsingModeManager: BrowsingModeManager =
-            mockk(relaxed = true) {
-                every { mode } returns Normal
-            }
+        val isPrivateMode = false
         val (_, store) =
             buildMiddlewareAndAddToStore(
                 appStore = appStore,
                 components = components,
-                browsingModeManager = browsingModeManager,
+                isPrivate = { isPrivateMode },
             )
         store.dispatch(EnterEditMode(false))
         store.dispatch(SearchQueryUpdated(BrowserToolbarQuery("")))
@@ -1737,15 +1694,12 @@ class BrowserToolbarSearchMiddlewareTest {
         every { components.useCases.fenixBrowserUseCases } returns browserUseCases
         every { settings.googleLensIntegrationEnabled } returns true
         every { settings.googleLensIntegrationUserEnabled } returns true
-        val browsingModeManager: BrowsingModeManager =
-            mockk(relaxed = true) {
-                every { mode } returns Normal
-            }
+        val isPrivateMode = false
         val (_, store) =
             buildMiddlewareAndAddToStore(
                 appStore = appStore,
                 components = components,
-                browsingModeManager = browsingModeManager,
+                isPrivate = { isPrivateMode },
             )
         store.dispatch(EnterEditMode(false))
         store.dispatch(SearchQueryUpdated(BrowserToolbarQuery("")))
@@ -1879,7 +1833,7 @@ class BrowserToolbarSearchMiddlewareTest {
         browserStore: BrowserStore = this.browserStore,
         components: Components = this.components,
         navController: NavController = this.navController,
-        browsingModeManager: BrowsingModeManager = this.browsingModeManager,
+        isPrivate: () -> Boolean = { isPrivateMode },
         settings: Settings = this.settings,
         scope: CoroutineScope = testScope,
     ): Pair<BrowserToolbarSearchMiddleware, BrowserToolbarStore> {
@@ -1890,7 +1844,7 @@ class BrowserToolbarSearchMiddlewareTest {
                 browserStore = browserStore,
                 components = components,
                 navController = navController,
-                browsingModeManager = browsingModeManager,
+                isPrivate = isPrivate,
                 settings = settings,
                 scope = scope,
             )
@@ -1908,7 +1862,7 @@ class BrowserToolbarSearchMiddlewareTest {
         browserStore: BrowserStore = this.browserStore,
         components: Components = this.components,
         navController: NavController = this.navController,
-        browsingModeManager: BrowsingModeManager = this.browsingModeManager,
+        isPrivate: () -> Boolean = { isPrivateMode },
         settings: Settings = this.settings,
         scope: CoroutineScope = testScope,
     ) =
@@ -1918,7 +1872,7 @@ class BrowserToolbarSearchMiddlewareTest {
             browserStore = browserStore,
             components = components,
             navController = navController,
-            browsingModeManager = browsingModeManager,
+            isPrivate = isPrivate,
             settings = settings,
             scope = scope,
             autocompleteDispatcher = testDispatcher,

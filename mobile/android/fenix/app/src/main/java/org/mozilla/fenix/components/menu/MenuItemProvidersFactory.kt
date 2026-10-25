@@ -40,6 +40,7 @@ import org.mozilla.fenix.components.TabCollectionStorage
 import org.mozilla.fenix.components.UseCases
 import org.mozilla.fenix.components.accounts.MozillaAccountMenuItemProvider
 import org.mozilla.fenix.downloads.DownloadsMenuItemProvider
+import org.mozilla.fenix.ext.components
 import org.mozilla.fenix.home.CustomizeHomepageMenuItemProvider
 import org.mozilla.fenix.home.topsites.ShortcutMenuItemProvider
 import org.mozilla.fenix.ipprotection.VpnMenuItemProvider
@@ -96,6 +97,9 @@ class MenuItemProvidersFactory(
     private val applicationScope: CoroutineScope,
 ) {
 
+    private fun isTargetPrivate() =
+        context.components.activityPrivacy.isPrivate((target as? MenuTarget.CustomTab)?.customTabId)
+
     /** Build a [MenuItemProvider] for the given [FenixMenuItem]. */
     @Suppress("LongMethod", "CyclomaticComplexMethod")
     fun buildProviderFor(item: FenixMenuItem): MenuItemProvider =
@@ -149,7 +153,7 @@ class MenuItemProvidersFactory(
                     addonManager = addonManager,
                     viewLifecycleScope = menuViewScope,
                     applicationScope = applicationScope,
-                    appStore = appStore,
+                    isPrivate = ::isTargetPrivate,
                     fenixBrowserUseCases = useCases.fenixBrowserUseCases,
                 )
             is FenixMenuItem.More ->
@@ -224,7 +228,7 @@ class MenuItemProvidersFactory(
                     settings = settings,
                     webCompatReporterMoreInfoSender =
                         DefaultWebCompatReporterMoreInfoSender(DefaultWebCompatReporterRetrievalService(browserStore)),
-                    appStore = appStore,
+                    isPrivate = ::isTargetPrivate,
                     fenixBrowserUseCases = useCases.fenixBrowserUseCases,
                     scope = menuViewScope,
                 )

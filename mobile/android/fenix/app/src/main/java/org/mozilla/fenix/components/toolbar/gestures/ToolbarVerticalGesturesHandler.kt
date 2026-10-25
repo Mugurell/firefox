@@ -18,8 +18,6 @@ import org.mozilla.fenix.GleanMetrics.Events
 import org.mozilla.fenix.NavGraphDirections
 import org.mozilla.fenix.R
 import org.mozilla.fenix.browser.SwipeGestureListener
-import org.mozilla.fenix.browser.browsingmode.BrowsingMode.Normal
-import org.mozilla.fenix.browser.browsingmode.BrowsingMode.Private
 import org.mozilla.fenix.components.AppStore
 import org.mozilla.fenix.components.toolbar.ToolbarPosition
 import org.mozilla.fenix.components.toolbar.ToolbarPosition.BOTTOM
@@ -35,6 +33,7 @@ private const val TOOLBAR_HEIGHT_MAXIMUM_SWIPE_FACTOR = 0.8f
  * swip up/down gesture.
  *
  * @param appStore The [AppStore] containing the application state.
+ * @param isPrivate Whether the current tab is private.
  * @param toolbarLayout The address bar layout.
  * @param navBarLayout The navigation bar layout.
  * @param toolbarPosition Where the address bar is shown on the screen.
@@ -42,6 +41,7 @@ private const val TOOLBAR_HEIGHT_MAXIMUM_SWIPE_FACTOR = 0.8f
  */
 class ToolbarVerticalGesturesHandler(
     private val appStore: AppStore,
+    private val isPrivate: () -> Boolean,
     private val toolbarLayout: View,
     private val navBarLayout: View?,
     private val toolbarPosition: ToolbarPosition,
@@ -97,9 +97,10 @@ class ToolbarVerticalGesturesHandler(
                 navController.currentDestination?.id,
                 NavGraphDirections.actionGlobalTabManagementFragment(
                     page =
-                        when (appStore.state.mode) {
-                            Normal -> Page.NormalTabs
-                            Private -> Page.PrivateTabs
+                        if (isPrivate()) {
+                            Page.PrivateTabs
+                        } else {
+                            Page.NormalTabs
                         }
                 ),
             )

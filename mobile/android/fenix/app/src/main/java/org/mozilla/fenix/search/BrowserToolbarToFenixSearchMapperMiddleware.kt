@@ -17,7 +17,6 @@ import mozilla.components.compose.browser.toolbar.store.Mode
 import mozilla.components.lib.state.Middleware
 import mozilla.components.lib.state.Store
 import mozilla.components.lib.state.ext.flow
-import org.mozilla.fenix.browser.browsingmode.BrowsingModeManager
 import org.mozilla.fenix.search.SearchFragmentAction.Init
 import org.mozilla.fenix.search.SearchFragmentAction.SearchStarted
 
@@ -25,13 +24,13 @@ import org.mozilla.fenix.search.SearchFragmentAction.SearchStarted
  * [SearchFragmentStore] [Middleware] to synchronize search related details from [BrowserToolbarStore].
  *
  * @param toolbarStore The [BrowserToolbarStore] to sync from.
- * @param browsingModeManager [BrowsingModeManager] for querying the current browsing mode.
+ * @param isPrivate Whether the activity showing this is private.
  * @param scope [CoroutineScope] used for running long running operations in background.
  * @param browserStore The [BrowserStore] to sync from.
  */
 class BrowserToolbarToFenixSearchMapperMiddleware(
     private val toolbarStore: BrowserToolbarStore,
-    private val browsingModeManager: BrowsingModeManager,
+    private val isPrivate: () -> Boolean,
     private val scope: CoroutineScope,
     private val browserStore: BrowserStore? = null,
 ) : Middleware<SearchFragmentState, SearchFragmentAction> {
@@ -66,7 +65,7 @@ class BrowserToolbarToFenixSearchMapperMiddleware(
                             SearchStarted(
                                 selectedSearchEngine = null,
                                 isUserSelected = true,
-                                inPrivateMode = browsingModeManager.mode.isPrivate,
+                                inPrivateMode = isPrivate(),
                                 searchStartedForCurrentUrl =
                                     editState.isQueryPrefilled &&
                                         isCurrentUrl(

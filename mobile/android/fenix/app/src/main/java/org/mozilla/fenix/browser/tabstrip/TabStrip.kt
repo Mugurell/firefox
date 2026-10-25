@@ -80,7 +80,6 @@ import mozilla.components.support.utils.keyboardAsState
 import mozilla.components.ui.icons.R as iconsR
 import org.mozilla.fenix.GleanMetrics.TabStrip as TabStripMetrics
 import org.mozilla.fenix.R
-import org.mozilla.fenix.components.AppStore
 import org.mozilla.fenix.components.components
 import org.mozilla.fenix.compose.Favicon
 import org.mozilla.fenix.compose.HorizontalFadingEdgeBox
@@ -109,7 +108,7 @@ private val tabStripIconSize
  * @param showTabCounterButton Show the tab counter button in the tabs strip when true.
  * @param tabStripColors The colors to use for the tabs strip.
  * @param browserStore The [BrowserStore] instance used to observe tabs state.
- * @param appStore The [AppStore] instance used to observe browsing mode.
+ * @param isPrivate Whether the activity showing the tabs strip is private.
  * @param tabsUseCases The [TabsUseCases] instance to perform tab actions.
  * @param hideWhenKeyboardShown Whether or not to hide the tabs strip when the keyboard is shown.
  * @param onAddTabClick Invoked when the add tab button is clicked.
@@ -124,7 +123,7 @@ fun TabStrip(
     showTabCounterButton: Boolean = true,
     tabStripColors: TabStripColors = TabStripColors.default(),
     browserStore: BrowserStore = components.core.store,
-    appStore: AppStore = components.appStore,
+    isPrivate: Boolean = components.activityPrivacy.isPrivate(customTabSessionId = null),
     tabsUseCases: TabsUseCases = components.useCases.tabsUseCases,
     hideWhenKeyboardShown: Boolean,
     onAddTabClick: () -> Unit,
@@ -133,21 +132,17 @@ fun TabStrip(
     onSelectedTabClick: (url: String) -> Unit,
     onTabCounterClick: () -> Unit,
 ) {
-    val isPossiblyPrivateMode by remember {
-        appStore.stateFlow.map { it.mode.isPrivate }
-    }
-        .collectAsState(initial = false)
     val state by remember {
         browserStore.stateFlow.map {
             it.toTabStripState(
                 isSelectDisabled = isSelectDisabled,
-                isPossiblyPrivateMode = isPossiblyPrivateMode,
+                isPossiblyPrivateMode = isPrivate,
                 addTab = onAddTabClick,
-                closeTab = { isPrivate, numberOfTabs ->
+                closeTab = { isPrivateTab, numberOfTabs ->
                     it.selectedTabId?.let { selectedTabId ->
                         closeTab(
                             numberOfTabs = numberOfTabs,
-                            isPrivate = isPrivate,
+                            isPrivate = isPrivateTab,
                             tabsUseCases = tabsUseCases,
                             tabId = selectedTabId,
                             onLastTabClose = onLastTabClose,
@@ -649,7 +644,7 @@ private fun TabStripPreview(@PreviewParameter(PreviewThemeProvider::class) theme
     FirefoxTheme(theme) {
         Surface(modifier = Modifier.fillMaxWidth().height(dimensionResource(id = R.dimen.tab_strip_height))) {
             TabStrip(
-                appStore = AppStore(),
+                isPrivate = false,
                 browserStore = browserStore,
                 tabsUseCases = TabsUseCases(browserStore),
                 hideWhenKeyboardShown = false,

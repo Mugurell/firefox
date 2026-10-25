@@ -25,10 +25,8 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.mozilla.fenix.GleanMetrics.GoogleLens
-import org.mozilla.fenix.browser.browsingmode.BrowsingMode
 import org.mozilla.fenix.components.AppStore
 import org.mozilla.fenix.components.LensImageUploader
-import org.mozilla.fenix.components.appstate.AppAction
 import org.mozilla.fenix.components.appstate.AppAction.LensAction
 import org.mozilla.fenix.components.usecases.FenixBrowserUseCases
 import org.robolectric.RobolectricTestRunner
@@ -38,6 +36,7 @@ class LensImageSearchTest {
     @get:Rule val gleanTestRule = GleanTestRule(testContext)
 
     private val testDispatcher = StandardTestDispatcher()
+    private var isPrivate = false
     private val appStore = spyk(AppStore())
     private val uploader: LensImageUploader = mockk()
     private val browserUseCases: FenixBrowserUseCases = mockk(relaxed = true)
@@ -47,14 +46,14 @@ class LensImageSearchTest {
     private val lensImageSearch =
         LensImageSearch(
             appStore = appStore,
+            isPrivate = { isPrivate },
             uploader = { uploader },
             browserUseCases = { browserUseCases },
             scope = CoroutineScope(testDispatcher),
         )
 
     private fun setPrivateMode() {
-        appStore.dispatch(AppAction.BrowsingModeManagerModeChanged(BrowsingMode.Private))
-        testDispatcher.scheduler.advanceUntilIdle()
+        isPrivate = true
     }
 
     private fun verifyResultOpened(private: Boolean, url: String = resultUrl) {

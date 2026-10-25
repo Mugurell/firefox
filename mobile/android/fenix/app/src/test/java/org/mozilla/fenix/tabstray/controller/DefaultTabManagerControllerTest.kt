@@ -61,12 +61,10 @@ import org.mozilla.fenix.GleanMetrics.Events
 import org.mozilla.fenix.GleanMetrics.TabsTray
 import org.mozilla.fenix.GleanMetrics.TrackingProtection
 import org.mozilla.fenix.R
-import org.mozilla.fenix.browser.browsingmode.BrowsingMode
 import org.mozilla.fenix.browser.browsingmode.BrowsingModeManager
 import org.mozilla.fenix.components.AppStore
 import org.mozilla.fenix.components.TabCollectionStorage
 import org.mozilla.fenix.components.accounts.FenixFxAEntryPoint
-import org.mozilla.fenix.components.appstate.AppState
 import org.mozilla.fenix.components.bookmarks.BookmarksUseCase
 import org.mozilla.fenix.components.share.ShareSheetChooserAction
 import org.mozilla.fenix.components.share.ShareSource
@@ -2218,10 +2216,9 @@ class DefaultTabManagerControllerTest {
         every { tab.active() }.answers { entry }
         every { entry.url }.answers { "https://mozilla.org" }
 
-        val appStore = AppStore(initialState = AppState(mode = BrowsingMode.Normal))
         fenixBrowserUseCases =
             FenixBrowserUseCases(
-                appStore = appStore,
+                isPrivate = { false },
                 tabsUseCases = tabsUseCases,
                 loadUrlUseCase = loadUrlUseCase,
                 searchUseCases = searchUseCases,
@@ -2262,7 +2259,7 @@ class DefaultTabManagerControllerTest {
             }
         fenixBrowserUseCases =
             FenixBrowserUseCases(
-                appStore = AppStore(initialState = AppState(mode = BrowsingMode.Normal)),
+                isPrivate = { false },
                 tabsUseCases = tabsUseCases,
                 loadUrlUseCase = loadUrlUseCase,
                 searchUseCases = searchUseCases,
@@ -2307,7 +2304,7 @@ class DefaultTabManagerControllerTest {
             }
         fenixBrowserUseCases =
             FenixBrowserUseCases(
-                appStore = AppStore(initialState = AppState(mode = BrowsingMode.Normal)),
+                isPrivate = { false },
                 tabsUseCases = tabsUseCases,
                 loadUrlUseCase = loadUrlUseCase,
                 searchUseCases = searchUseCases,

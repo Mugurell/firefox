@@ -182,7 +182,7 @@ class HomeToolbarComposableTest {
             toolbarStore = toolbarStore,
             appStore = appStore,
             browserStore = browserStore,
-            browsingModeManager = mockk(),
+            isPrivate = { false },
             settings = settings,
             directToSearchConfig = directToSearchConfig,
             coroutineScope = coroutineScope,

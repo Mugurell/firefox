@@ -23,7 +23,6 @@ import mozilla.components.lib.state.Middleware
 import mozilla.components.lib.state.State
 import mozilla.components.lib.state.Store
 import org.mozilla.fenix.browser.browsingmode.BrowsingMode
-import org.mozilla.fenix.browser.browsingmode.BrowsingModeManager
 import org.mozilla.fenix.components.Components
 import org.mozilla.fenix.components.metrics.MetricsUtils
 import org.mozilla.fenix.search.SearchFragmentAction.Init
@@ -56,13 +55,13 @@ class SearchFragmentStore(
      *
      * @property context [Context] used for various system interactions.
      * @property viewLifecycleOwner [LifecycleOwner] depending on which lifecycle related operations will be scheduled.
-     * @property browsingModeManager [BrowsingModeManager] for querying the current browsing mode.
+     * @property isPrivate Whether the activity showing this is private.
      * @property navController [NavController] used to navigate to other destinations.
      */
     data class Environment(
         val context: Context,
         val viewLifecycleOwner: LifecycleOwner,
-        val browsingModeManager: BrowsingModeManager,
+        val isPrivate: () -> Boolean,
         val navController: NavController,
     )
 }
@@ -232,7 +231,7 @@ fun createInitialSearchFragmentState(
     isAndroidAutomotiveAvailable: Boolean = context.isAndroidAutomotiveAvailable(),
 ): SearchFragmentState {
     val settings = components.settings
-    val browsingMode = components.appStore.state.mode
+    val browsingMode = BrowsingMode.fromBoolean(components.activityPrivacy.isPrivate(customTabSessionId = null))
     val tab = tabId?.let { components.core.store.state.findTab(it) }
     val currentTabData = tab?.let {
         CurrentTabData(

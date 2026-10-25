@@ -16,7 +16,6 @@ import mozilla.components.compose.browser.toolbar.store.ToolbarGravity.Bottom
 import mozilla.components.compose.browser.toolbar.store.ToolbarGravity.Top
 import mozilla.components.support.utils.KeyboardState
 import mozilla.components.support.utils.keyboardAsState
-import org.mozilla.fenix.browser.browsingmode.BrowsingModeManager
 import org.mozilla.fenix.components.AppStore
 import org.mozilla.fenix.theme.FirefoxTheme
 import org.mozilla.fenix.utils.Settings
@@ -28,14 +27,14 @@ import org.mozilla.fenix.wallpapers.WallpaperTheme
  *
  * @param toolbarStore [BrowserToolbarStore] containing the navigation bar state.
  * @param appStore [AppStore] used to observe the currently applied wallpaper.
- * @param browsingModeManager [BrowsingModeManager] used to determine the current browsing mode.
+ * @param isPrivate Whether the activity showing this is private.
  * @param settings [Settings] object to get the toolbar position and other settings.
  * @param hideWhenKeyboardShown If true, navigation bar will be hidden when the keyboard is visible.
  */
 class HomeNavigationBar(
     private val toolbarStore: BrowserToolbarStore,
     private val appStore: AppStore,
-    private val browsingModeManager: BrowsingModeManager,
+    private val isPrivate: () -> Boolean,
     private val settings: Settings,
     private val hideWhenKeyboardShown: Boolean,
 ) : FenixHomeToolbar {
@@ -59,7 +58,7 @@ class HomeNavigationBar(
                 false
             }
 
-        val isPrivateMode = browsingModeManager.mode.isPrivate
+        val isPrivateMode = isPrivate()
 
         if (uiState.displayState.navigationActions.isNotEmpty() && !isKeyboardVisible) {
             FirefoxTheme {

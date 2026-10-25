@@ -206,7 +206,7 @@ class BrowserStoreToFenixSearchMapperMiddlewareTest {
                 BrowserStore(BrowserState(search = SearchState(applicationSearchEngines = newSearchEngines)))
             val appStore = AppStore(AppState(mode = BrowsingMode.Private))
             val actionsCaptor = CaptureActionsMiddleware<SearchFragmentState, SearchFragmentAction>()
-            val middleware = BrowserStoreToFenixSearchMapperMiddleware(browserStore, backgroundScope, appStore)
+            val middleware = BrowserStoreToFenixSearchMapperMiddleware(browserStore, backgroundScope, appStore) { true }
             buildStore(middleware, actionsCaptor)
 
             browserStore.dispatch(ApplicationSearchEnginesLoaded(newSearchEngines))

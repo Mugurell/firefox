@@ -17,6 +17,7 @@ import androidx.navigation.fragment.navArgs
 import kotlinx.coroutines.flow.emptyFlow
 import mozilla.components.lib.state.helpers.StoreProvider.Companion.fragmentStore
 import org.mozilla.fenix.R
+import org.mozilla.fenix.browser.browsingmode.BrowsingMode
 import org.mozilla.fenix.components.accounts.FenixFxAEntryPoint
 import org.mozilla.fenix.components.appstate.AppAction
 import org.mozilla.fenix.components.share.ShareSheetChooserAction
@@ -29,6 +30,7 @@ import org.mozilla.fenix.theme.FirefoxTheme
 
 /** Menu to edit the name, URL, and location of a bookmark item. */
 class EditBookmarkFragment : Fragment(), SystemInsetsPaddedFragment {
+    private fun isActivityPrivate() = requireComponents.activityPrivacy.isPrivate(customTabSessionId = null)
 
     private val args by navArgs<EditBookmarkFragmentArgs>()
 
@@ -40,7 +42,6 @@ class EditBookmarkFragment : Fragment(), SystemInsetsPaddedFragment {
     ): View {
         val context = requireContext()
         val buildStore = { composeNavController: NavHostController ->
-            val appStore = requireComponents.appStore
             val navController = findNavController()
             val isSignedIntoSync = requireComponents.backgroundServices.accountManager.authenticatedAccount() != null
 
@@ -58,7 +59,7 @@ class EditBookmarkFragment : Fragment(), SystemInsetsPaddedFragment {
                                         if (requireComponents.settings.enableHomepageAsNewTab) {
                                             false
                                         } else {
-                                            appStore.state.mode.isPrivate
+                                            isActivityPrivate()
                                         },
                                     getNavController = { composeNavController },
                                     exitBookmarks = { navController.popBackStack() },
@@ -74,7 +75,7 @@ class EditBookmarkFragment : Fragment(), SystemInsetsPaddedFragment {
                                     },
                                     navigateToImportDialog = {},
                                     shareBookmarks = { bookmarks ->
-                                        val isPrivate = appStore.state.mode.isPrivate
+                                        val isPrivate = isActivityPrivate()
                                         val shareItems = bookmarks.asShareDataArray(isPrivate).toList()
                                         requireComponents.useCases.shareUseCases.shareItems(
                                             items = shareItems,
@@ -107,7 +108,7 @@ class EditBookmarkFragment : Fragment(), SystemInsetsPaddedFragment {
                                         ) ?: ""
                                     },
                                     getBrowsingMode = {
-                                        appStore.state.mode
+                                        BrowsingMode.fromBoolean(isActivityPrivate())
                                     },
                                     editBookmarkUseCase = requireComponents.useCases.bookmarksUseCases.editBookmark,
                                     saveBookmarkSortOrder = {},

@@ -36,7 +36,6 @@ import mozilla.components.compose.browser.toolbar.store.BrowserToolbarStore
 import mozilla.components.compose.browser.toolbar.store.DisplayState
 import mozilla.components.lib.state.ext.observeAsComposableState
 import mozilla.components.ui.icons.R as iconsR
-import org.mozilla.fenix.components.AppStore
 import org.mozilla.fenix.components.components
 import org.mozilla.fenix.theme.FirefoxTheme
 import org.mozilla.fenix.wallpapers.WallpaperTheme
@@ -45,20 +44,16 @@ import org.mozilla.fenix.wallpapers.WallpaperTheme
  * A simple browser toolbar that displays only the browser end actions configured in [store].
  *
  * @param store The [BrowserToolbarStore] to observe the UI state from.
- * @param appStore The [AppStore] to observe the wallpaper state from.
  */
 @Composable
-fun BrowserSimpleToolbar(
-    store: BrowserToolbarStore,
-    appStore: AppStore,
-) {
+fun BrowserSimpleToolbar(store: BrowserToolbarStore) {
     val uiState by store.observeAsComposableState { it }
 
     val pageOrigin = uiState.displayState.pageOrigin
     val browserActionsEnd = uiState.displayState.browserActionsEnd
     val onInteraction: (BrowserToolbarEvent) -> Unit = { store.dispatch(it) }
 
-    val isPrivateMode = appStore.observeAsComposableState { it.mode.isPrivate }.value
+    val isPrivateMode = !inComposePreview && components.activityPrivacy.isPrivate(customTabSessionId = null)
     // Tint the browser action icons with the wallpaper text color only under the universal
     // treatment. WallpaperTheme.onWallpaper falls back to onSurface for the default wallpaper, in
     // previews, and anywhere LocalWallpaperState is not provided (e.g. tab previews).
@@ -149,7 +144,7 @@ private fun SimpleBrowserToolbarPreview(actions: List<Action>, theme: Theme) {
         )
     FirefoxTheme(theme = theme) {
         Surface {
-            BrowserSimpleToolbar(store = store, appStore = AppStore())
+            BrowserSimpleToolbar(store = store)
         }
     }
 }

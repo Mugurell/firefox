@@ -66,6 +66,7 @@ class SearchFragmentStoreTest {
                 override fun updateMode(intent: Intent?) = Unit
             }
         every { components.settings } returns settings
+        every { components.activityPrivacy.isPrivate(customTabSessionId = null) } returns false
         every { searchEngine.trendingUrl } returns null
 
         appStore = AppStore(initialState = AppState(mode = BrowsingMode.Normal))
@@ -148,6 +149,7 @@ class SearchFragmentStoreTest {
     fun `createInitialSearchFragmentState with no tab in private browsing mode`() {
         appStore = AppStore(initialState = AppState(mode = BrowsingMode.Private))
         every { components.appStore } returns appStore
+        every { components.activityPrivacy.isPrivate(customTabSessionId = null) } returns true
         every { components.core.store.state } returns BrowserState()
         every { settings.shouldShowHistorySuggestions } returns true
         every { settings.shouldShowSearchSuggestions } returns true
@@ -194,6 +196,7 @@ class SearchFragmentStoreTest {
         every { settings.shouldUseBottomToolbar } returns true
         appStore = AppStore(initialState = AppState(mode = BrowsingMode.Private))
         every { components.appStore } returns appStore
+        every { components.activityPrivacy.isPrivate(customTabSessionId = null) } returns true
         every { components.core.store.state } returns
             BrowserState(
                 tabs =

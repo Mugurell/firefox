@@ -236,6 +236,7 @@ class BrowserFragment : BaseBrowserFragment(), UserInteractionHandler, SystemIns
             binding.gestureLayout.addGestureListener(
                 ToolbarVerticalGesturesHandler(
                     appStore = components.appStore,
+                    isPrivate = { components.activityPrivacy.isPrivate(customTabSessionId = null) },
                     toolbarLayout = browserToolbar.layout,
                     navBarLayout = browserNavigationBar?.layout,
                     toolbarPosition = settings.toolbarPosition,

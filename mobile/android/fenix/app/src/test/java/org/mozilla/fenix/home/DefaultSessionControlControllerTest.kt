@@ -69,6 +69,8 @@ import org.robolectric.RobolectricTestRunner
 @RunWith(RobolectricTestRunner::class) // For gleanTestRule
 class DefaultSessionControlControllerTest {
 
+    private var isPrivate = false
+
     @get:Rule val temporaryFolder = TemporaryFolder()
 
     @get:Rule val gleanTestRule = FenixGleanTestRule(testContext)
@@ -150,7 +152,7 @@ class DefaultSessionControlControllerTest {
 
     @Test
     fun `GIVEN browsing mode is private and collection tab cannot be restored WHEN a collection tab is opened THEN open collection in a new private tab`() {
-        every { appStore.state.mode } returns BrowsingMode.Private
+        isPrivate = true
 
         val tab =
             mockk<ComponentTab> {
@@ -470,7 +472,7 @@ class DefaultSessionControlControllerTest {
 
     @Test
     fun `GIVEN app is in private browsing mode WHEN handling wallpaper dialog THEN the dialog is not shown`() {
-        every { appStore.state } returns AppState(mode = BrowsingMode.Private)
+        isPrivate = true
 
         val wallpaperState =
             WallpaperState.default.copy(
@@ -718,6 +720,7 @@ class DefaultSessionControlControllerTest {
                 reloadUrlUseCase = reloadUrlUseCase.reload,
                 fenixBrowserUseCases = fenixBrowserUseCases,
                 appStore = appStore,
+                isPrivate = { isPrivate },
                 navControllerRef = WeakReference(navController),
                 viewLifecycleScope = TestScope(),
                 shareUseCases = shareUseCases,

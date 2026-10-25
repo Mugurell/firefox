@@ -177,7 +177,7 @@ class AddonsManagementFragment : Fragment(R.layout.fragment_add_ons_management),
     internal fun installAddon(addon: Addon) {
         binding?.addonProgressOverlay?.overlayCardView?.visibility = View.VISIBLE
 
-        if (requireComponents.appStore.state.mode.isPrivate) {
+        if (requireComponents.activityPrivacy.isPrivate(customTabSessionId = null)) {
             binding
                 ?.addonProgressOverlay
                 ?.overlayCardView

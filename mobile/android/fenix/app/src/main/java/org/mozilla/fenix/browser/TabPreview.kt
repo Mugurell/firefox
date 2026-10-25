@@ -48,8 +48,6 @@ import mozilla.components.support.ktx.kotlin.isContentUrl
 import mozilla.components.support.ktx.util.URLStringUtils
 import mozilla.components.ui.icons.R as iconsR
 import org.mozilla.fenix.R
-import org.mozilla.fenix.browser.browsingmode.BrowsingMode.Normal
-import org.mozilla.fenix.browser.browsingmode.BrowsingMode.Private
 import org.mozilla.fenix.components.toolbar.ToolbarPosition
 import org.mozilla.fenix.databinding.TabPreviewBinding
 import org.mozilla.fenix.ext.components
@@ -76,7 +74,6 @@ constructor(
 ) : CoordinatorLayout(context, attrs, defStyle) {
     private val binding = TabPreviewBinding.inflate(LayoutInflater.from(context), this)
     private val thumbnailLoader = ThumbnailLoader(context.components.core.thumbnailStorage)
-    private val appStore = context.components.appStore
     private val browserStore = context.components.core.store
     private val summarizationFeatureSettings = context.components.core.summarizeFeatureSettings
     private val translationsFeatureSettings = TranslationsEnabledSettings.dataStore(context)
@@ -114,7 +111,7 @@ constructor(
         tab: TabSessionState?,
     ): Action {
         val tabsCount = currentOpenedTabsCount
-        val isPrivateMode = context.components.appStore.state.mode.isPrivate
+        val isPrivateMode = context.components.activityPrivacy.isPrivate(customTabSessionId = null)
 
         return when (toolbarAction) {
             ToolbarAction.NewTab ->
@@ -264,9 +261,10 @@ constructor(
                     drawableResId = iconsR.drawable.mozac_ic_lightning_24,
                     contentDescription = summariesR.string.mozac_summarize_settings_summarize_pages,
                     state =
-                        when (appStore.state.mode) {
-                            Normal -> ActionButton.State.DEFAULT
-                            Private -> ActionButton.State.DISABLED
+                        if (context.components.activityPrivacy.isPrivate(customTabSessionId = null)) {
+                            ActionButton.State.DISABLED
+                        } else {
+                            ActionButton.State.DEFAULT
                         },
                     onClick = object : BrowserToolbarEvent {},
                 )
@@ -407,10 +405,7 @@ constructor(
                             context.components.settings.enableHomepageSearchBar &&
                                 context.components.settings.toolbarPosition == ToolbarPosition.TOP
                         ) {
-                            BrowserSimpleToolbar(
-                                store = browserToolbarStore,
-                                appStore = context.components.appStore,
-                            )
+                            BrowserSimpleToolbar(store = browserToolbarStore)
                         } else if (context.components.settings.toolbarPosition == ToolbarPosition.TOP) {
                             BrowserToolbar(store = browserToolbarStore)
                         }

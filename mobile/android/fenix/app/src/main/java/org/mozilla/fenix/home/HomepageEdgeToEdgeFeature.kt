@@ -28,8 +28,6 @@ import mozilla.components.compose.browser.toolbar.store.BrowserToolbarStore
 import mozilla.components.lib.state.ext.flowScoped
 import mozilla.components.support.base.feature.LifecycleAwareFeature
 import org.mozilla.fenix.R
-import org.mozilla.fenix.browser.browsingmode.BrowsingMode
-import org.mozilla.fenix.browser.browsingmode.BrowsingModeManager
 import org.mozilla.fenix.components.AppStore
 import org.mozilla.fenix.utils.Settings
 import org.mozilla.fenix.wallpapers.Wallpaper
@@ -41,7 +39,7 @@ import org.mozilla.fenix.wallpapers.Wallpaper
  * @param appStore [AppStore] used for querying and updating application state.
  * @param activity The activity containing the window to manage.
  * @param settings The [Settings] used to determine the current position of the toolbar.
- * @param browsingModeManager The [BrowsingModeManager] used to determine the current browsing mode.
+ * @param isPrivate Whether the activity showing this is private.
  * @param toolbarStore The [BrowserToolbarStore] which state is observed to manage status bar background in edit mode.
  * @param mainDispatcher The [CoroutineDispatcher] used for main thread operations.
  */
@@ -49,7 +47,7 @@ class HomepageEdgeToEdgeFeature(
     private val appStore: AppStore,
     private val activity: Activity,
     private val settings: Settings,
-    private val browsingModeManager: BrowsingModeManager,
+    private val isPrivate: () -> Boolean,
     private val toolbarStore: BrowserToolbarStore,
     private val mainDispatcher: CoroutineDispatcher = Dispatchers.Main,
 ) : LifecycleAwareFeature {
@@ -114,7 +112,7 @@ class HomepageEdgeToEdgeFeature(
     }
 
     private fun setBackground(background: Background) {
-        val isPrivateMode = browsingModeManager.mode == BrowsingMode.Private
+        val isPrivateMode = isPrivate()
         activity.window?.setBackgroundDrawableResource(
             if (isPrivateMode) R.color.fx_mobile_private_surface else background.resourceId
         )
@@ -179,14 +177,14 @@ class HomepageEdgeToEdgeFeature(
 
     private fun getStatusBarColor(settings: Settings, toolbarState: BrowserToolbarState): Int {
         val shouldShow = !settings.shouldUseBottomToolbar || toolbarState.isShowingResultsScreen
-        val isPrivateMode = browsingModeManager.mode == BrowsingMode.Private
+        val isPrivateMode = isPrivate()
 
         return when {
             !shouldShow -> Color.TRANSPARENT
             isPrivateMode -> ContextCompat.getColor(activity, R.color.fx_mobile_private_surface)
             !settings.isTabStripEnabled &&
                 toolbarState.isShowingResultsScreen &&
-                browsingModeManager.mode == BrowsingMode.Normal &&
+                !isPrivate() &&
                 (settings.enableHomepageTrendingRecentSearch ||
                     toolbarState.editState.query.current.isNotEmpty() ||
                     toolbarState.editState.queryWasPrefilled) ->

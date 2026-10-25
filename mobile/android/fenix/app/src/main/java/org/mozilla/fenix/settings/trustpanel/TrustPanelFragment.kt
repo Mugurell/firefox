@@ -159,7 +159,7 @@ class TrustPanelFragment : BottomSheetDialogFragment() {
                             navController = findNavController(),
                             privacySecurityPrefKey =
                                 requireContext().getString(R.string.pref_key_privacy_security_category),
-                            appStore = requireComponents.appStore,
+                            isPrivate = { requireComponents.activityPrivacy.isPrivate(customTabSessionId = null) },
                             tabsUseCases = requireComponents.useCases.tabsUseCases,
                             sessionUseCases = requireComponents.useCases.sessionUseCases,
                             scope = lifecycleScope,

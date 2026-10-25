@@ -15,12 +15,11 @@ import mozilla.components.feature.session.SessionUseCases
 import mozilla.components.feature.tabs.TabsUseCases
 import mozilla.components.support.ktx.kotlin.isUrl
 import mozilla.components.support.ktx.kotlin.toNormalizedUrl
-import org.mozilla.fenix.components.AppStore
 
 /**
  * Use cases for handling loading a URL and performing a search.
  *
- * @param appStore [AppStore] used to fetch the appstore
+ * @param isPrivate Whether new tabs are private when the caller doesn't say.
  * @param tabsUseCases [TabsUseCases] used for adding new tabs.
  * @param loadUrlUseCase [SessionUseCases.DefaultLoadUrlUseCase] used for loading a URL.
  * @param searchUseCases [SearchUseCases] used for performing a search.
@@ -28,7 +27,7 @@ import org.mozilla.fenix.components.AppStore
  * @param profiler [Profiler] used to add profiler markers.
  */
 class FenixBrowserUseCases(
-    private val appStore: AppStore,
+    private val isPrivate: () -> Boolean,
     private val tabsUseCases: TabsUseCases,
     private val loadUrlUseCase: SessionUseCases.DefaultLoadUrlUseCase,
     private val searchUseCases: SearchUseCases,
@@ -51,7 +50,7 @@ class FenixBrowserUseCases(
     fun loadUrlOrSearch(
         searchTermOrURL: String,
         newTab: Boolean,
-        private: Boolean = appStore.state.mode.isPrivate,
+        private: Boolean = isPrivate(),
         forceSearch: Boolean = false,
         searchEngine: SearchEngine? = null,
         flags: EngineSession.LoadUrlFlags = EngineSession.LoadUrlFlags.none(),
@@ -128,7 +127,7 @@ class FenixBrowserUseCases(
      * @return The ID of the created tab.
      */
     fun addNewHomepageTab(
-        private: Boolean = appStore.state.mode.isPrivate,
+        private: Boolean = isPrivate(),
         startLoading: Boolean = true,
         selectTab: Boolean = true,
     ): String {

@@ -24,7 +24,6 @@ import org.junit.Assert.assertEquals
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.mozilla.fenix.R
-import org.mozilla.fenix.components.AppStore
 import org.mozilla.fenix.components.usecases.FenixBrowserUseCases
 import org.mozilla.fenix.ext.components
 import org.mozilla.fenix.utils.Settings
@@ -217,7 +216,7 @@ class TrackingProtectionFragmentTest {
         val tabsUseCases: TabsUseCases = mockk(relaxed = true)
         val fenixBrowserUseCases =
             FenixBrowserUseCases(
-                appStore = AppStore(),
+                isPrivate = { false },
                 tabsUseCases = tabsUseCases,
                 loadUrlUseCase = mockk(relaxed = true),
                 searchUseCases = mockk(relaxed = true),

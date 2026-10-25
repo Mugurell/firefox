@@ -46,6 +46,7 @@ class ToolbarSimpleShortcutPreferenceTest {
     fun setUp() {
         every { context.components } returns components
         every { components.appStore } returns AppStore(AppState(mode = BrowsingMode.Normal))
+        every { components.activityPrivacy.isPrivate(customTabSessionId = null) } returns false
         every { components.core.summarizeFeatureSettings } returns summarizationFeatureSettings
         every { summarizationFeatureSettings.canShowFeature } returns true
         every { components.core.store } returns browserStore
@@ -92,7 +93,7 @@ class ToolbarSimpleShortcutPreferenceTest {
 
     @Test
     fun `GIVEN summarization enabled and private browsing WHEN getting the shortcut options THEN the summarize option is shown but disabled`() {
-        every { components.appStore } returns AppStore(AppState(mode = BrowsingMode.Private))
+        every { components.activityPrivacy.isPrivate(customTabSessionId = null) } returns true
         val preference =
             ToolbarSimpleShortcutPreference(context).apply {
                 isTranslationsFeatureEnabled = true

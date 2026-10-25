@@ -930,7 +930,7 @@ open class FenixApplication : Application(), Provider, ThemeProvider {
             WebExtensionSupport.initialize(
                 components.core.engine,
                 components.core.store,
-                isInPrivateBrowsingMode = { components.appStore.state.mode.isPrivate },
+                isInPrivateBrowsingMode = { components.activityPrivacy.isPrivate(customTabSessionId = null) },
                 onNewTabOverride = { _, engineSession, url, selected, isPrivate ->
                     components.useCases.tabsUseCases.addTab(
                         url = url,

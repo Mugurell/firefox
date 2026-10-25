@@ -50,6 +50,7 @@ object BrowserToolbarStoreBuilder {
      * @param browserStore [BrowserStore] used for observing the browsing details.
      * @param components [Components] allowing interactions with other application features.
      * @param browsingModeManager [BrowsingModeManager] for querying the current browsing mode.
+     * @param isPrivate Whether the activity showing the toolbar is private.
      * @param thumbnailsFeature [BrowserThumbnails] for requesting screenshots of the current tab.
      * @param readerModeController [ReaderModeController] for managing the reader mode.
      * @param customTabSession [CustomTabSessionState] if the toolbar is shown in a custom tab.
@@ -65,6 +66,7 @@ object BrowserToolbarStoreBuilder {
         browserStore: BrowserStore,
         components: Components,
         browsingModeManager: BrowsingModeManager,
+        isPrivate: () -> Boolean,
         thumbnailsFeature: () -> BrowserThumbnails?,
         readerModeController: ReaderModeController,
         customTabSession: CustomTabSessionState? = null,
@@ -125,7 +127,7 @@ object BrowserToolbarStoreBuilder {
                                 ),
                                 BrowserToolbarSearchStatusSyncMiddleware(
                                     appStore = appStore,
-                                    browsingModeManager = browsingModeManager,
+                                    isPrivate = isPrivate,
                                     scope = lifecycleScope,
                                 ),
                                 BrowserToolbarSearchMiddleware(
@@ -134,7 +136,7 @@ object BrowserToolbarStoreBuilder {
                                     browserStore = browserStore,
                                     components = components,
                                     navController = navController,
-                                    browsingModeManager = browsingModeManager,
+                                    isPrivate = isPrivate,
                                     settings = components.settings,
                                     scope = lifecycleScope,
                                 ),

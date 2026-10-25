@@ -111,6 +111,7 @@ class ToolbarVerticalGesturesHandlerTest(private val scenario: Scenario) {
         val gesturesHandler =
             ToolbarVerticalGesturesHandler(
                 appStore = appStore,
+                isPrivate = { scenario.browsingMode.isPrivate },
                 toolbarLayout = toolbarLayout,
                 navBarLayout = navbarLayout,
                 toolbarPosition = scenario.toolbarPosition,

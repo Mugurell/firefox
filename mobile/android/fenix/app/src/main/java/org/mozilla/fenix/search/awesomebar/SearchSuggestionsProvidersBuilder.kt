@@ -36,7 +36,6 @@ import mozilla.components.support.ktx.android.net.sameHostWithoutMobileSubdomain
 import mozilla.components.support.ktx.kotlin.tryGetHostFromUrl
 import mozilla.components.support.ktx.kotlin.urlContainsQueryParameters
 import org.mozilla.fenix.browser.browsingmode.BrowsingMode
-import org.mozilla.fenix.browser.browsingmode.BrowsingModeManager
 import org.mozilla.fenix.components.Components
 import org.mozilla.fenix.components.Core.Companion.METADATA_HISTORY_SUGGESTION_LIMIT
 import org.mozilla.fenix.components.Core.Companion.METADATA_SHORTCUT_SUGGESTION_LIMIT
@@ -48,7 +47,7 @@ import org.mozilla.fenix.search.SearchEngineSource
 class SearchSuggestionsProvidersBuilder(
     private val components: Components,
     private val scope: CoroutineScope,
-    private val browsingModeManager: BrowsingModeManager,
+    private val isPrivate: () -> Boolean,
     private val includeSelectedTab: Boolean,
     private val loadUrlUseCase: LoadUrlUseCase,
     private val searchUseCase: SearchUseCases.SearchUseCase,
@@ -69,7 +68,7 @@ class SearchSuggestionsProvidersBuilder(
 
     init {
         engineForSpeculativeConnects =
-            when (browsingModeManager.mode) {
+            when (BrowsingMode.fromBoolean(isPrivate())) {
                 BrowsingMode.Normal -> components.core.engine
                 BrowsingMode.Private -> null
             }
@@ -112,14 +111,14 @@ class SearchSuggestionsProvidersBuilder(
                 showDescription = false,
                 engine = engineForSpeculativeConnects,
                 filterExactMatch = true,
-                private = browsingModeManager.mode.isPrivate,
+                private = isPrivate(),
                 suggestionsHeader = suggestionsStringsProvider.forSearchEngineSuggestion(),
             )
 
         defaultTrendingSearchProvider =
             TrendingSearchProvider(
                 fetchClient = components.core.client,
-                privateMode = browsingModeManager.mode.isPrivate,
+                privateMode = isPrivate(),
                 searchUseCase = searchUseCase,
                 icon = trendingSearchBitmap,
             )
@@ -208,12 +207,12 @@ class SearchSuggestionsProvidersBuilder(
             }
         }
 
-        if (!browsingModeManager.mode.isPrivate && state.showAllSessionSuggestions) {
+        if (!isPrivate() && state.showAllSessionSuggestions) {
             // Unlike other providers, we don't exclude sponsored suggestions for open tabs.
             providersToAdd.add(getLocalTabsProvider())
         }
 
-        if (!browsingModeManager.mode.isPrivate && state.showSessionSuggestionsForCurrentEngine) {
+        if (!isPrivate() && state.showSessionSuggestionsForCurrentEngine) {
             getFilterForCurrentEngineResults(state)?.let {
                 providersToAdd.add(getLocalTabsProvider(it))
             }
@@ -394,7 +393,7 @@ class SearchSuggestionsProvidersBuilder(
             val searchBitmap = suggestionIconProvider.getSearchIconBitmap()
 
             val engineForSpeculativeConnects =
-                when (browsingModeManager.mode.isPrivate) {
+                when (isPrivate()) {
                     true -> null
                     else -> components.core.engine
                 }
@@ -415,7 +414,7 @@ class SearchSuggestionsProvidersBuilder(
                     icon = searchBitmap,
                     engine = engineForSpeculativeConnects,
                     filterExactMatch = true,
-                    private = browsingModeManager.mode.isPrivate,
+                    private = isPrivate(),
                 ),
             )
         }

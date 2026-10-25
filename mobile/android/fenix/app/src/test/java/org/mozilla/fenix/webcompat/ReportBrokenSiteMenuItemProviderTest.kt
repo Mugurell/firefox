@@ -27,8 +27,6 @@ import mozilla.components.compose.menu.ui.MenuItemState
 import mozilla.components.ui.icons.R as iconsR
 import org.junit.Test
 import org.mozilla.fenix.R
-import org.mozilla.fenix.components.AppStore
-import org.mozilla.fenix.components.appstate.AppState
 import org.mozilla.fenix.components.menu.MenuFragmentDirections
 import org.mozilla.fenix.components.menu.MenuTarget
 import org.mozilla.fenix.components.menu.fake.FakeMenuHost
@@ -41,7 +39,6 @@ import org.mozilla.fenix.utils.Settings
 class ReportBrokenSiteMenuItemProviderTest {
     private val settings: Settings = mockk()
     private val webCompatReporterMoreInfoSender: WebCompatReporterMoreInfoSender = mockk(relaxed = true)
-    private val appStore: AppStore = mockk { every { state } returns AppState() }
     private val fenixBrowserUseCases: FenixBrowserUseCases = mockk(relaxed = true)
     private val menu = FakeMenuHost()
 
@@ -147,7 +144,7 @@ class ReportBrokenSiteMenuItemProviderTest {
             target = target,
             settings = settings,
             webCompatReporterMoreInfoSender = webCompatReporterMoreInfoSender,
-            appStore = appStore,
+            isPrivate = { false },
             fenixBrowserUseCases = fenixBrowserUseCases,
             scope = backgroundScope,
         )

@@ -56,7 +56,7 @@ class StartSearchIntentProcessorTest {
         fenixBrowserUseCases =
             FenixBrowserUseCases(
                 tabsUseCases = TabsUseCases(store = browserStore),
-                appStore = mockk(relaxed = true),
+                isPrivate = { false },
                 loadUrlUseCase = mockk(relaxed = true),
                 searchUseCases = mockk(relaxed = true),
                 homepageTitle = "",

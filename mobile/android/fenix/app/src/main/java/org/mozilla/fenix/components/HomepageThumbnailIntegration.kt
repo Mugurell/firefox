@@ -30,7 +30,7 @@ import org.mozilla.fenix.browser.browsingmode.BrowsingMode
  * @param context A [Context] used to check for low memory.
  * @param view The [View] to take screenshot of.
  * @param store The [BrowserStore] used to look up the current selected tab.
- * @param appStore The [AppStore] used to look up the current browsing mode.
+ * @param isPrivate Whether the homepage is private.
  * @param homepageContentBounds Lamba that provides the bounds of the homepage content (excluding the toolbar and system
  *   bar padding) within [view], used to crop the screenshot to the content only. Returns null when the bounds are
  *   unknown, in which case the full [view] is captured.
@@ -39,7 +39,7 @@ class HomepageThumbnailIntegration(
     private val context: Context,
     private val view: View,
     private val store: BrowserStore,
-    private val appStore: AppStore,
+    private val isPrivate: () -> Boolean,
     private val homepageContentBounds: () -> Rect?,
 ) : LifecycleAwareFeature {
     private val feature by lazy {
@@ -53,7 +53,7 @@ class HomepageThumbnailIntegration(
     private var backgroundColor: Int = 0
 
     override fun start() {
-        backgroundColor = getColor(context, appStore.state.mode).surface.toArgb()
+        backgroundColor = getColor(context, BrowsingMode.fromBoolean(isPrivate())).surface.toArgb()
         feature.start()
     }
 

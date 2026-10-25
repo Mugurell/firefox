@@ -17,7 +17,6 @@ import mozilla.components.compose.browser.toolbar.store.BrowserToolbarStore
 import mozilla.components.lib.state.Middleware
 import mozilla.components.lib.state.Store
 import mozilla.components.lib.state.ext.flow
-import org.mozilla.fenix.browser.browsingmode.BrowsingModeManager
 import org.mozilla.fenix.components.AppStore
 import org.mozilla.fenix.components.appstate.AppAction.SearchAction.SearchEnded
 
@@ -25,12 +24,12 @@ import org.mozilla.fenix.components.appstate.AppAction.SearchAction.SearchEnded
  * [Middleware] for synchronizing whether a search is active between [BrowserToolbarStore] and [AppStore].
  *
  * @param appStore [AppStore] through which the toolbar updates can be integrated with other application features.
- * @param browsingModeManager [BrowsingModeManager] for querying the current browsing mode.
+ * @param isPrivate Whether the activity showing this is private.
  * @param scope [CoroutineScope] used for running long running operations in background.
  */
 class BrowserToolbarSearchStatusSyncMiddleware(
     private val appStore: AppStore,
-    private val browsingModeManager: BrowsingModeManager,
+    private val isPrivate: () -> Boolean,
     private val scope: CoroutineScope,
 ) : Middleware<BrowserToolbarState, BrowserToolbarAction> {
     private var syncSearchActiveJob: Job? = null
@@ -61,7 +60,7 @@ class BrowserToolbarSearchStatusSyncMiddleware(
                 .distinctUntilChangedBy { it.searchState.isSearchActive }
                 .collect {
                     if (it.searchState.isSearchActive) {
-                        store.dispatch(EnterEditMode(browsingModeManager.mode.isPrivate))
+                        store.dispatch(EnterEditMode(isPrivate()))
                     } else {
                         store.dispatch(ExitEditMode)
                     }

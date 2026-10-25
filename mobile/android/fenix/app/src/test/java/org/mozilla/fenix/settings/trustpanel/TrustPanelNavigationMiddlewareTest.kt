@@ -20,7 +20,6 @@ import mozilla.components.feature.session.SessionUseCases
 import mozilla.components.feature.tabs.TabsUseCases
 import org.junit.Test
 import org.mozilla.fenix.R
-import org.mozilla.fenix.components.AppStore
 import org.mozilla.fenix.settings.PhoneFeature
 import org.mozilla.fenix.settings.trustpanel.middleware.TrustPanelNavigationMiddleware
 import org.mozilla.fenix.settings.trustpanel.store.TrustPanelAction
@@ -35,7 +34,7 @@ class TrustPanelNavigationMiddlewareTest {
             every { navigate(any<NavDirections>(), any<NavOptions>()) } just runs
             every { currentDestination?.id } returns R.id.trustPanelFragment
         }
-    private val appStore: AppStore = mockk(relaxed = true)
+    private var isPrivate = false
     private val tabsUseCases: TabsUseCases = mockk(relaxed = true)
     private val sessionUseCases: SessionUseCases = mockk(relaxed = true)
 
@@ -107,7 +106,7 @@ class TrustPanelNavigationMiddlewareTest {
             val testContextId = "context-id"
             val isPrivate = false
 
-            every { appStore.state.mode.isPrivate } returns isPrivate
+            this@TrustPanelNavigationMiddlewareTest.isPrivate = isPrivate
 
             val sessionState: SessionState = mockk {
                 every { id } returns testSessionId
@@ -147,7 +146,7 @@ class TrustPanelNavigationMiddlewareTest {
             val testContextId = "context-id"
             val isPrivate = true
 
-            every { appStore.state.mode.isPrivate } returns isPrivate
+            this@TrustPanelNavigationMiddlewareTest.isPrivate = isPrivate
 
             val sessionState: SessionState = mockk {
                 every { id } returns testSessionId
@@ -222,7 +221,7 @@ class TrustPanelNavigationMiddlewareTest {
                     TrustPanelNavigationMiddleware(
                         navController = navController,
                         privacySecurityPrefKey = privacySecurityPrefKey,
-                        appStore = appStore,
+                        isPrivate = { isPrivate },
                         tabsUseCases = tabsUseCases,
                         sessionUseCases = sessionUseCases,
                         scope = scope,

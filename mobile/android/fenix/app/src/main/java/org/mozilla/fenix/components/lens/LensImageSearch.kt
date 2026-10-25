@@ -61,13 +61,15 @@ internal suspend fun runLensUpload(
  * Keep this application scoped. [LensCameraActivity] covers, and on low memory devices outlives, the host fragment, so
  * neither the upload nor the tab it opens can depend on a view lifecycle.
  *
- * @param appStore Provides the browsing mode and receives the result of the search.
+ * @param appStore Receives the result of the search.
+ * @param isPrivate Whether the search opens its result in a private tab.
  * @param uploader Supplies the uploader lazily, so constructing this never touches the engine.
  * @param browserUseCases Supplies the use cases lazily, for the same reason.
  * @param scope Application scoped coroutine scope the uploads run in.
  */
 class LensImageSearch(
     private val appStore: AppStore,
+    private val isPrivate: () -> Boolean,
     private val uploader: () -> LensImageUploader,
     private val browserUseCases: () -> FenixBrowserUseCases,
     private val scope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate),
@@ -120,7 +122,7 @@ class LensImageSearch(
         // The newest request wins. Two in-flight uploads would open two tabs and race to write the result.
         searchJob?.cancel()
         searchJob = scope.launch {
-            val isPrivate = appStore.state.mode.isPrivate
+            val isPrivate = isPrivate()
 
             val resultUrl = runLensUpload(source) { upload(isPrivate) }?.resultUrl
             if (resultUrl == null) {

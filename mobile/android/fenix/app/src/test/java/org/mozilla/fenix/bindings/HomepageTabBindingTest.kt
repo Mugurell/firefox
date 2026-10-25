@@ -18,7 +18,6 @@ import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.mozilla.fenix.browser.browsingmode.BrowsingMode
-import org.mozilla.fenix.browser.browsingmode.BrowsingModeManager
 import org.mozilla.fenix.components.AppStore
 import org.mozilla.fenix.components.HomepageAsANewTabPreferencesRepository
 import org.mozilla.fenix.components.appstate.AppAction
@@ -238,7 +237,7 @@ class HomepageTabBindingTest {
         HomepageTabBinding(
             browserStore = browserStore,
             appStore = appStore,
-            browsingModeManager = mockk<BrowsingModeManager> { every { this@mockk.mode } returns mode },
+            isPrivate = { mode.isPrivate },
             fenixBrowserUseCases = fenixBrowserUseCases,
             repository = repository,
             mainDispatcher = testDispatcher,

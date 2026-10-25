@@ -50,7 +50,6 @@ import mozilla.components.lib.state.helpers.StoreProvider.Companion.fragmentStor
 import mozilla.components.support.ktx.android.view.hideKeyboard
 import org.mozilla.fenix.HomeActivity
 import org.mozilla.fenix.R
-import org.mozilla.fenix.browser.browsingmode.BrowsingMode
 import org.mozilla.fenix.components.AppStore
 import org.mozilla.fenix.components.Components
 import org.mozilla.fenix.components.appstate.AppAction.SearchAction.SearchEnded
@@ -156,7 +155,7 @@ class AwesomeBarComposable(
         val clipboardBarBackground =
             edgeToEdgeClipboardBarBackground(
                 shouldUseEdgeToEdgeColors = isEdgeToEdgeBackgroundEnabled,
-                isPrivateMode = activity.browsingModeManager.mode == BrowsingMode.Private,
+                isPrivateMode = activity.components.activityPrivacy.isPrivate(customTabSessionId = null),
             )
         val showCurrentTabData = remember { components.settings.showAddressBarInFocusMode }
         val view = LocalView.current
@@ -330,7 +329,7 @@ class AwesomeBarComposable(
                     listOf(
                         BrowserToolbarToFenixSearchMapperMiddleware(
                             toolbarStore = toolbarStore,
-                            browsingModeManager = activity.browsingModeManager,
+                            isPrivate = { activity.components.activityPrivacy.isPrivate(customTabSessionId = null) },
                             scope = lifecycleScope,
                             browserStore = browserStore,
                         ),
@@ -338,6 +337,7 @@ class AwesomeBarComposable(
                             browserStore = browserStore,
                             scope = lifecycleScope,
                             appStore = components.appStore,
+                            isPrivate = { activity.components.activityPrivacy.isPrivate(customTabSessionId = null) },
                         ),
                         FenixSearchMiddleware(
                             fragment = fragment,
@@ -349,7 +349,7 @@ class AwesomeBarComposable(
                             browserStore = browserStore,
                             toolbarStore = toolbarStore,
                             navController = navController,
-                            browsingModeManager = activity.browsingModeManager,
+                            isPrivate = { activity.components.activityPrivacy.isPrivate(customTabSessionId = null) },
                             shareUseCases = components.useCases.shareUseCases,
                             clipboardHandler = components.clipboardHandler,
                         ),

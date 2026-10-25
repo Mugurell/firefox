@@ -88,6 +88,7 @@ class DefaultHistoryMetadataGroupController(
     private val historyStorage: PlacesHistoryStorage,
     private val browserStore: BrowserStore,
     private val appStore: AppStore,
+    private val isPrivate: () -> Boolean,
     private val store: HistoryMetadataGroupFragmentStore,
     private val selectOrAddUseCase: TabsUseCases.SelectOrAddUseCase,
     private val fenixBrowserUseCases: FenixBrowserUseCases,
@@ -111,7 +112,7 @@ class DefaultHistoryMetadataGroupController(
             fenixBrowserUseCases.loadUrlOrSearch(
                 searchTermOrURL = item.url,
                 newTab = false,
-                private = appStore.state.mode.isPrivate,
+                private = isPrivate(),
             )
         } else {
             selectOrAddUseCase.invoke(item.url, item.historyMetadataKey)
@@ -140,7 +141,7 @@ class DefaultHistoryMetadataGroupController(
 
     override fun handleShare(items: Set<History.Metadata>) {
         val shareData = items.map {
-            ShareData(url = it.url, title = it.title, private = appStore.state.mode.isPrivate)
+            ShareData(url = it.url, title = it.title, private = isPrivate())
         }
 
         shareUseCases.shareItems(

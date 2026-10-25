@@ -23,7 +23,6 @@ import mozilla.components.support.ktx.kotlin.isAboutUrl
 import mozilla.components.support.ktx.kotlin.isContentUrl
 import mozilla.components.ui.icons.R as iconsR
 import org.mozilla.fenix.R
-import org.mozilla.fenix.components.AppStore
 import org.mozilla.fenix.components.menu.MenuFragmentDirections
 import org.mozilla.fenix.components.menu.MenuHost
 import org.mozilla.fenix.components.menu.MenuItemProvider
@@ -41,7 +40,7 @@ import org.mozilla.fenix.utils.Settings
  * @param settings [Settings] used to know whether the user allows telemetry.
  * @param webCompatReporterMoreInfoSender [WebCompatReporterMoreInfoSender] for sending the details of a broken site to
  *   webcompat.com.
- * @param appStore [AppStore] used to know whether to open pages in a private tab.
+ * @param isPrivate Whether to open pages in a private tab.
  * @param fenixBrowserUseCases [FenixBrowserUseCases] for opening webcompat.com.
  * @param scope [CoroutineScope] used to keep the item up to date for as long as it can be shown, and to send the
  *   details of a broken site.
@@ -52,7 +51,7 @@ class ReportBrokenSiteMenuItemProvider(
     private val target: MenuTarget,
     private val settings: Settings,
     private val webCompatReporterMoreInfoSender: WebCompatReporterMoreInfoSender,
-    private val appStore: AppStore,
+    private val isPrivate: () -> Boolean,
     private val fenixBrowserUseCases: FenixBrowserUseCases,
     private val scope: CoroutineScope,
 ) : MenuItemProvider {
@@ -94,7 +93,7 @@ class ReportBrokenSiteMenuItemProvider(
             fenixBrowserUseCases.loadUrlOrSearch(
                 searchTermOrURL = "$WEB_COMPAT_REPORTER_URL$tabUrl",
                 newTab = true,
-                private = appStore.state.mode.isPrivate,
+                private = isPrivate(),
             )
         }
     }

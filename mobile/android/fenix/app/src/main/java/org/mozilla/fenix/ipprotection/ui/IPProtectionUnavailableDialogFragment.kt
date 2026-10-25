@@ -11,11 +11,11 @@ import android.view.ViewGroup
 import androidx.appcompat.app.AppCompatDialogFragment
 import androidx.fragment.compose.content
 import androidx.navigation.fragment.findNavController
+import androidx.navigation.fragment.navArgs
 import mozilla.components.feature.ipprotection.IPProtectionUnavailableDialog
 import mozilla.components.feature.ipprotection.store.IPProtectionAction
 import mozilla.components.feature.ipprotection.store.state.Authorized
 import mozilla.components.lib.state.ext.observeAsComposableState
-import org.mozilla.fenix.HomeActivity
 import org.mozilla.fenix.components.components
 import org.mozilla.fenix.ext.requireComponents
 import org.mozilla.fenix.tabstray.redux.state.Page
@@ -28,9 +28,10 @@ import org.mozilla.fenix.theme.FirefoxTheme
  * allows the user to toggle off the proxy, and it closes itself when the proxy error state is gone.
  */
 class IPProtectionUnavailableDialogFragment : AppCompatDialogFragment() {
+    private val args by navArgs<IPProtectionUnavailableDialogFragmentArgs>()
 
     private val isPrivateMode by lazy {
-        (requireActivity() as HomeActivity).browsingModeManager.mode.isPrivate
+        requireComponents.activityPrivacy.isPrivate(args.customTabSessionId)
     }
 
     override fun onCreateView(

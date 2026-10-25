@@ -24,11 +24,10 @@ import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
-import org.mozilla.fenix.browser.browsingmode.BrowsingMode
-import org.mozilla.fenix.components.appstate.AppAction
 import org.mozilla.fenix.components.appstate.AppAction.LensAction
 import org.mozilla.fenix.components.lens.LensCameraActivity
 import org.mozilla.fenix.components.lens.LensImageSearch
+import org.mozilla.fenix.ext.components
 import org.robolectric.RobolectricTestRunner
 
 @RunWith(RobolectricTestRunner::class)
@@ -203,7 +202,7 @@ class LensFeatureTest {
     @Test
     fun `GIVEN private browsing WHEN LensRequested is dispatched THEN the camera is launched in private mode`() =
         runTest(testDispatcher) {
-            appStore.dispatch(AppAction.BrowsingModeManagerModeChanged(BrowsingMode.Private))
+            every { testContext.components.activityPrivacy.isPrivate(customTabSessionId = null) } returns true
             val intentSlot = slot<Intent>()
             every { lensLauncher.launch(capture(intentSlot)) } returns Unit
 

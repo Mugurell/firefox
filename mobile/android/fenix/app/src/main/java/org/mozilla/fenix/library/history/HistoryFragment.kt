@@ -94,7 +94,6 @@ import org.mozilla.fenix.GleanMetrics.History as GleanHistory
 import org.mozilla.fenix.HomeActivity
 import org.mozilla.fenix.NavHostActivity
 import org.mozilla.fenix.R
-import org.mozilla.fenix.browser.browsingmode.BrowsingMode
 import org.mozilla.fenix.components.LensFeature
 import org.mozilla.fenix.components.QrScanFenixFeature
 import org.mozilla.fenix.components.VoiceSearchFeature
@@ -139,6 +138,8 @@ private const val MATERIAL_DESIGN_SCRIM = "#52000000"
 @SuppressWarnings("TooManyFunctions", "LargeClass")
 class HistoryFragment :
     LibraryPageFragment<History>(), UserInteractionHandler, MenuProvider, SystemInsetsPaddedFragment {
+    private fun isActivityPrivate() = requireComponents.activityPrivacy.isPrivate(customTabSessionId = null)
+
     private lateinit var historyStore: HistoryFragmentStore
     private lateinit var searchStore: SearchFragmentStore
     private lateinit var toolbarStore: BrowserToolbarStore
@@ -211,12 +212,7 @@ class HistoryFragment :
             fragmentStore(HistoryFragmentState.initial) {
                     HistoryFragmentStore(
                         initialState = it,
-                        middleware =
-                            listOf(
-                                HistoryTelemetryMiddleware(
-                                    isInPrivateMode = requireComponents.appStore.state.mode == BrowsingMode.Private
-                                )
-                            ),
+                        middleware = listOf(HistoryTelemetryMiddleware(isInPrivateMode = isActivityPrivate())),
                     )
                 }
                 .value
@@ -336,7 +332,7 @@ class HistoryFragment :
             R.id.share_history_multi_select -> {
                 val selectedHistory = historyStore.state.mode.selectedItems
                 val shareTabs = mutableListOf<ShareData>()
-                val isPrivate = requireComponents.appStore.state.mode.isPrivate
+                val isPrivate = isActivityPrivate()
                 for (history in selectedHistory) {
                     when (history) {
                         is History.Regular -> {
@@ -616,7 +612,7 @@ class HistoryFragment :
         requireComponents.useCases.fenixBrowserUseCases.loadUrlOrSearch(
             searchTermOrURL = item.url,
             newTab = requireComponents.settings.enableHomepageAsNewTab.not(),
-            private = (requireActivity() as HomeActivity).browsingModeManager.mode.isPrivate,
+            private = isActivityPrivate(),
         )
         findNavController().navigate(R.id.browserFragment)
     }
@@ -765,7 +761,7 @@ class HistoryFragment :
                         BrowserToolbarSyncToHistoryMiddleware(historyStore),
                         BrowserToolbarSearchStatusSyncMiddleware(
                             appStore = requireComponents.appStore,
-                            browsingModeManager = (requireActivity() as HomeActivity).browsingModeManager,
+                            isPrivate = ::isActivityPrivate,
                             scope = lifecycleScope,
                         ),
                         BrowserToolbarSearchMiddleware(
@@ -774,7 +770,7 @@ class HistoryFragment :
                             browserStore = requireComponents.core.store,
                             components = requireComponents,
                             navController = findNavController(),
-                            browsingModeManager = (requireActivity() as HomeActivity).browsingModeManager,
+                            isPrivate = ::isActivityPrivate,
                             settings = requireComponents.settings,
                             scope = lifecycleScope,
                         ),
@@ -804,13 +800,14 @@ class HistoryFragment :
                     listOf(
                         BrowserToolbarToFenixSearchMapperMiddleware(
                             toolbarStore = toolbarStore,
-                            browsingModeManager = (requireActivity() as HomeActivity).browsingModeManager,
+                            isPrivate = ::isActivityPrivate,
                             scope = lifecycleScope,
                         ),
                         BrowserStoreToFenixSearchMapperMiddleware(
                             browserStore = requireComponents.core.store,
                             scope = lifecycleScope,
                             appStore = requireComponents.appStore,
+                            isPrivate = ::isActivityPrivate,
                         ),
                         FenixSearchMiddleware(
                             fragment = this@HistoryFragment,
@@ -822,7 +819,7 @@ class HistoryFragment :
                             browserStore = requireComponents.core.store,
                             toolbarStore = toolbarStore,
                             navController = findNavController(),
-                            browsingModeManager = (requireActivity() as HomeActivity).browsingModeManager,
+                            isPrivate = ::isActivityPrivate,
                             shareUseCases = requireComponents.useCases.shareUseCases,
                             clipboardHandler = requireComponents.clipboardHandler,
                         ),

@@ -41,9 +41,6 @@ import org.junit.runner.RunWith
 import org.mozilla.fenix.BuildConfig
 import org.mozilla.fenix.HomeActivity
 import org.mozilla.fenix.R
-import org.mozilla.fenix.browser.browsingmode.BrowsingMode
-import org.mozilla.fenix.components.AppStore
-import org.mozilla.fenix.components.appstate.AppState
 import org.mozilla.fenix.components.usecases.FenixBrowserUseCases
 import org.mozilla.fenix.databinding.FragmentInstalledAddOnDetailsBinding
 import org.mozilla.fenix.ext.components
@@ -349,15 +346,7 @@ class InstalledAddonDetailsFragmentTest {
         val navController = mockk<NavController>(relaxed = true)
         Navigation.setViewNavController(fragment.binding.root, navController)
 
-        val appStore = mockk<AppStore>()
-        val appState = mockk<AppState>()
-        every { appState.mode } returns
-            mockk(relaxed = true) {
-                every { isPrivate } returns false // or true
-            }
-
-        every { appStore.state } returns appState
-        every { testContext.components.appStore } returns appStore
+        every { testContext.components.activityPrivacy.isPrivate(customTabSessionId = null) } returns false
 
         // Click the report button.
         fragment.binding.reportAddOn.performClick()
@@ -383,7 +372,7 @@ class InstalledAddonDetailsFragmentTest {
         every { selectOrAddTab.invoke(any(), any(), any(), any(), any()) } returns "some-tab-id"
         every { useCases.selectOrAddTab } returns selectOrAddTab
         every { testContext.components.useCases.tabsUseCases } returns useCases
-        every { testContext.components.appStore.state.mode.isPrivate } returns true
+        every { testContext.components.activityPrivacy.isPrivate(customTabSessionId = null) } returns true
         // We create the `binding` instance and bind the UI here because `onCreateView()` checks a late init variable
         // and we cannot easily mock it to skip the check.
         fragment.setBindingAndBindUI(
@@ -633,10 +622,9 @@ class InstalledAddonDetailsFragmentTest {
         val navController = mockk<NavController>(relaxed = true)
         Navigation.setViewNavController(binding.root, navController)
 
-        val appStore = AppStore(initialState = AppState(mode = BrowsingMode.Normal))
         val useCases =
             FenixBrowserUseCases(
-                appStore = appStore,
+                isPrivate = { false },
                 tabsUseCases = tabsUseCases,
                 loadUrlUseCase = loadUrlUseCase,
                 searchUseCases = searchUseCases,
@@ -685,10 +673,9 @@ class InstalledAddonDetailsFragmentTest {
         val navController = mockk<NavController>(relaxed = true)
         Navigation.setViewNavController(binding.root, navController)
 
-        val appStore = AppStore(initialState = AppState(mode = BrowsingMode.Normal))
         val useCases =
             FenixBrowserUseCases(
-                appStore = appStore,
+                isPrivate = { false },
                 tabsUseCases = tabsUseCases,
                 loadUrlUseCase = loadUrlUseCase,
                 searchUseCases = searchUseCases,
@@ -738,10 +725,9 @@ class InstalledAddonDetailsFragmentTest {
         val navController = mockk<NavController>(relaxed = true)
         Navigation.setViewNavController(binding.root, navController)
 
-        val appStore = AppStore(initialState = AppState(mode = BrowsingMode.Normal))
         val useCases =
             FenixBrowserUseCases(
-                appStore = appStore,
+                isPrivate = { false },
                 tabsUseCases = tabsUseCases,
                 loadUrlUseCase = loadUrlUseCase,
                 searchUseCases = searchUseCases,

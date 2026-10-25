@@ -782,7 +782,7 @@ class TabManagementFragment : Fragment() {
                     isLocked = appState.isPrivateScreenLocked,
                     showLockBanner =
                         shouldShowLockPbmBanner(
-                            isPrivateMode = appState.mode.isPrivate,
+                            isPrivateMode = requireComponents.activityPrivacy.isPrivate(customTabSessionId = null),
                             hasPrivateTabs = coreState.privateTabs.isNotEmpty(),
                             biometricAvailable = BiometricManager.from(requireContext()).isDeviceLockCapable(),
                             privateLockEnabled = settings.privateBrowsingModeLocked,

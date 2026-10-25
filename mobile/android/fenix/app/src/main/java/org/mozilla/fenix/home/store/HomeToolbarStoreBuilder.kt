@@ -35,6 +35,7 @@ object HomeToolbarStoreBuilder {
      * @param appStore [AppStore] to sync from.
      * @param browserStore [BrowserStore] to sync from.
      * @param browsingModeManager [BrowsingModeManager] for querying the current browsing mode.
+     * @param isPrivate Whether the activity showing the toolbar is private.
      */
     fun build(
         context: Context,
@@ -43,6 +44,7 @@ object HomeToolbarStoreBuilder {
         appStore: AppStore,
         browserStore: BrowserStore,
         browsingModeManager: BrowsingModeManager,
+        isPrivate: () -> Boolean,
     ) =
         fragment.fragmentStore(BrowserToolbarState()) {
             val lifecycleScope = fragment.viewLifecycleOwner.lifecycle.coroutineScope
@@ -53,7 +55,7 @@ object HomeToolbarStoreBuilder {
                     listOf(
                         BrowserToolbarSearchStatusSyncMiddleware(
                             appStore = appStore,
-                            browsingModeManager = browsingModeManager,
+                            isPrivate = isPrivate,
                             scope = lifecycleScope,
                         ),
                         BrowserToolbarMiddleware(
@@ -76,7 +78,7 @@ object HomeToolbarStoreBuilder {
                             browserStore = browserStore,
                             components = context.components,
                             navController = navController,
-                            browsingModeManager = browsingModeManager,
+                            isPrivate = isPrivate,
                             settings = context.components.settings,
                             scope = lifecycleScope,
                         ),

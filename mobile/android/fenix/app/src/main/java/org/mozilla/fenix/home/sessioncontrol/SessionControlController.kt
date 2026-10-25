@@ -129,6 +129,7 @@ class DefaultSessionControlController(
     private val reloadUrlUseCase: SessionUseCases.ReloadUrlUseCase,
     private val fenixBrowserUseCases: FenixBrowserUseCases,
     private val appStore: AppStore,
+    private val isPrivate: () -> Boolean,
     private val navControllerRef: WeakReference<NavController>,
     private val viewLifecycleScope: CoroutineScope,
     private val shareUseCases: ShareUseCases,
@@ -175,7 +176,7 @@ class DefaultSessionControlController(
                 fenixBrowserUseCases.loadUrlOrSearch(
                     searchTermOrURL = tab.url,
                     newTab = !settings.enableHomepageAsNewTab,
-                    private = appStore.state.mode.isPrivate,
+                    private = isPrivate(),
                 )
             },
         )
@@ -240,7 +241,7 @@ class DefaultSessionControlController(
     }
 
     override fun handleShowWallpapersOnboardingDialog(state: WallpaperState): Boolean {
-        return if (appStore.state.mode.isPrivate) {
+        return if (isPrivate()) {
             false
         } else {
             state.availableWallpapers
@@ -284,7 +285,7 @@ class DefaultSessionControlController(
 
         val tabIds =
             store.state
-                .getNormalOrPrivateTabs(private = appStore.state.mode.isPrivate)
+                .getNormalOrPrivateTabs(private = isPrivate())
                 .map { session -> session.id }
                 .toList()
                 .toTypedArray()

@@ -18,7 +18,6 @@ import mozilla.components.feature.tabs.TabsUseCases
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Test
-import org.mozilla.fenix.components.AppStore
 import org.mozilla.fenix.components.usecases.FenixBrowserUseCases
 
 class UnlockPrivateTabsFragmentTest {
@@ -70,7 +69,7 @@ class UnlockPrivateTabsFragmentTest {
             tabsUseCases = tabsUseCases,
             fenixBrowserUseCases =
                 FenixBrowserUseCases(
-                    appStore = AppStore(),
+                    isPrivate = { false },
                     tabsUseCases = tabsUseCases,
                     loadUrlUseCase = SessionUseCases(store).loadUrl,
                     searchUseCases = mockk(relaxed = true),

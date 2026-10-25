@@ -24,9 +24,9 @@ import mozilla.components.compose.browser.toolbar.store.BrowserToolbarStore
 import mozilla.components.compose.browser.toolbar.store.Mode
 import mozilla.components.lib.state.helpers.StoreProvider.Companion.fragmentStore
 import mozilla.components.support.base.feature.ViewBoundFeatureWrapper
-import org.mozilla.fenix.HomeActivity
 import org.mozilla.fenix.R
 import org.mozilla.fenix.bookmarks.importer.FenixImporterEvent
+import org.mozilla.fenix.browser.browsingmode.BrowsingMode
 import org.mozilla.fenix.components.LensFeature
 import org.mozilla.fenix.components.QrScanFenixFeature
 import org.mozilla.fenix.components.VoiceSearchFeature
@@ -49,6 +49,7 @@ import org.mozilla.fenix.theme.FirefoxTheme
 /** The screen that displays the user's bookmark list in their Library. */
 @Suppress("TooManyFunctions", "LargeClass")
 class BookmarkFragment : Fragment(), SystemInsetsPaddedFragment {
+    private fun isActivityPrivate() = requireComponents.activityPrivacy.isPrivate(customTabSessionId = null)
 
     private val verificationResultLauncher = registerForVerification()
     private var qrScanFenixFeature: ViewBoundFeatureWrapper<QrScanFenixFeature>? =
@@ -89,7 +90,6 @@ class BookmarkFragment : Fragment(), SystemInsetsPaddedFragment {
     ): View {
         val toolbarStore = buildToolbarStore()
         val buildStore = { composeNavController: NavHostController ->
-            val appStore = requireComponents.appStore
             val navController = this@BookmarkFragment.findNavController()
 
             val store by
@@ -152,8 +152,7 @@ class BookmarkFragment : Fragment(), SystemInsetsPaddedFragment {
                                             )
                                     },
                                     shareBookmarks = { bookmarks ->
-                                        val shareItems =
-                                            bookmarks.asShareDataArray(appStore.state.mode.isPrivate).toList()
+                                        val shareItems = bookmarks.asShareDataArray(isActivityPrivate()).toList()
                                         requireComponents.useCases.shareUseCases.shareItems(
                                             items = shareItems,
                                             source = ShareSource.BOOKMARKS,
@@ -170,7 +169,7 @@ class BookmarkFragment : Fragment(), SystemInsetsPaddedFragment {
                                                 navController.nav(
                                                     R.id.bookmarkFragment,
                                                     BookmarkFragmentDirections.actionGlobalShareFragment(
-                                                        data = bookmarks.asShareDataArray(appStore.state.mode.isPrivate)
+                                                        data = bookmarks.asShareDataArray(isActivityPrivate())
                                                     ),
                                                 )
                                             },
@@ -185,7 +184,7 @@ class BookmarkFragment : Fragment(), SystemInsetsPaddedFragment {
                                         ) ?: ""
                                     },
                                     getBrowsingMode = {
-                                        appStore.state.mode
+                                        BrowsingMode.fromBoolean(isActivityPrivate())
                                     },
                                     saveBookmarkSortOrder = {
                                         requireComponents.settings.bookmarkListSortOrder = it.asString
@@ -240,7 +239,7 @@ class BookmarkFragment : Fragment(), SystemInsetsPaddedFragment {
                         listOf(
                             BrowserToolbarSearchStatusSyncMiddleware(
                                 appStore = requireComponents.appStore,
-                                browsingModeManager = (requireActivity() as HomeActivity).browsingModeManager,
+                                isPrivate = ::isActivityPrivate,
                                 scope = lifecycleScope,
                             ),
                             BrowserToolbarSearchMiddleware(
@@ -249,7 +248,7 @@ class BookmarkFragment : Fragment(), SystemInsetsPaddedFragment {
                                 browserStore = requireComponents.core.store,
                                 components = requireComponents,
                                 navController = findNavController(),
-                                browsingModeManager = (requireActivity() as HomeActivity).browsingModeManager,
+                                isPrivate = ::isActivityPrivate,
                                 settings = requireComponents.settings,
                                 scope = lifecycleScope,
                             ),

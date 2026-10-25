@@ -18,7 +18,6 @@ import mozilla.components.concept.engine.utils.ABOUT_HOME_URL
 import mozilla.components.feature.tabs.TabsUseCases
 import mozilla.components.support.base.feature.LifecycleAwareFeature
 import org.mozilla.fenix.R
-import org.mozilla.fenix.browser.browsingmode.BrowsingModeManager
 import org.mozilla.fenix.components.usecases.FenixBrowserUseCases
 import org.mozilla.fenix.ext.actualInactiveTabs
 import org.mozilla.fenix.ext.components
@@ -38,7 +37,7 @@ import org.mozilla.fenix.utils.getUndoDelay
  * @param context An Android [Context].
  * @param viewModel [HomeScreenViewModel] containing the data on the sessions to delete.
  * @param browserStore The [BrowserStore] that holds the currently open tabs.
- * @param browsingModeManager [BrowsingModeManager] used for fetching the current browsing mode.
+ * @param isPrivate Whether the activity showing this is private.
  * @param navController [NavController] used for navigation.
  * @param tabsUseCases The [TabsUseCases] instance to perform tab actions.
  * @param fenixBrowserUseCases [FenixBrowserUseCases] used for adding new homepage tabs.
@@ -51,7 +50,7 @@ class TabsCleanupFeature(
     private val context: Context,
     private val viewModel: HomeScreenViewModel,
     private val browserStore: BrowserStore,
-    private val browsingModeManager: BrowsingModeManager,
+    private val isPrivate: () -> Boolean,
     private val navController: NavController,
     private val tabsUseCases: TabsUseCases,
     private val fenixBrowserUseCases: FenixBrowserUseCases,
@@ -111,7 +110,7 @@ class TabsCleanupFeature(
             // Add a new tab after all the tabs are removed to ensure there's always 1 tab.
             // Hold onto the new tab ID so that the new tab can be removed if the tabs are restored
             // by the undo action.
-            tabId = fenixBrowserUseCases.addNewHomepageTab(private = browsingModeManager.mode.isPrivate)
+            tabId = fenixBrowserUseCases.addNewHomepageTab(private = isPrivate())
         }
 
         showUndoSnackbar(
@@ -135,7 +134,7 @@ class TabsCleanupFeature(
 
     private fun removeTabAndShowSnackbar(sessionId: String) {
         val tab = browserStore.state.findTab(sessionId) ?: return
-        val isPrivate = browsingModeManager.mode.isPrivate
+        val isPrivate = isPrivate()
 
         // Check if this is the last tab being removed.
         val hasTabsRemaining =

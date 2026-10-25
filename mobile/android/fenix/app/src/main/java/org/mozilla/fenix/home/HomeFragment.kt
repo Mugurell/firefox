@@ -230,6 +230,8 @@ class HomeFragment : Fragment(), UserInteractionHandler, OnLongPressedListener {
     private val browsingModeManager
         get() = (activity as HomeActivity).browsingModeManager
 
+    private fun isActivityPrivate() = requireComponents.activityPrivacy.isPrivate(customTabSessionId = null)
+
     private val collectionStorageObserver =
         object : TabCollectionStorage.Observer {
             override fun onTabsAdded(tabCollection: TabCollection, sessions: List<TabSessionState>) {
@@ -472,7 +474,7 @@ class HomeFragment : Fragment(), UserInteractionHandler, OnLongPressedListener {
                         appStore = requireComponents.appStore,
                         activity = activity,
                         settings = activity.components.settings,
-                        browsingModeManager = browsingModeManager,
+                        isPrivate = ::isActivityPrivate,
                         toolbarStore = toolbarStore,
                     ),
                 owner = viewLifecycleOwner,
@@ -484,7 +486,7 @@ class HomeFragment : Fragment(), UserInteractionHandler, OnLongPressedListener {
             HomeNavigationBar(
                 toolbarStore = toolbarStore,
                 appStore = activity.components.appStore,
-                browsingModeManager = activity.browsingModeManager,
+                isPrivate = ::isActivityPrivate,
                 settings = activity.components.settings,
                 hideWhenKeyboardShown = true,
             )
@@ -495,7 +497,7 @@ class HomeFragment : Fragment(), UserInteractionHandler, OnLongPressedListener {
             toolbarStore = toolbarStore,
             appStore = activity.components.appStore,
             browserStore = activity.components.core.store,
-            browsingModeManager = activity.browsingModeManager,
+            isPrivate = ::isActivityPrivate,
             settings = activity.components.settings,
             directToSearchConfig =
                 DirectToSearchConfig(
@@ -522,6 +524,7 @@ class HomeFragment : Fragment(), UserInteractionHandler, OnLongPressedListener {
             appStore = requireContext().components.appStore,
             browserStore = requireContext().components.core.store,
             browsingModeManager = activity.browsingModeManager,
+            isPrivate = ::isActivityPrivate,
         )
 
     private fun initMessagingFeature(view: View) {
@@ -707,10 +710,10 @@ class HomeFragment : Fragment(), UserInteractionHandler, OnLongPressedListener {
 
                 val microsurveyVisible =
                     settings.microsurveyFeatureEnabled &&
-                        !appState.value.mode.isPrivate &&
+                        !isActivityPrivate() &&
                         appState.value.microsurvey.current != null
 
-                val isPrivateMode = appState.value.mode.isPrivate
+                val isPrivateMode = isActivityPrivate()
                 val currentWallpaper = appState.value.wallpaperState.currentWallpaper
                 val universalEdgeToEdge = settings.enableUniversalEdgeToEdgeWallpapers
                 val showToolbarScrim = shouldShowToolbarScrim(appState.value)
@@ -987,7 +990,7 @@ class HomeFragment : Fragment(), UserInteractionHandler, OnLongPressedListener {
                         privacyNoticeBannerState = privacyNoticeBannerState,
                         collectionsMigrationCardState = collectionsMigrationCardState,
                         settings = settings,
-                        browsingModeManager = browsingModeManager,
+                        isPrivate = ::isActivityPrivate,
                     ),
                 interactor = sessionControlInteractor,
                 onCollectionsMigrationCardAction = { action ->
@@ -1061,7 +1064,7 @@ class HomeFragment : Fragment(), UserInteractionHandler, OnLongPressedListener {
             }
         }
 
-        if (!appStore.state.mode.isPrivate) {
+        if (!isActivityPrivate()) {
             sessionControlInteractor.reportSessionMetrics(state = appState)
         }
 
@@ -1076,7 +1079,7 @@ class HomeFragment : Fragment(), UserInteractionHandler, OnLongPressedListener {
     /** Whether the homepage is drawn over a universal edge-to-edge wallpaper, outside private mode and search. */
     private fun isOverUniversalEdgeToEdgeWallpaper(appState: AppState): Boolean =
         requireComponents.settings.enableUniversalEdgeToEdgeWallpapers &&
-            !appState.mode.isPrivate &&
+            !isActivityPrivate() &&
             !appState.searchState.isSearchActive
 
     /** Whether the gradient scrims are drawn behind the homepage toolbars over a universal edge-to-edge wallpaper. */
@@ -1101,16 +1104,14 @@ class HomeFragment : Fragment(), UserInteractionHandler, OnLongPressedListener {
                 tabStripColors =
                     TabStripColors.build(
                         toolbarState = toolbarState,
-                        browsingModeManager = (requireActivity() as HomeActivity).browsingModeManager,
+                        isPrivate = ::isActivityPrivate,
                         settings = requireComponents.settings,
                         isOverEdgeToEdgeWallpaper = isOverEdgeToEdgeWallpaper,
                     ),
                 hideWhenKeyboardShown = requireComponents.settings.shouldUseBottomTabStrip,
                 onAddTabClick = {
                     if (requireComponents.settings.enableHomepageAsNewTab) {
-                        requireComponents.useCases.fenixBrowserUseCases.addNewHomepageTab(
-                            private = (requireActivity() as HomeActivity).browsingModeManager.mode.isPrivate
-                        )
+                        requireComponents.useCases.fenixBrowserUseCases.addNewHomepageTab(private = isActivityPrivate())
                     } else {
                         findNavController()
                             .navigate(
@@ -1131,7 +1132,7 @@ class HomeFragment : Fragment(), UserInteractionHandler, OnLongPressedListener {
                         isLastTabClosedPrivate = isPrivate,
                         navigateFromId = R.id.homeFragment,
                         appStore = requireComponents.appStore,
-                        browsingMode = browsingModeManager.mode,
+                        browsingMode = BrowsingMode.fromBoolean(isActivityPrivate()),
                         navController = findNavController(),
                     ) {
                         showUndoSnackbar(requireContext().tabClosedUndoMessage(isPrivate))
@@ -1377,7 +1378,7 @@ class HomeFragment : Fragment(), UserInteractionHandler, OnLongPressedListener {
                 R.id.homeFragment,
                 HomeFragmentDirections.actionGlobalTabManagementFragment(
                     page =
-                        when (browsingModeManager.mode) {
+                        when (BrowsingMode.fromBoolean(isActivityPrivate())) {
                             BrowsingMode.Normal -> Page.NormalTabs
                             BrowsingMode.Private -> Page.PrivateTabs
                         }
@@ -1549,7 +1550,7 @@ class HomeFragment : Fragment(), UserInteractionHandler, OnLongPressedListener {
                     // TabPreview overlay gets baked into the thumbnail and compounds on every swipe.
                     view = homepageComposeView ?: view,
                     store = requireComponents.core.store,
-                    appStore = requireComponents.appStore,
+                    isPrivate = ::isActivityPrivate,
                     homepageContentBounds = { homepageContentBounds },
                 ),
             owner = this,
@@ -1579,7 +1580,7 @@ class HomeFragment : Fragment(), UserInteractionHandler, OnLongPressedListener {
                     context = requireContext(),
                     viewModel = homeViewModel,
                     browserStore = requireComponents.core.store,
-                    browsingModeManager = browsingModeManager,
+                    isPrivate = ::isActivityPrivate,
                     navController = findNavController(),
                     tabsUseCases = requireComponents.useCases.tabsUseCases,
                     fenixBrowserUseCases = requireComponents.useCases.fenixBrowserUseCases,
@@ -1770,6 +1771,7 @@ class HomeFragment : Fragment(), UserInteractionHandler, OnLongPressedListener {
                     reloadUrlUseCase = requireComponents.useCases.sessionUseCases.reload,
                     fenixBrowserUseCases = requireComponents.useCases.fenixBrowserUseCases,
                     appStore = requireComponents.appStore,
+                    isPrivate = ::isActivityPrivate,
                     navControllerRef = WeakReference(findNavController()),
                     viewLifecycleScope = viewLifecycleOwner.lifecycleScope,
                     applicationScope = requireComponents.applicationScope,
@@ -1812,7 +1814,7 @@ class HomeFragment : Fragment(), UserInteractionHandler, OnLongPressedListener {
 
         HomeScreen.homeScreenViewCount.add()
 
-        if (!browsingModeManager.mode.isPrivate) {
+        if (!isActivityPrivate()) {
             HomeScreen.standardHomepageViewCount.add()
         }
 

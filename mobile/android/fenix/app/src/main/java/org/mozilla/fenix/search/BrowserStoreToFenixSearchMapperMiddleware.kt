@@ -34,11 +34,13 @@ import org.mozilla.fenix.search.SearchFragmentStore.Environment
  * @param browserStore The [BrowserStore] to sync from.
  * @param scope [CoroutineScope] used for running long-running operations in background.
  * @param appStore The [AppStore] to sync from.
+ * @param isPrivate Whether the activity showing the search is private.
  */
 class BrowserStoreToFenixSearchMapperMiddleware(
     private val browserStore: BrowserStore,
     private val scope: CoroutineScope,
     private val appStore: AppStore? = null,
+    private val isPrivate: () -> Boolean = { false },
 ) : Middleware<SearchFragmentState, SearchFragmentAction> {
     @VisibleForTesting internal var environment: Environment? = null
     private var observeBrowserSearchStateJob: Job? = null
@@ -101,7 +103,7 @@ class BrowserStoreToFenixSearchMapperMiddleware(
                     store.dispatch(
                         UpdateSearchState(
                             searchState,
-                            isPrivate = appStore?.state?.mode?.isPrivate ?: false,
+                            isPrivate = isPrivate(),
                         )
                     )
                 }

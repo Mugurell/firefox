@@ -302,7 +302,7 @@ class PrivateBrowsingLockUseCases(appStore: AppStore) {
  */
 fun Fragment.observePrivateModeLock(
     lockNormalMode: Boolean = false,
-    isPrivate: () -> Boolean = { requireComponents.appStore.state.mode.isPrivate },
+    isPrivate: () -> Boolean = { requireComponents.activityPrivacy.isPrivate(customTabSessionId = null) },
     onPrivateModeLocked: () -> Unit,
 ) {
     viewLifecycleOwner.run {

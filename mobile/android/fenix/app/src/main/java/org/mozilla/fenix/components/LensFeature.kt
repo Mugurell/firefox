@@ -94,7 +94,8 @@ class LensFeature(
     }
 
     private fun launchCameraActivity() {
-        val intent = LensCameraActivity.newIntent(context, isPrivate = appStore.state.mode.isPrivate)
+        val isPrivate = context.components.activityPrivacy.isPrivate(customTabSessionId = null)
+        val intent = LensCameraActivity.newIntent(context, isPrivate = isPrivate)
         try {
             lensLauncher.launch(intent)
         } catch (e: ActivityNotFoundException) {

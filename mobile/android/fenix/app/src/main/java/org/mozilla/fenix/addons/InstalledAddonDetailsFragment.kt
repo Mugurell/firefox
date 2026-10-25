@@ -375,7 +375,7 @@ class InstalledAddonDetailsFragment : Fragment(), SystemInsetsPaddedFragment {
                 v.loadInCustomTab(url, it)
                 return@setOnClickListener
             }
-            val shouldCreatePrivateSession = v.context.components.appStore.state.mode.isPrivate
+            val shouldCreatePrivateSession = v.context.components.activityPrivacy.isPrivate(args.customTabSessionId)
 
             v.context.components.useCases.tabsUseCases.selectOrAddTab(
                 url = url,
@@ -401,7 +401,8 @@ class InstalledAddonDetailsFragment : Fragment(), SystemInsetsPaddedFragment {
                 val directions =
                     if (addon.installedState?.openOptionsPageInTab == true) {
                         val components = v.context.components
-                        val shouldCreatePrivateSession = v.context.components.appStore.state.mode.isPrivate
+                        val shouldCreatePrivateSession =
+                            v.context.components.activityPrivacy.isPrivate(args.customTabSessionId)
 
                         // If the addon settings page is already open in a tab, select that one
                         components.useCases.tabsUseCases.selectOrAddTab(

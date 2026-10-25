@@ -188,7 +188,6 @@ import org.mozilla.fenix.browser.store.BrowserScreenState
 import org.mozilla.fenix.browser.store.BrowserScreenStore
 import org.mozilla.fenix.browser.tabstrip.TabStrip
 import org.mozilla.fenix.browser.tabstrip.ext.handleTabStripLastTabClosed
-import org.mozilla.fenix.components.AppStore
 import org.mozilla.fenix.components.FenixAutocompletePrompt
 import org.mozilla.fenix.components.FenixEmailMaskPrompt
 import org.mozilla.fenix.components.FenixSuggestStrongPasswordPrompt
@@ -208,7 +207,6 @@ import org.mozilla.fenix.components.toolbar.ToolbarsIntegration
 import org.mozilla.fenix.compose.snackbar.DefaultSnackbarFactory
 import org.mozilla.fenix.crashes.CrashContentIntegration
 import org.mozilla.fenix.crashes.CrashContentView
-import org.mozilla.fenix.customtabs.ExternalAppBrowserActivity
 import org.mozilla.fenix.databinding.FragmentBrowserBinding
 import org.mozilla.fenix.downloads.DownloadService
 import org.mozilla.fenix.downloads.RenameAndChangeLocationDialogFragment
@@ -545,7 +543,7 @@ abstract class BaseBrowserFragment :
             DefaultReaderModeController(
                 readerViewFeature,
                 binding.readerViewControlsBar,
-                isPrivate = appStore.state.mode.isPrivate,
+                isPrivate = context.components.activityPrivacy.isPrivate(customTabSessionId),
                 onReaderModeChanged = { activity.finishActionMode() },
             )
         _findInPageLauncher = {
@@ -553,7 +551,7 @@ abstract class BaseBrowserFragment :
         }
 
         _browserToolbar = initializeBrowserToolbar(activity, store, readerMenuController)
-        browserTabStrip = initializeBrowserTabStripView(activity, appStore, settings)
+        browserTabStrip = initializeBrowserTabStripView(activity, settings)
 
         if (settings.microsurveyFeatureEnabled) {
             listenForMicrosurveyMessage(context)
@@ -667,7 +665,11 @@ abstract class BaseBrowserFragment :
                     proxyUnavailable = {
                         Vpn.proxyUnavailable.record()
                         findNavController()
-                            .navigate(BrowserFragmentDirections.actionGlobalIpProtectionUnavailableDialog())
+                            .navigate(
+                                BrowserFragmentDirections.actionGlobalIpProtectionUnavailableDialog(
+                                    customTabSessionId = customTabSessionId
+                                )
+                            )
                     },
                 ),
             owner = this,
@@ -1515,7 +1517,7 @@ abstract class BaseBrowserFragment :
                 settings = settings,
                 customTabSessionId = customTabSessionId,
                 hideWhenKeyboardShown = true,
-                tabStripContent = { buildTabStrip(appStore, settings) },
+                tabStripContent = { buildTabStrip(settings) },
                 tabGroupsStripContent = { buildTabGroupsStrip() },
             )
 
@@ -1545,7 +1547,7 @@ abstract class BaseBrowserFragment :
             browserStore = store,
             settings = settings,
             customTabSession = customTabSessionId?.let { store.state.findCustomTab(it) },
-            tabStripContent = buildTabStrip(appStore, settings),
+            tabStripContent = buildTabStrip(settings),
             tabGroupsStripContent = buildTabGroupsStrip(),
             searchSuggestionsContent = { modifier ->
                 (awesomeBarComposable ?: buildAwesomeBar(activity, toolbarStore, modifier)).SearchSuggestions()
@@ -1557,12 +1559,11 @@ abstract class BaseBrowserFragment :
     /** Build the TabStrip [View] for when the TabStrip is to be shown alone at the top of the screen. */
     private fun initializeBrowserTabStripView(
         context: Context,
-        appStore: AppStore,
         settings: org.mozilla.fenix.utils.Settings,
     ) =
         if (customTabSessionId == null && settings.shouldShowTabStripAtTop && settings.shouldUseBottomToolbar) {
             BrowserTabStrip(context, binding.browserLayout, settings) {
-                buildTabStrip(appStore, settings)()
+                buildTabStrip(settings)()
             }
         } else {
             null
@@ -1594,19 +1595,14 @@ abstract class BaseBrowserFragment :
         blackScreenOverlay = null
     }
 
-    private fun buildTabStrip(
-        appStore: AppStore,
-        settings: org.mozilla.fenix.utils.Settings,
-    ): @Composable () -> Unit = {
+    private fun buildTabStrip(settings: org.mozilla.fenix.utils.Settings): @Composable () -> Unit = {
         FirefoxTheme {
             TabStrip(
                 showTabCounterButton = false,
                 hideWhenKeyboardShown = settings.shouldUseBottomTabStrip,
                 onAddTabClick = {
                     if (settings.enableHomepageAsNewTab) {
-                        requireComponents.useCases.fenixBrowserUseCases.addNewHomepageTab(
-                            private = appStore.state.mode.isPrivate
-                        )
+                        requireComponents.useCases.fenixBrowserUseCases.addNewHomepageTab(private = isActivityPrivate())
                     } else {
                         findNavController()
                             .navigate(
@@ -1622,7 +1618,7 @@ abstract class BaseBrowserFragment :
                         isLastTabClosedPrivate = isPrivate,
                         navigateFromId = R.id.browserFragment,
                         appStore = requireComponents.appStore,
-                        browsingMode = requireComponents.appStore.state.mode,
+                        browsingMode = BrowsingMode.fromBoolean(isActivityPrivate()),
                         navController = findNavController(),
                     ) {
                         requireComponents.appStore.dispatch(AppAction.TabStripAction.UpdateLastTabClosed(isPrivate))
@@ -1633,7 +1629,9 @@ abstract class BaseBrowserFragment :
                 onCloseTabClick = { isPrivate ->
                     showUndoSnackbar(requireContext().tabClosedUndoMessage(isPrivate))
                 },
-                onTabCounterClick = { onTabCounterClicked(appStore.state.mode) },
+                onTabCounterClick = {
+                    onTabCounterClicked(BrowsingMode.fromBoolean(isActivityPrivate()))
+                },
             )
         }
     }
@@ -1699,6 +1697,7 @@ abstract class BaseBrowserFragment :
             browserScreenStore = browserScreenStore,
             components = activity.components,
             browsingModeManager = activity.browsingModeManager,
+            isPrivate = ::isActivityPrivate,
             thumbnailsFeature = { thumbnailsFeature.get() },
             readerModeController = readerModeController,
             customTabSession = customTabSessionId?.let { activity.components.core.store.state.findCustomTab(it) },
@@ -2034,7 +2033,7 @@ abstract class BaseBrowserFragment :
                 .collect { restored ->
                     if (restored) {
                         // Once tab restoration is complete, if there are no tabs to show in the browser, go home
-                        val isPrivate = requireComponents.appStore.state.mode.isPrivate
+                        val isPrivate = isActivityPrivate()
                         val tabs = store.state.getNormalOrPrivateTabs(isPrivate)
                         if (tabs.isEmpty() || store.state.selectedTabId == null) {
                             navController.popBackStack(R.id.homeFragment, false)
@@ -2293,6 +2292,8 @@ abstract class BaseBrowserFragment :
         (activity as HomeActivity).browsingModeManager.mode = sessionMode
     }
 
+    private fun isActivityPrivate() = requireComponents.activityPrivacy.isPrivate(customTabSessionId)
+
     /** A safe version of [getCurrentTab] that safely checks for context nullability. */
     protected fun getSafeCurrentTab(): SessionState? {
         return context?.components?.core?.store?.state?.findCustomTabOrSelectedTab(customTabSessionId)
@@ -2360,7 +2361,7 @@ abstract class BaseBrowserFragment :
             (view as? SwipeGestureLayout)?.isSwipeEnabled = true
             (activity as? HomeActivity)?.let { homeActivity ->
                 // ExternalAppBrowserActivity exclusively handles it's own theming unless in private mode.
-                if (homeActivity !is ExternalAppBrowserActivity || homeActivity.browsingModeManager.mode.isPrivate) {
+                if (customTabSessionId == null || isActivityPrivate()) {
                     homeActivity.themeManager.applyStatusBarTheme(homeActivity)
                 }
             }

@@ -161,7 +161,7 @@ class UseCases(
 
     val fenixBrowserUseCases by lazyMonitored {
         FenixBrowserUseCases(
-            appStore = appStore.value,
+            isPrivate = { context.components.activityPrivacy.isPrivate(customTabSessionId = null) },
             tabsUseCases = tabsUseCases,
             loadUrlUseCase = sessionUseCases.loadUrl,
             searchUseCases = searchUseCases,

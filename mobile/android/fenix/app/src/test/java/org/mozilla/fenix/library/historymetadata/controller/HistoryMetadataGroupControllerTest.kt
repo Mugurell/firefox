@@ -187,7 +187,7 @@ class HistoryMetadataGroupControllerTest {
                 ShareData(
                     url = mozillaHistoryMetadataItem.url,
                     title = mozillaHistoryMetadataItem.title,
-                    private = appStore.state.mode.isPrivate,
+                    private = false,
                 )
             )
 
@@ -210,12 +210,12 @@ class HistoryMetadataGroupControllerTest {
                 ShareData(
                     url = mozillaHistoryMetadataItem.url,
                     title = mozillaHistoryMetadataItem.title,
-                    private = appStore.state.mode.isPrivate,
+                    private = false,
                 ),
                 ShareData(
                     url = firefoxHistoryMetadataItem.url,
                     title = firefoxHistoryMetadataItem.title,
-                    private = appStore.state.mode.isPrivate,
+                    private = false,
                 ),
             )
 
@@ -379,6 +379,7 @@ class HistoryMetadataGroupControllerTest {
             historyStorage = historyStorage,
             browserStore = browserStore,
             appStore = appStore,
+            isPrivate = { false },
             store = store,
             selectOrAddUseCase = selectOrAddUseCase,
             fenixBrowserUseCases = fenixBrowserUseCases,

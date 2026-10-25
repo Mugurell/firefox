@@ -34,8 +34,6 @@ import org.junit.runner.RunWith
 import org.mozilla.fenix.GleanMetrics.RecentlyClosedTabs
 import org.mozilla.fenix.R
 import org.mozilla.fenix.browser.browsingmode.BrowsingMode
-import org.mozilla.fenix.components.AppStore
-import org.mozilla.fenix.components.appstate.AppState
 import org.mozilla.fenix.components.share.ShareSheetChooserAction
 import org.mozilla.fenix.components.share.ShareSource
 import org.mozilla.fenix.components.usecases.ShareUseCases
@@ -353,9 +351,8 @@ class DefaultRecentlyClosedControllerTest {
         scope: CoroutineScope = CoroutineScope(Dispatchers.IO),
         openToBrowser: (String) -> Unit = { _ -> },
     ): RecentlyClosedController {
-        val appStore = AppStore(initialState = AppState(mode = currentMode))
         return DefaultRecentlyClosedController(
-            appStore = appStore,
+            isPrivate = { currentMode.isPrivate },
             navController = navController,
             browserStore = browserStore,
             recentlyClosedStore = recentlyClosedStore,

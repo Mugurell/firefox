@@ -386,7 +386,13 @@
 
     <dialog
       android:id="@+id/ipProtectionUnavailableDialogFragment"
-      android:name="org.mozilla.fenix.ipprotection.ui.IPProtectionUnavailableDialogFragment" />
+      android:name="org.mozilla.fenix.ipprotection.ui.IPProtectionUnavailableDialogFragment">
+      <argument
+          android:name="customTabSessionId"
+          android:defaultValue="@null"
+          app:argType="string"
+          app:nullable="true" />
+    </dialog>
 
     <fragment
         android:id="@+id/recentlyClosedFragment"

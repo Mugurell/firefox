@@ -7,7 +7,6 @@ package org.mozilla.fenix.addons
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.mockk.coEvery
 import io.mockk.coVerify
-import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
 import kotlin.test.assertEquals
@@ -47,8 +46,6 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.mozilla.fenix.NavGraphDirections
 import org.mozilla.fenix.R
-import org.mozilla.fenix.components.AppStore
-import org.mozilla.fenix.components.appstate.AppState
 import org.mozilla.fenix.components.menu.MenuTarget
 import org.mozilla.fenix.components.menu.fake.FakeMenuHost
 import org.mozilla.fenix.components.menu.fake.reachableEvents
@@ -59,7 +56,6 @@ import org.mozilla.fenix.settings.SupportUtils.AMO_HOMEPAGE_FOR_ANDROID
 @RunWith(AndroidJUnit4::class)
 class ExtensionsMenuItemProviderTest {
     private val addonManager: AddonManager = mockk { coEvery { getAddons() } returns emptyList() }
-    private val appStore: AppStore = mockk { every { state } returns AppState() }
     private val fenixBrowserUseCases: FenixBrowserUseCases = mockk(relaxed = true)
     private val menu = FakeMenuHost()
 
@@ -569,7 +565,7 @@ class ExtensionsMenuItemProviderTest {
             // Both are scopes that runTest runs and then cancels at the end of each test.
             viewLifecycleScope = backgroundScope,
             applicationScope = backgroundScope,
-            appStore = appStore,
+            isPrivate = { false },
             fenixBrowserUseCases = fenixBrowserUseCases,
         )
 

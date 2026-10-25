@@ -42,7 +42,6 @@ import mozilla.components.support.ktx.android.util.dpToPx
 import mozilla.components.ui.icons.R as iconsR
 import org.mozilla.fenix.NavGraphDirections
 import org.mozilla.fenix.R
-import org.mozilla.fenix.components.AppStore
 import org.mozilla.fenix.components.menu.MenuHost
 import org.mozilla.fenix.components.menu.MenuItemProvider
 import org.mozilla.fenix.components.menu.MenuTarget
@@ -66,7 +65,7 @@ private const val EXTENSION_ACTION_ICON_SIZE_DP = 24
  *   details.
  * @param applicationScope [CoroutineScope] tied to the lifetime of the application, on which to query the extensions
  *   since that cannot be interrupted.
- * @param appStore [AppStore] used to know whether to open pages in a private tab.
+ * @param isPrivate Whether to open pages in a private tab.
  * @param fenixBrowserUseCases [FenixBrowserUseCases] for opening the extensions website.
  */
 class ExtensionsMenuItemProvider(
@@ -76,7 +75,7 @@ class ExtensionsMenuItemProvider(
     private val addonManager: AddonManager,
     viewLifecycleScope: CoroutineScope,
     applicationScope: CoroutineScope,
-    private val appStore: AppStore,
+    private val isPrivate: () -> Boolean,
     private val fenixBrowserUseCases: FenixBrowserUseCases,
 ) : MenuItemProvider {
     private val logger = Logger("ExtensionsMenuItemProvider")
@@ -190,7 +189,7 @@ class ExtensionsMenuItemProvider(
                 fenixBrowserUseCases.loadUrlOrSearch(
                     searchTermOrURL = AMO_HOMEPAGE_FOR_ANDROID,
                     newTab = true,
-                    private = appStore.state.mode.isPrivate,
+                    private = isPrivate(),
                 )
             }
 

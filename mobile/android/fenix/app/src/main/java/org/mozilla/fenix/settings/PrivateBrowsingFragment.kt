@@ -15,7 +15,6 @@ import androidx.preference.PreferenceCategory
 import androidx.preference.PreferenceFragmentCompat
 import androidx.preference.SwitchPreferenceCompat
 import org.mozilla.fenix.GleanMetrics.PrivateBrowsingLocked
-import org.mozilla.fenix.HomeActivity
 import org.mozilla.fenix.R
 import org.mozilla.fenix.components.DefaultPendingIntentFactory
 import org.mozilla.fenix.components.DefaultShortcutManagerCompatWrapper
@@ -83,8 +82,7 @@ class PrivateBrowsingFragment : PreferenceFragmentCompat(), SystemInsetsPaddedFr
                 object : SharedPreferenceUpdater() {
                     override fun onPreferenceChange(preference: Preference, newValue: Any?): Boolean {
                         if (
-                            (activity as? HomeActivity)?.browsingModeManager?.mode?.isPrivate == true &&
-                                newValue == false
+                            requireComponents.activityPrivacy.isPrivate(customTabSessionId = null) && newValue == false
                         ) {
                             activity?.window?.addFlags(WindowManager.LayoutParams.FLAG_SECURE)
                         } else {
@@ -191,7 +189,7 @@ class PrivateBrowsingFragment : PreferenceFragmentCompat(), SystemInsetsPaddedFr
             if (pbmLockEnabled) {
                 requireComponents.settings.allowScreenshotsInPrivateMode = false
                 isChecked = false
-                if ((activity as? HomeActivity)?.browsingModeManager?.mode?.isPrivate == true) {
+                if (requireComponents.activityPrivacy.isPrivate(customTabSessionId = null)) {
                     activity?.window?.addFlags(WindowManager.LayoutParams.FLAG_SECURE)
                 }
             }

@@ -11,7 +11,6 @@ import android.view.View.VISIBLE
 import android.widget.ImageView
 import androidx.preference.PreferenceViewHolder
 import org.mozilla.fenix.R
-import org.mozilla.fenix.browser.browsingmode.BrowsingMode.Normal
 import org.mozilla.fenix.ext.components
 import org.mozilla.fenix.nimbus.FxNimbus
 
@@ -65,7 +64,7 @@ constructor(
         get() = context.components.core.summarizeFeatureSettings.canShowFeature
 
     private val isBrowsingInNormalMode: Boolean
-        get() = context.components.appStore.state.mode == Normal
+        get() = !context.components.activityPrivacy.isPrivate(customTabSessionId = null)
 
     private val isTranslationsFeatureAvailable: Boolean
         get() {

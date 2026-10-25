@@ -17,7 +17,6 @@ import mozilla.components.feature.tabs.TabsUseCases
 import mozilla.components.lib.state.Middleware
 import mozilla.components.lib.state.Store
 import org.mozilla.fenix.R
-import org.mozilla.fenix.components.AppStore
 import org.mozilla.fenix.components.accounts.FenixFxAEntryPoint
 import org.mozilla.fenix.ext.nav
 import org.mozilla.fenix.ext.openToBrowser
@@ -32,7 +31,7 @@ import org.mozilla.fenix.settings.trustpanel.store.TrustPanelStore
  *
  * @param navController [NavController] used for navigation.
  * @param privacySecurityPrefKey Preference key used to scroll to the Privacy and security category within settings.
- * @param appStore [AppStore] used to access the current browsing mode.
+ * @param isPrivate Whether certificates of regular tabs open in a private tab.
  * @param tabsUseCases [TabsUseCases] used to add tabs.
  * @param sessionUseCases [SessionUseCases] used to load the certificate in a custom tab.
  * @param scope [CoroutineScope] used to launch coroutines.
@@ -40,7 +39,7 @@ import org.mozilla.fenix.settings.trustpanel.store.TrustPanelStore
 class TrustPanelNavigationMiddleware(
     private val navController: NavController,
     private val privacySecurityPrefKey: String,
-    private val appStore: AppStore,
+    private val isPrivate: () -> Boolean,
     private val tabsUseCases: TabsUseCases,
     private val sessionUseCases: SessionUseCases,
     private val scope: CoroutineScope = CoroutineScope(Dispatchers.Main),
@@ -108,7 +107,7 @@ class TrustPanelNavigationMiddleware(
             url,
             parentId = sessionState?.id,
             contextId = sessionState?.contextId,
-            private = appStore.state.mode.isPrivate,
+            private = isPrivate(),
         )
     }
 }

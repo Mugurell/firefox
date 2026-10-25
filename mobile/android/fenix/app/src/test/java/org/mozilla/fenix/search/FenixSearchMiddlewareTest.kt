@@ -63,7 +63,6 @@ import org.mozilla.fenix.GleanMetrics.Toolbar
 import org.mozilla.fenix.NavGraphDirections
 import org.mozilla.fenix.R
 import org.mozilla.fenix.browser.browsingmode.BrowsingMode
-import org.mozilla.fenix.browser.browsingmode.BrowsingModeManager
 import org.mozilla.fenix.components.AppStore
 import org.mozilla.fenix.components.NimbusComponents
 import org.mozilla.fenix.components.UseCases
@@ -108,7 +107,7 @@ class FenixSearchMiddlewareTest {
         every { speculativeCreateSession(any(), any()) } just Runs
     }
     private val fenixBrowserUseCasesMock: FenixBrowserUseCases = mockk(relaxed = true)
-    private val browsingModeManager: BrowsingModeManager = mockk(relaxed = true)
+    private var isPrivateMode = false
     private val useCases: UseCases = mockk {
         every { fenixBrowserUseCases } returns fenixBrowserUseCasesMock
         every { tabsUseCases } returns mockk()
@@ -435,7 +434,7 @@ class FenixSearchMiddlewareTest {
         every { settings.showSearchSuggestionsInPrivateOnboardingFinished } returns false
         every { settings.shouldShowSearchSuggestions } returns true
         every { settings.shouldShowSearchSuggestionsInPrivate } returns false
-        every { browsingModeManager.mode } returns BrowsingMode.Private
+        isPrivateMode = true
 
         store.dispatch(SearchFragmentAction.UpdateQuery(""))
 
@@ -461,7 +460,7 @@ class FenixSearchMiddlewareTest {
         every { settings.showSearchSuggestionsInPrivateOnboardingFinished } returns false
         every { settings.shouldShowSearchSuggestions } returns true
         every { settings.shouldShowSearchSuggestionsInPrivate } returns false
-        every { browsingModeManager.mode } returns BrowsingMode.Private
+        isPrivateMode = true
 
         store.dispatch(SearchFragmentAction.UpdateQuery("test"))
 
@@ -473,7 +472,7 @@ class FenixSearchMiddlewareTest {
         val (_, store) = buildMiddlewareAndAddToSearchStore()
         every { settings.shouldShowSearchSuggestions } returns true
         every { settings.shouldShowSearchSuggestionsInPrivate } returns true
-        every { browsingModeManager.mode } returns BrowsingMode.Private
+        isPrivateMode = true
 
         store.dispatch(SearchFragmentAction.UpdateQuery(store.state.currentTabData!!.url))
         assertFalse(store.state.shouldShowSearchSuggestions)
@@ -993,7 +992,7 @@ class FenixSearchMiddlewareTest {
         browserStore: BrowserStore = this.browserStore,
         toolbarStore: BrowserToolbarStore = this.toolbarStore,
         navController: NavController = this.navController,
-        browsingModeManager: BrowsingModeManager = this.browsingModeManager,
+        isPrivate: () -> Boolean = { isPrivateMode },
         shareUseCases: ShareUseCases = this.shareUseCases,
         clipboardHandler: ClipboardHandler = this.clipboardHandler,
     ): FenixSearchMiddleware {
@@ -1012,7 +1011,7 @@ class FenixSearchMiddlewareTest {
                     browserStore = browserStore,
                     toolbarStore = toolbarStore,
                     navController = navController,
-                    browsingModeManager = browsingModeManager,
+                    isPrivate = isPrivate,
                     shareUseCases = shareUseCases,
                     clipboardHandler = clipboardHandler,
                 )
