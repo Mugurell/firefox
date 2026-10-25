@@ -161,6 +161,7 @@ class TrustPanelFragment : BottomSheetDialogFragment() {
                                 requireContext().getString(R.string.pref_key_privacy_security_category),
                             appStore = requireComponents.appStore,
                             tabsUseCases = requireComponents.useCases.tabsUseCases,
+                            sessionUseCases = requireComponents.useCases.sessionUseCases,
                             scope = lifecycleScope,
                         ),
                         TrustPanelTelemetryMiddleware(),

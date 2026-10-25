@@ -15,6 +15,7 @@ import io.mockk.verify
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.test.runTest
 import mozilla.components.browser.state.state.SessionState
+import mozilla.components.feature.session.SessionUseCases
 import mozilla.components.feature.tabs.TabsUseCases
 import org.junit.Test
 import org.mozilla.fenix.R
@@ -35,6 +36,7 @@ class TrustPanelNavigationMiddlewareTest {
         }
     private val appStore: AppStore = mockk(relaxed = true)
     private val tabsUseCases: TabsUseCases = mockk(relaxed = true)
+    private val sessionUseCases: SessionUseCases = mockk(relaxed = true)
 
     @Test
     fun `WHEN navigate to privacy security settings action is dispatched THEN navigate to privacy and security settings`() =
@@ -148,6 +150,36 @@ class TrustPanelNavigationMiddlewareTest {
             }
         }
 
+    @Test
+    fun `GIVEN a custom tab WHEN security certificate action is dispatched THEN load certificate in custom tab and pop back stack`() =
+        runTest {
+            val testSessionId = "custom-tab-id"
+            val sessionState: CustomTabSessionState = mockk {
+                every { id } returns testSessionId
+            }
+            val websiteInfoState: WebsiteInfoState = mockk {
+                every { certificate } returns mockk(relaxed = true)
+            }
+            val store =
+                createStore(
+                    trustPanelState =
+                        TrustPanelState(
+                            sessionState = sessionState,
+                            websiteInfoState = websiteInfoState,
+                        ),
+                    scope = this,
+                )
+
+            store.dispatch(TrustPanelAction.Navigate.SecurityCertificate)
+            testScheduler.advanceUntilIdle()
+
+            verify { sessionUseCases.loadUrl("about:certificate?cert=null", testSessionId) }
+            verify { navController.popBackStack(R.id.trust_panel_graph, inclusive = true) }
+            verify(exactly = 0) {
+                tabsUseCases.addTab(url = any(), parentId = any(), contextId = any(), private = any())
+            }
+        }
+
     private fun createStore(
         trustPanelState: TrustPanelState = TrustPanelState(),
         privacySecurityPrefKey: String = "",
@@ -162,6 +194,7 @@ class TrustPanelNavigationMiddlewareTest {
                         privacySecurityPrefKey = privacySecurityPrefKey,
                         appStore = appStore,
                         tabsUseCases = tabsUseCases,
+                        sessionUseCases = sessionUseCases,
                         scope = scope,
                     )
                 ),

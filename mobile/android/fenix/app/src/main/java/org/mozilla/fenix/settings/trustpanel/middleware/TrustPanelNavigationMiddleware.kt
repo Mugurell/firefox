@@ -10,7 +10,9 @@ import androidx.navigation.NavController
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import mozilla.components.browser.state.state.CustomTabSessionState
 import mozilla.components.browser.state.state.SessionState
+import mozilla.components.feature.session.SessionUseCases
 import mozilla.components.feature.tabs.TabsUseCases
 import mozilla.components.lib.state.Middleware
 import mozilla.components.lib.state.Store
@@ -32,6 +34,7 @@ import org.mozilla.fenix.settings.trustpanel.store.TrustPanelStore
  * @param privacySecurityPrefKey Preference key used to scroll to the Privacy and security category within settings.
  * @param appStore [AppStore] used to access the current browsing mode.
  * @param tabsUseCases [TabsUseCases] used to add tabs.
+ * @param sessionUseCases [SessionUseCases] used to load the certificate in a custom tab.
  * @param scope [CoroutineScope] used to launch coroutines.
  */
 class TrustPanelNavigationMiddleware(
@@ -39,6 +42,7 @@ class TrustPanelNavigationMiddleware(
     private val privacySecurityPrefKey: String,
     private val appStore: AppStore,
     private val tabsUseCases: TabsUseCases,
+    private val sessionUseCases: SessionUseCases,
     private val scope: CoroutineScope = CoroutineScope(Dispatchers.Main),
 ) : Middleware<TrustPanelState, TrustPanelAction> {
 
@@ -92,9 +96,15 @@ class TrustPanelNavigationMiddleware(
             return
         }
         val base64 = Base64.encodeToString(certificateBytes, Base64.NO_WRAP or Base64.NO_PADDING)
+        val url = "about:certificate?cert=${Uri.encode(base64)}"
+        if (sessionState is CustomTabSessionState) {
+            sessionUseCases.loadUrl(url, sessionState.id)
+            navController.popBackStack(R.id.trust_panel_graph, inclusive = true)
+            return
+        }
         navController.openToBrowser()
         tabsUseCases.addTab(
-            "about:certificate?cert=${Uri.encode(base64)}",
+            url,
             parentId = sessionState?.id,
             contextId = sessionState?.contextId,
             private = appStore.state.mode.isPrivate,
