@@ -548,6 +548,11 @@
         android:id="@+id/savedLoginsAuthFragment"
         android:name="org.mozilla.fenix.settings.logins.fragment.SavedLoginsAuthFragment"
         android:label="@string/preferences_passwords_logins_and_passwords_2">
+        <argument
+            android:name="customTabSessionId"
+            android:defaultValue="@null"
+            app:argType="string"
+            app:nullable="true" />
         <action
             android:id="@+id/action_savedLoginsAuthFragment_to_loginsListFragment"
             app:destination="@id/savedLogins"
@@ -1162,6 +1167,11 @@
             android:defaultValue="@null"
             app:argType="string"
             app:nullable="true" />
+        <argument
+            android:name="customTabSessionId"
+            android:defaultValue="@null"
+            app:argType="string"
+            app:nullable="true" />
         <action
             android:id="@+id/action_trackingProtectionFragment_to_exceptionsFragment"
             app:destination="@id/trackingProtectionExceptionsFragment"
@@ -1213,7 +1223,13 @@
         android:id="@+id/trackingProtectionExceptionsFragment"
         android:name="org.mozilla.fenix.exceptions.trackingprotection.TrackingProtectionExceptionsFragment"
         android:label="@string/preference_exceptions"
-        tools:layout="@layout/fragment_exceptions" />
+        tools:layout="@layout/fragment_exceptions">
+        <argument
+            android:name="customTabSessionId"
+            android:defaultValue="@null"
+            app:argType="string"
+            app:nullable="true" />
+    </fragment>
     <fragment
         android:id="@+id/syncDebugFragment"
         android:name="org.mozilla.fenix.settings.SyncDebugFragment"
@@ -1315,7 +1331,13 @@
     <fragment
         android:id="@+id/addNewDeviceFragment"
         android:name="org.mozilla.fenix.share.AddNewDeviceFragment"
-        tools:layout="@layout/fragment_add_new_device" />
+        tools:layout="@layout/fragment_add_new_device">
+        <argument
+            android:name="customTabSessionId"
+            android:defaultValue="@null"
+            app:argType="string"
+            app:nullable="true" />
+    </fragment>
     <fragment
         android:id="@+id/localeSettingsFragment"
         android:name="org.mozilla.fenix.settings.advanced.LocaleSettingsFragment"
@@ -1355,6 +1377,11 @@
         <argument
             android:name="addon"
             app:argType="mozilla.components.feature.addons.Addon" />
+        <argument
+            android:name="customTabSessionId"
+            android:defaultValue="@null"
+            app:argType="string"
+            app:nullable="true" />
     </fragment>
 
     <fragment
@@ -1429,6 +1456,11 @@
         <argument
             android:name="addon"
             app:argType="mozilla.components.feature.addons.Addon" />
+        <argument
+            android:name="customTabSessionId"
+            android:defaultValue="@null"
+            app:argType="string"
+            app:nullable="true" />
     </fragment>
     <fragment
         android:id="@+id/notYetSupportedAddonFragment"
@@ -1444,6 +1476,11 @@
         <argument
             android:name="addon"
             app:argType="mozilla.components.feature.addons.Addon" />
+        <argument
+            android:name="customTabSessionId"
+            android:defaultValue="@null"
+            app:argType="string"
+            app:nullable="true" />
     </fragment>
     <fragment
         android:id="@+id/addonInternalSettingsFragment"
@@ -1460,6 +1497,11 @@
         <argument
             android:name="webExtensionId"
             app:argType="string" />
+        <argument
+            android:name="customTabSessionId"
+            android:defaultValue="@null"
+            app:argType="string"
+            app:nullable="true" />
     </fragment>
 
     <dialog
@@ -1662,9 +1704,19 @@
     <navigation
         android:id="@+id/savedLogins"
         app:startDestination="@id/savedLoginsFragment">
+        <argument
+            android:name="customTabSessionId"
+            android:defaultValue="@null"
+            app:argType="string"
+            app:nullable="true" />
         <fragment
             android:id="@+id/savedLoginsFragment"
             android:name="org.mozilla.fenix.settings.logins.fragment.SavedLoginsFragment">
+            <argument
+                android:name="customTabSessionId"
+                android:defaultValue="@null"
+                app:argType="string"
+                app:nullable="true" />
             <action
                 android:id="@+id/action_savedLoginsFragment_to_browserFragment"
                 app:destination="@id/browserFragment"
@@ -1715,9 +1767,19 @@
     <navigation
         android:id="@+id/translations_settings_graph"
         app:startDestination="@id/translationSettingsFragment">
+        <argument
+            android:name="customTabSessionId"
+            android:defaultValue="@null"
+            app:argType="string"
+            app:nullable="true" />
         <fragment
             android:id="@+id/translationSettingsFragment"
             android:name="org.mozilla.fenix.translations.settings.TranslationSettingsFragment">
+            <argument
+                android:name="customTabSessionId"
+                android:defaultValue="@null"
+                app:argType="string"
+                app:nullable="true" />
             <action
                 android:id="@+id/action_translationSettingsFragment_to_translationsDialogFragment"
                 app:destination="@id/translationsDialogFragment"
@@ -1768,6 +1830,11 @@
         <fragment
             android:id="@+id/downloadLanguagesPreferenceFragment"
             android:name="org.mozilla.fenix.translations.preferences.downloadlanguages.DownloadLanguagesPreferenceFragment">
+            <argument
+                android:name="customTabSessionId"
+                android:defaultValue="@null"
+                app:argType="string"
+                app:nullable="true" />
             <action
                 android:id="@+id/action_downloadLanguagesPreference_to_downloadLanguagesDialogPreference"
                 app:destination="@id/downloadLanguagesDialogPreferenceFragment" />

@@ -1112,7 +1112,10 @@ abstract class BaseBrowserFragment :
                                 get() = loginSelectBar
 
                             override val onManageLogins = {
-                                val directions = NavGraphDirections.actionGlobalSavedLoginsAuthFragment()
+                                val directions =
+                                    NavGraphDirections.actionGlobalSavedLoginsAuthFragment(
+                                        customTabSessionId = customTabSessionId
+                                    )
                                 findNavController().navigate(directions)
                             }
                         },

@@ -17,6 +17,7 @@ import kotlinx.coroutines.test.runTest
 import mozilla.components.feature.addons.Addon
 import mozilla.components.feature.addons.AddonManager
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -33,10 +34,26 @@ class AddonInternalSettingsFragmentTest {
 
     @Before
     fun setup() {
-        fragment = spyk(AddonInternalSettingsFragment())
         navController = mockk(relaxed = true)
-        every { fragment.provideNavController() } returns navController
-        every { fragment.provideAddonManager() } returns addonManager
+        fragment = createFragment()
+    }
+
+    private fun createFragment(customTabSessionId: String? = null): AddonInternalSettingsFragment {
+        val target =
+            AddonInternalSettingsFragment().apply {
+                arguments =
+                    AddonInternalSettingsFragmentArgs(
+                            webExtensionId = ADD_ON_ID,
+                            webExtensionName = "addon-name",
+                            optionsPageUrl = "addon-url",
+                            customTabSessionId = customTabSessionId,
+                        )
+                        .toBundle()
+            }
+        val spiedFragment = spyk(target)
+        every { spiedFragment.provideNavController() } returns navController
+        every { spiedFragment.provideAddonManager() } returns addonManager
+        return spiedFragment
     }
 
     @Test
@@ -74,6 +91,30 @@ class AddonInternalSettingsFragmentTest {
             assertEquals(
                 R.id.action_global_to_installedAddonDetailsFragment,
                 directions.captured.actionId,
+            )
+            assertNull(directions.captured.arguments.getString("customTabSessionId"))
+        }
+
+    @Test
+    fun `GIVEN the options page was opened from a custom tab WHEN navigating back THEN the add-on details get the custom tab ID`() =
+        runTest {
+            val customTabSessionId = "custom-tab-id"
+            fragment = createFragment(customTabSessionId = customTabSessionId)
+            coEvery { addonManager.getAddonByID(ADD_ON_ID) } returns mockAddon()
+
+            fragment.navigateToInstalledAddonDetailsFor(ADD_ON_ID)
+
+            val directions = slot<NavDirections>()
+            verify {
+                navController.navigate(capture(directions), any<NavOptions>())
+            }
+            assertEquals(
+                R.id.action_global_to_installedAddonDetailsFragment,
+                directions.captured.actionId,
+            )
+            assertEquals(
+                customTabSessionId,
+                directions.captured.arguments.getString("customTabSessionId"),
             )
         }
 

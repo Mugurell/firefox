@@ -12,6 +12,7 @@ import androidx.core.content.getSystemService
 import androidx.fragment.compose.content
 import androidx.navigation.NavHostController
 import androidx.navigation.fragment.findNavController
+import androidx.navigation.fragment.navArgs
 import mozilla.components.concept.engine.EngineSession
 import mozilla.components.feature.password.importer.PasswordsImporterResult
 import mozilla.components.lib.state.helpers.StoreProvider.Companion.fragmentStore
@@ -21,6 +22,7 @@ import org.mozilla.fenix.components.LogMiddleware
 import org.mozilla.fenix.e2e.SystemInsetsPaddedFragment
 import org.mozilla.fenix.ext.components
 import org.mozilla.fenix.ext.hideToolbar
+import org.mozilla.fenix.ext.loadInCustomTab
 import org.mozilla.fenix.ext.openToBrowser
 import org.mozilla.fenix.ext.requireComponents
 import org.mozilla.fenix.settings.logins.ImportPasswordsDialogFragment
@@ -36,6 +38,7 @@ import org.mozilla.fenix.theme.FirefoxTheme
 
 /** Defines the fragment containing the saved logins. */
 class SavedLoginsFragment : SecureFragment(), SystemInsetsPaddedFragment {
+    private val args by navArgs<SavedLoginsFragmentArgs>()
 
     private var loginsStore: LoginsStore? = null
 
@@ -100,15 +103,21 @@ class SavedLoginsFragment : SecureFragment(), SystemInsetsPaddedFragment {
                                             )
                                     },
                                     openTab = { url, openInNewTab ->
-                                        findNavController().openToBrowser()
-                                        requireComponents.useCases.fenixBrowserUseCases.loadUrlOrSearch(
-                                            searchTermOrURL = url,
-                                            newTab = openInNewTab,
-                                            flags =
-                                                EngineSession.LoadUrlFlags.select(
-                                                    EngineSession.LoadUrlFlags.ALLOW_JAVASCRIPT_URL
-                                                ),
-                                        )
+                                        val flags =
+                                            EngineSession.LoadUrlFlags.select(
+                                                EngineSession.LoadUrlFlags.ALLOW_JAVASCRIPT_URL
+                                            )
+                                        val customTabSessionId = args.customTabSessionId
+                                        if (customTabSessionId != null) {
+                                            loadInCustomTab(url, customTabSessionId, flags)
+                                        } else {
+                                            findNavController().openToBrowser()
+                                            requireComponents.useCases.fenixBrowserUseCases.loadUrlOrSearch(
+                                                searchTermOrURL = url,
+                                                newTab = openInNewTab,
+                                                flags = flags,
+                                            )
+                                        }
                                     },
                                     clipboardManager = requireContext().getSystemService(),
                                 ),

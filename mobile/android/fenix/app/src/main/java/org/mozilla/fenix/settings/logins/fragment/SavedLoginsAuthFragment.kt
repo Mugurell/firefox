@@ -7,6 +7,7 @@ package org.mozilla.fenix.settings.logins.fragment
 import android.os.Bundle
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
+import androidx.navigation.fragment.navArgs
 import androidx.preference.Preference
 import androidx.preference.PreferenceFragmentCompat
 import androidx.preference.SwitchPreferenceCompat
@@ -30,6 +31,7 @@ import org.mozilla.fenix.settings.requirePreference
 /** Settings screen allowing users to configure the passwords manager functionality of the application. */
 @Suppress("TooManyFunctions")
 class SavedLoginsAuthFragment : PreferenceFragmentCompat(), SystemInsetsPaddedFragment {
+    private val args by navArgs<SavedLoginsAuthFragmentArgs>()
 
     override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
         setPreferencesFromResource(R.xml.logins_preferences, rootKey)
@@ -123,7 +125,10 @@ class SavedLoginsAuthFragment : PreferenceFragmentCompat(), SystemInsetsPaddedFr
     private fun navigateToSavedLoginsFragment() {
         if (findNavController().currentDestination?.id == R.id.savedLoginsAuthFragment) {
             Logins.openLogins.record(NoExtras())
-            val directions = SavedLoginsAuthFragmentDirections.actionSavedLoginsAuthFragmentToLoginsListFragment()
+            val directions =
+                SavedLoginsAuthFragmentDirections.actionSavedLoginsAuthFragmentToLoginsListFragment(
+                    customTabSessionId = args.customTabSessionId
+                )
             findNavController().navigate(directions)
         }
     }

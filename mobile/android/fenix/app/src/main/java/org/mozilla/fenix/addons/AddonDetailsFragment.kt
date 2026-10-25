@@ -20,6 +20,7 @@ import mozilla.components.feature.addons.update.DefaultAddonUpdater.UpdateAttemp
 import org.mozilla.fenix.R
 import org.mozilla.fenix.databinding.FragmentAddOnDetailsBinding
 import org.mozilla.fenix.e2e.SystemInsetsPaddedFragment
+import org.mozilla.fenix.ext.loadInCustomTab
 import org.mozilla.fenix.ext.openToBrowser
 import org.mozilla.fenix.ext.requireComponents
 import org.mozilla.fenix.ext.showToolbar
@@ -45,6 +46,10 @@ class AddonDetailsFragment :
     }
 
     override fun openWebsite(url: Uri) {
+        args.customTabSessionId?.let {
+            loadInCustomTab(url.toString(), it)
+            return
+        }
         findNavController().openToBrowser()
         requireComponents.useCases.fenixBrowserUseCases.loadUrlOrSearch(
             searchTermOrURL = url.toString(),

@@ -95,6 +95,7 @@ interface ShareController {
  * @param applicationScope [CoroutineScope] tied to the application lifetime, used for operations that must outlive the
  *   share fragment (e.g. sending tabs to devices after the fragment is dismissed).
  * @param fxaEntrypoint The entrypoint if we need to authenticate, it will be reported in telemetry.
+ * @param customTabSessionId The ID of the custom tab showing the share screen, or null outside a custom tab.
  * @param dismiss Callback signalling sharing can be closed.
  */
 @Suppress("TooManyFunctions", "LongParameterList")
@@ -112,6 +113,7 @@ class DefaultShareController(
     private val scope: CoroutineScope,
     private val applicationScope: CoroutineScope,
     private val fxaEntrypoint: FxAEntryPoint = FenixFxAEntryPoint.ShareMenu,
+    private val customTabSessionId: String? = null,
     private val dismiss: (ShareController.Result) -> Unit,
 ) : ShareController {
 
@@ -190,7 +192,8 @@ class DefaultShareController(
     }
 
     override fun handleAddNewDevice() {
-        val directions = ShareFragmentDirections.actionShareFragmentToAddNewDeviceFragment()
+        val directions =
+            ShareFragmentDirections.actionShareFragmentToAddNewDeviceFragment(customTabSessionId = customTabSessionId)
         navController.navigate(directions)
     }
 

@@ -465,6 +465,7 @@ class HomeActivityTest {
         assertEquals(activeOptionsPage.url, directions?.arguments?.getString("optionsPageUrl"))
         assertEquals(activeOptionsPage.name, directions?.arguments?.getString("webExtensionName"))
         assertEquals(extension.id, directions?.arguments?.getString("webExtensionId"))
+        assertNull(directions?.arguments?.getString("customTabSessionId"))
     }
 
     @Test

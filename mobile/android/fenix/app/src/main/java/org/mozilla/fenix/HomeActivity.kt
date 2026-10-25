@@ -1618,6 +1618,9 @@ open class HomeActivity : LocaleAwareAppCompatActivity(), NavHostActivity, Crash
         navController.navigate(NavGraphDirections.actionStartupHome())
     }
 
+    /** The ID of the custom tab this activity shows, or null for the regular tabs activity. */
+    protected open fun getCustomTabSessionId(): String? = null
+
     @VisibleForTesting
     internal open fun addAboutHomeBinding(lifecycle: Lifecycle) {
         lifecycle.addObserver(aboutHomeBinding)
@@ -1721,6 +1724,7 @@ open class HomeActivity : LocaleAwareAppCompatActivity(), NavHostActivity, Crash
                 optionsPageUrl = activeOptionsPage.url,
                 webExtensionName = activeOptionsPage.name,
                 webExtensionId = it.id,
+                customTabSessionId = getCustomTabSessionId(),
             )
         }
     }

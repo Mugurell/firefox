@@ -398,7 +398,10 @@ class TranslationsDialogFragment : BottomSheetDialogFragment() {
                 findNavController()
                     .navigate(
                         TranslationsDialogFragmentDirections
-                            .actionTranslationsDialogFragmentToTranslationSettingsFragment()
+                            .actionTranslationsDialogFragmentToTranslationSettingsFragment(
+                                customTabSessionId =
+                                    args.sessionId?.takeIf { browserStore.state.findCustomTab(it) != null }
+                            )
                     )
             },
             aboutTranslationClicked = {

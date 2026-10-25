@@ -16,6 +16,7 @@ import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.findNavController
 import androidx.navigation.fragment.findNavController
+import androidx.navigation.fragment.navArgs
 import com.google.android.material.materialswitch.MaterialSwitch
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
@@ -36,12 +37,15 @@ import org.mozilla.fenix.BuildConfig
 import org.mozilla.fenix.databinding.FragmentInstalledAddOnDetailsBinding
 import org.mozilla.fenix.e2e.SystemInsetsPaddedFragment
 import org.mozilla.fenix.ext.components
+import org.mozilla.fenix.ext.loadInCustomTab
 import org.mozilla.fenix.ext.runIfFragmentIsAttached
 import org.mozilla.fenix.ext.showToolbar
 
 /** An activity to show the details of a installed add-on. */
 @Suppress("LargeClass", "TooManyFunctions")
 class InstalledAddonDetailsFragment : Fragment(), SystemInsetsPaddedFragment {
+    private val args by navArgs<InstalledAddonDetailsFragmentArgs>()
+
     @VisibleForTesting(otherwise = VisibleForTesting.PRIVATE) internal lateinit var addon: Addon
     internal val logger = Logger("InstalledAddonDetailsFragment")
 
@@ -166,7 +170,7 @@ class InstalledAddonDetailsFragment : Fragment(), SystemInsetsPaddedFragment {
                 messageBarWarningView,
                 messageBarErrorView,
                 onLearnMoreLinkClicked = { link ->
-                    binding.root.openLearnMoreLink(link, addon)
+                    binding.root.openLearnMoreLink(link, addon, args.customTabSessionId)
                 },
                 addon,
                 addon.translateName(it),
@@ -366,10 +370,15 @@ class InstalledAddonDetailsFragment : Fragment(), SystemInsetsPaddedFragment {
 
     private fun bindReportButton() {
         binding.reportAddOn.setOnClickListener { v ->
+            val url = "${BuildConfig.AMO_BASE_URL}/android/feedback/addon/${addon.id}/"
+            args.customTabSessionId?.let {
+                v.loadInCustomTab(url, it)
+                return@setOnClickListener
+            }
             val shouldCreatePrivateSession = v.context.components.appStore.state.mode.isPrivate
 
             v.context.components.useCases.tabsUseCases.selectOrAddTab(
-                url = "${BuildConfig.AMO_BASE_URL}/android/feedback/addon/${addon.id}/",
+                url = url,
                 private = shouldCreatePrivateSession,
                 ignoreFragment = true,
             )
@@ -384,6 +393,11 @@ class InstalledAddonDetailsFragment : Fragment(), SystemInsetsPaddedFragment {
             isVisible = shouldSettingsBeVisible()
             setOnClickListener { v ->
                 val settingUrl = addon.installedState?.optionsPageUrl ?: return@setOnClickListener
+                val customTabSessionId = args.customTabSessionId
+                if (addon.installedState?.openOptionsPageInTab == true && customTabSessionId != null) {
+                    v.loadInCustomTab(settingUrl, customTabSessionId)
+                    return@setOnClickListener
+                }
                 val directions =
                     if (addon.installedState?.openOptionsPageInTab == true) {
                         val components = v.context.components
@@ -403,6 +417,7 @@ class InstalledAddonDetailsFragment : Fragment(), SystemInsetsPaddedFragment {
                                 webExtensionName = addon.translateName(requireContext()),
                                 optionsPageUrl = settingUrl,
                                 webExtensionId = addon.id,
+                                customTabSessionId = customTabSessionId,
                             )
                     }
                 this.findNavController().navigate(directions)
@@ -413,7 +428,10 @@ class InstalledAddonDetailsFragment : Fragment(), SystemInsetsPaddedFragment {
     private fun bindDetails() {
         binding.details.setOnClickListener {
             val directions =
-                InstalledAddonDetailsFragmentDirections.actionInstalledAddonFragmentToAddonDetailsFragment(addon)
+                InstalledAddonDetailsFragmentDirections.actionInstalledAddonFragmentToAddonDetailsFragment(
+                    addon = addon,
+                    customTabSessionId = args.customTabSessionId,
+                )
             binding.root.findNavController().navigate(directions)
         }
     }
@@ -422,7 +440,8 @@ class InstalledAddonDetailsFragment : Fragment(), SystemInsetsPaddedFragment {
         binding.permissions.setOnClickListener {
             val directions =
                 InstalledAddonDetailsFragmentDirections.actionInstalledAddonFragmentToAddonPermissionsDetailsFragment(
-                    addon
+                    addon = addon,
+                    customTabSessionId = args.customTabSessionId,
                 )
             binding.root.findNavController().navigate(directions)
         }

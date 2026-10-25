@@ -138,7 +138,7 @@ class ShareControllerTest {
                     this,
                     this,
                     FenixFxAEntryPoint.ShareMenu,
-                    dismiss,
+                    dismiss = dismiss,
                 )
             every { activityContext.startActivity(capture(shareIntent)) } just Runs
             coEvery { recentAppStorage.updateRecentApp(appShareOption.activityName) } just Runs
@@ -205,7 +205,7 @@ class ShareControllerTest {
                     this,
                     this,
                     FenixFxAEntryPoint.ShareMenu,
-                    dismiss,
+                    dismiss = dismiss,
                 )
 
             every { activityContext.startActivity(capture(shareIntent)) } just Runs
@@ -252,7 +252,7 @@ class ShareControllerTest {
                     this,
                     this,
                     FenixFxAEntryPoint.ShareMenu,
-                    dismiss,
+                    dismiss = dismiss,
                 )
 
             every { activityContext.startActivity(capture(shareIntent)) } just Runs
@@ -566,7 +566,7 @@ class ShareControllerTest {
                     this,
                     this,
                     FenixFxAEntryPoint.ShareMenu,
-                    dismiss,
+                    dismiss = dismiss,
                 )
 
             val deviceToShareTo =
@@ -627,7 +627,7 @@ class ShareControllerTest {
                     this,
                     this,
                     FenixFxAEntryPoint.ShareMenu,
-                    dismiss,
+                    dismiss = dismiss,
                 )
 
             every { sendTabUseCases.sendToAllAsync(any<List<TabData>>()) } returns CompletableDeferred(true)
@@ -689,7 +689,7 @@ class ShareControllerTest {
                     this,
                     this,
                     FenixFxAEntryPoint.ShareMenu,
-                    dismiss,
+                    dismiss = dismiss,
                 )
 
             controller.handleSignIn()
@@ -725,7 +725,7 @@ class ShareControllerTest {
                     this,
                     this,
                     FenixFxAEntryPoint.ShareMenu,
-                    dismiss,
+                    dismiss = dismiss,
                 )
 
             controller.handleReauth()
@@ -738,6 +738,70 @@ class ShareControllerTest {
                     null,
                 )
                 dismissSink.onDismiss(ShareController.Result.DISMISSED)
+            }
+        }
+
+    @Test
+    fun `GIVEN sharing outside a custom tab WHEN connecting another device THEN its screen gets no custom tab ID`() =
+        runTest(testDispatcher) {
+            val controller =
+                DefaultShareController(
+                    testContext,
+                    appStore,
+                    shareSubject,
+                    shareData,
+                    sendTabUseCases,
+                    saveToPdfUseCase,
+                    printUseCase,
+                    sentFromFirefoxManager,
+                    navController,
+                    recentAppStorage,
+                    this,
+                    this,
+                    FenixFxAEntryPoint.ShareMenu,
+                    dismiss = dismiss,
+                )
+
+            controller.handleAddNewDevice()
+
+            verify {
+                navController.navigate(
+                    ShareFragmentDirections.actionShareFragmentToAddNewDeviceFragment(customTabSessionId = null)
+                )
+            }
+        }
+
+    @Test
+    fun `GIVEN sharing from a custom tab WHEN connecting another device THEN its screen gets the custom tab ID`() =
+        runTest(testDispatcher) {
+            val customTabSessionId = "custom-tab-session-id"
+            val controller =
+                DefaultShareController(
+                    testContext,
+                    appStore,
+                    shareSubject,
+                    shareData,
+                    sendTabUseCases,
+                    saveToPdfUseCase,
+                    printUseCase,
+                    sentFromFirefoxManager,
+                    navController,
+                    recentAppStorage,
+                    this,
+                    this,
+                    FenixFxAEntryPoint.ShareMenu,
+                    customTabSessionId = customTabSessionId,
+                    dismiss = dismiss,
+                )
+
+            controller.handleAddNewDevice()
+
+            verify {
+                navController.navigate(
+                    ShareFragmentDirections.actionShareFragmentToAddNewDeviceFragment(
+                        customTabSessionId = customTabSessionId
+                    )
+                )
             }
         }
 
@@ -759,7 +823,7 @@ class ShareControllerTest {
                     this,
                     this,
                     FenixFxAEntryPoint.ShareMenu,
-                    dismiss,
+                    dismiss = dismiss,
                 )
 
             val destinations = listOf("a", "b")
@@ -795,7 +859,7 @@ class ShareControllerTest {
                     this,
                     this,
                     FenixFxAEntryPoint.ShareMenu,
-                    dismiss,
+                    dismiss = dismiss,
                 )
 
             val destinations = listOf("a", "b")
@@ -831,7 +895,7 @@ class ShareControllerTest {
                     this,
                     this,
                     FenixFxAEntryPoint.ShareMenu,
-                    dismiss,
+                    dismiss = dismiss,
                 )
 
             assertEquals(textToShare, controller.getShareText())
@@ -888,7 +952,7 @@ class ShareControllerTest {
                     this,
                     this,
                     FenixFxAEntryPoint.ShareMenu,
-                    dismiss,
+                    dismiss = dismiss,
                 )
 
             assertEquals(shareSubject, controller.getShareSubject())

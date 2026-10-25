@@ -5,6 +5,10 @@
 package org.mozilla.fenix.ext
 
 import android.content.Context
+import android.os.Bundle
+import android.view.LayoutInflater
+import android.view.View
+import android.view.ViewGroup
 import android.view.WindowManager
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentActivity
@@ -12,6 +16,7 @@ import androidx.navigation.NavController
 import androidx.navigation.NavDestination
 import androidx.navigation.NavDirections
 import androidx.navigation.NavOptions
+import androidx.navigation.Navigation
 import io.mockk.Runs
 import io.mockk.confirmVerified
 import io.mockk.every
@@ -19,12 +24,15 @@ import io.mockk.just
 import io.mockk.mockk
 import io.mockk.spyk
 import io.mockk.verify
+import mozilla.components.concept.engine.EngineSession.LoadUrlFlags
+import mozilla.components.feature.session.SessionUseCases
 import mozilla.components.support.test.robolectric.testContext
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.mozilla.fenix.R
 import org.mozilla.fenix.navigation.NavControllerProvider
 import org.mozilla.fenix.utils.Settings
 import org.robolectric.Robolectric
@@ -77,6 +85,55 @@ class FragmentTest {
         verify { navController.currentDestination }
         verify { navController.navigate(navDirections, mockOptions) }
         confirmVerified(fragment)
+    }
+
+    @Test
+    fun `WHEN a link is opened in a custom tab THEN it loads in that custom tab and the screens above it close`() {
+        val sessionUseCases: SessionUseCases = mockk(relaxed = true)
+        every { testContext.components.useCases.sessionUseCases } returns sessionUseCases
+        val shownFragment = showFragment()
+
+        shownFragment.loadInCustomTab(
+            url = "https://example.com",
+            customTabSessionId = "custom-tab-id",
+        )
+
+        verify {
+            sessionUseCases.loadUrl("https://example.com", "custom-tab-id", LoadUrlFlags.none())
+            navController.popBackStack(R.id.externalAppBrowserFragment, false)
+        }
+    }
+
+    @Test
+    fun `WHEN a link is opened in a custom tab with load flags THEN it loads with those flags`() {
+        val sessionUseCases: SessionUseCases = mockk(relaxed = true)
+        every { testContext.components.useCases.sessionUseCases } returns sessionUseCases
+        val shownFragment = showFragment()
+
+        val flags = LoadUrlFlags.select(LoadUrlFlags.ALLOW_JAVASCRIPT_URL)
+        shownFragment.loadInCustomTab(
+            url = "javascript:alert(1)",
+            customTabSessionId = "custom-tab-id",
+            flags = flags,
+        )
+
+        verify {
+            sessionUseCases.loadUrl("javascript:alert(1)", "custom-tab-id", flags)
+            navController.popBackStack(R.id.externalAppBrowserFragment, false)
+        }
+    }
+
+    private fun showFragment(): Fragment {
+        val activity = Robolectric.buildActivity(FragmentActivity::class.java).setup().get()
+        val shownFragment = ViewFragment()
+        activity.supportFragmentManager.beginTransaction().add(android.R.id.content, shownFragment).commitNow()
+        Navigation.setViewNavController(shownFragment.requireView(), navController)
+        return shownFragment
+    }
+
+    class ViewFragment : Fragment() {
+        override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?) =
+            View(inflater.context)
     }
 
     @Test

@@ -10,11 +10,13 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
+import androidx.navigation.fragment.navArgs
 import mozilla.components.lib.state.ext.consumeFrom
 import mozilla.components.lib.state.helpers.StoreProvider.Companion.fragmentStore
 import org.mozilla.fenix.R
 import org.mozilla.fenix.databinding.FragmentExceptionsBinding
 import org.mozilla.fenix.e2e.SystemInsetsPaddedFragment
+import org.mozilla.fenix.ext.loadInCustomTab
 import org.mozilla.fenix.ext.openToBrowser
 import org.mozilla.fenix.ext.requireComponents
 import org.mozilla.fenix.ext.showToolbar
@@ -22,6 +24,7 @@ import org.mozilla.fenix.ext.showToolbar
 /** Displays a list of sites that are exempted from Tracking Protection, along with controls to remove the exception. */
 class TrackingProtectionExceptionsFragment : Fragment(), SystemInsetsPaddedFragment {
 
+    private val args by navArgs<TrackingProtectionExceptionsFragmentArgs>()
     private lateinit var exceptionsStore: ExceptionsFragmentStore
     private var exceptionsView: TrackingProtectionExceptionsView? = null
     private lateinit var exceptionsInteractor: DefaultTrackingProtectionExceptionsInteractor
@@ -53,11 +56,16 @@ class TrackingProtectionExceptionsFragment : Fragment(), SystemInsetsPaddedFragm
                 exceptionsStore = exceptionsStore,
                 trackingProtectionUseCases = requireComponents.useCases.trackingProtectionUseCases,
                 openLearnMorePage = { url ->
-                    findNavController().openToBrowser()
-                    requireComponents.useCases.fenixBrowserUseCases.loadUrlOrSearch(
-                        searchTermOrURL = url,
-                        newTab = true,
-                    )
+                    val customTabSessionId = args.customTabSessionId
+                    if (customTabSessionId != null) {
+                        loadInCustomTab(url, customTabSessionId)
+                    } else {
+                        findNavController().openToBrowser()
+                        requireComponents.useCases.fenixBrowserUseCases.loadUrlOrSearch(
+                            searchTermOrURL = url,
+                            newTab = true,
+                        )
+                    }
                 },
             )
         exceptionsView =

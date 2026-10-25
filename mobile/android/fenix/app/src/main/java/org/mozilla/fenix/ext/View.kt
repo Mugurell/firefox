@@ -11,7 +11,10 @@ import androidx.annotation.Dimension
 import androidx.annotation.Dimension.Companion.DP
 import androidx.annotation.VisibleForTesting
 import androidx.coordinatorlayout.widget.CoordinatorLayout
+import androidx.navigation.findNavController
+import mozilla.components.concept.engine.EngineSession.LoadUrlFlags
 import mozilla.components.support.ktx.android.util.dpToPx
+import org.mozilla.fenix.R
 
 fun View.increaseTapArea(@Dimension(unit = DP) extraDps: Int) {
     val extraPx = extraDps.dpToPx(resources.displayMetrics)
@@ -76,3 +79,20 @@ var View.behavior: CoordinatorLayout.Behavior<*>?
     set(value) {
         (layoutParams as? CoordinatorLayout.LayoutParams)?.behavior = value
     }
+
+/**
+ * Loads the given URL in the custom tab session identified by [customTabSessionId] and pops the back stack up to the
+ * custom tab browser.
+ *
+ * @param url The URL to load.
+ * @param customTabSessionId The ID of the custom tab in which to load the new URL.
+ * @param flags The [LoadUrlFlags] to load [url] with.
+ */
+fun View.loadInCustomTab(
+    url: String,
+    customTabSessionId: String,
+    flags: LoadUrlFlags = LoadUrlFlags.none(),
+) {
+    context.components.useCases.sessionUseCases.loadUrl(url, customTabSessionId, flags)
+    findNavController().popBackStack(R.id.externalAppBrowserFragment, false)
+}

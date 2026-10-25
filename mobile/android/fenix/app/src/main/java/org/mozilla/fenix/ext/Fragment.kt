@@ -27,6 +27,7 @@ import androidx.navigation.NavOptions
 import androidx.navigation.fragment.findNavController
 import com.google.android.material.R as materialR
 import mozilla.components.concept.base.crash.Breadcrumb
+import mozilla.components.concept.engine.EngineSession.LoadUrlFlags
 import mozilla.components.ui.icons.R as iconsR
 import org.mozilla.fenix.NavHostActivity
 import org.mozilla.fenix.R
@@ -58,6 +59,26 @@ fun Fragment.nav(
 ) {
     val navController = navControllerProvider.getNavController(this)
     navController.nav(id, directions, options)
+}
+
+/**
+ * Opens a link from a screen shown in a custom tab activity in that custom tab instead of in a new tab while following
+ * the custom tab's browsing mode.
+ *
+ * The screen from which the link was opened will then be removed from the navigation backstack so that pressing back in
+ * the webpage showing [url] will show the previous webpage shown in the custom tab.
+ *
+ * @param url The URL to load.
+ * @param customTabSessionId The ID of the custom tab in which to load the new URL.
+ * @param flags The [LoadUrlFlags] to load [url] with.
+ */
+fun Fragment.loadInCustomTab(
+    url: String,
+    customTabSessionId: String,
+    flags: LoadUrlFlags = LoadUrlFlags.none(),
+) {
+    requireComponents.useCases.sessionUseCases.loadUrl(url, customTabSessionId, flags)
+    findNavController().popBackStack(R.id.externalAppBrowserFragment, false)
 }
 
 fun Fragment.getPreferenceKey(@StringRes resourceId: Int): String = getString(resourceId)

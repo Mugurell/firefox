@@ -14,6 +14,7 @@ import io.mockk.runs
 import io.mockk.verify
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.test.runTest
+import mozilla.components.browser.state.state.CustomTabSessionState
 import mozilla.components.browser.state.state.SessionState
 import mozilla.components.feature.session.SessionUseCases
 import mozilla.components.feature.tabs.TabsUseCases
@@ -49,7 +50,36 @@ class TrustPanelNavigationMiddlewareTest {
             verify {
                 navController.navigate(
                     TrustPanelFragmentDirections.actionGlobalTrackingProtectionFragment(
-                        preferenceToScrollTo = privacySecurityPrefKey
+                        preferenceToScrollTo = privacySecurityPrefKey,
+                        customTabSessionId = null,
+                    ),
+                    null,
+                )
+            }
+        }
+
+    @Test
+    fun `GIVEN a custom tab WHEN navigate to privacy security settings action is dispatched THEN navigate with customTabSessionId`() =
+        runTest {
+            val testSessionId = "custom-tab-id"
+            val sessionState: CustomTabSessionState = mockk {
+                every { id } returns testSessionId
+            }
+            val privacySecurityPrefKey = "pref_key_privacy_security_category"
+            val store =
+                createStore(
+                    trustPanelState = TrustPanelState(sessionState = sessionState),
+                    privacySecurityPrefKey = privacySecurityPrefKey,
+                    scope = this,
+                )
+            store.dispatch(TrustPanelAction.Navigate.PrivacySecuritySettings)
+            testScheduler.advanceUntilIdle()
+
+            verify {
+                navController.navigate(
+                    TrustPanelFragmentDirections.actionGlobalTrackingProtectionFragment(
+                        preferenceToScrollTo = privacySecurityPrefKey,
+                        customTabSessionId = testSessionId,
                     ),
                     null,
                 )

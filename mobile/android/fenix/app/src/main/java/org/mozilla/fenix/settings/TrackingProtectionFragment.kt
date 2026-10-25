@@ -23,6 +23,7 @@ import org.mozilla.fenix.GleanMetrics.TrackingProtection
 import org.mozilla.fenix.R
 import org.mozilla.fenix.e2e.SystemInsetsPaddedFragment
 import org.mozilla.fenix.ext.components
+import org.mozilla.fenix.ext.loadInCustomTab
 import org.mozilla.fenix.ext.nav
 import org.mozilla.fenix.ext.openToBrowser
 import org.mozilla.fenix.ext.requireComponents
@@ -38,7 +39,10 @@ class TrackingProtectionFragment : PreferenceFragmentCompat(), SystemInsetsPadde
     private val args by navArgs<TrackingProtectionFragmentArgs>()
 
     private val exceptionsClickListener = Preference.OnPreferenceClickListener {
-        val directions = TrackingProtectionFragmentDirections.actionTrackingProtectionFragmentToExceptionsFragment()
+        val directions =
+            TrackingProtectionFragmentDirections.actionTrackingProtectionFragmentToExceptionsFragment(
+                customTabSessionId = args.customTabSessionId
+            )
         requireView().findNavController().navigate(directions)
         true
     }
@@ -105,11 +109,7 @@ class TrackingProtectionFragment : PreferenceFragmentCompat(), SystemInsetsPadde
 
         val learnMorePreference = requirePreference<Preference>(R.string.pref_key_etp_learn_more)
         learnMorePreference.setOnPreferenceClickListener {
-            findNavController().openToBrowser()
-            requireComponents.useCases.fenixBrowserUseCases.loadUrlOrSearch(
-                searchTermOrURL = SupportUtils.getGenericSumoURLForTopic(SupportUtils.SumoTopic.TRACKING_PROTECTION),
-                newTab = true,
-            )
+            openSumoArticle()
             true
         }
         learnMorePreference.summary =
@@ -399,9 +399,14 @@ class TrackingProtectionFragment : PreferenceFragmentCompat(), SystemInsetsPadde
     }
 
     private fun openSumoArticle() {
+        val url = SupportUtils.getGenericSumoURLForTopic(SupportUtils.SumoTopic.TRACKING_PROTECTION)
+        args.customTabSessionId?.let {
+            loadInCustomTab(url, it)
+            return
+        }
         findNavController().openToBrowser()
         requireComponents.useCases.fenixBrowserUseCases.loadUrlOrSearch(
-            searchTermOrURL = SupportUtils.getGenericSumoURLForTopic(SupportUtils.SumoTopic.TRACKING_PROTECTION),
+            searchTermOrURL = url,
             newTab = true,
         )
     }

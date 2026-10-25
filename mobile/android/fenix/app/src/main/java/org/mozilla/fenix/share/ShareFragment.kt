@@ -23,6 +23,7 @@ import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
 import kotlinx.coroutines.launch
 import mozilla.components.browser.state.action.ContentAction
+import mozilla.components.browser.state.selector.findCustomTab
 import mozilla.components.browser.state.selector.findTabOrCustomTab
 import mozilla.components.concept.base.crash.Breadcrumb
 import mozilla.components.concept.engine.prompt.PromptRequest
@@ -111,6 +112,8 @@ class ShareFragment : AppCompatDialogFragment() {
                     recentAppsStorage = RecentAppsStorage(requireContext()),
                     scope = viewLifecycleOwner.lifecycleScope,
                     applicationScope = requireComponents.applicationScope,
+                    customTabSessionId =
+                        args.sessionId?.takeIf { requireComponents.core.store.state.findCustomTab(it) != null },
                     dismiss = { result ->
                         consumePrompt {
                             when (result) {

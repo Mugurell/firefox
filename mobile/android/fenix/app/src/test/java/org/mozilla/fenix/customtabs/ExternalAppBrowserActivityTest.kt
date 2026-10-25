@@ -16,11 +16,14 @@ import io.mockk.mockk
 import io.mockk.spyk
 import io.mockk.verify
 import kotlin.test.assertNotNull
+import mozilla.components.browser.state.state.ActiveOptionsPage
 import mozilla.components.browser.state.state.BrowserState
+import mozilla.components.browser.state.state.WebExtensionState
 import mozilla.components.browser.state.state.createCustomTab
 import mozilla.components.browser.state.state.createTab
 import mozilla.components.browser.state.store.BrowserStore
 import mozilla.components.feature.intent.ext.putSessionId
+import mozilla.components.support.test.robolectric.testContext
 import mozilla.components.support.utils.toSafeIntent
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -35,7 +38,9 @@ import org.mozilla.fenix.browser.browsingmode.BrowsingModeManager
 import org.mozilla.fenix.ext.components
 import org.mozilla.fenix.ext.getIntentSource
 import org.mozilla.fenix.ext.getNavDirections
+import org.mozilla.fenix.helpers.perf.TestStrictModeManager
 import org.mozilla.fenix.utils.Settings
+import org.robolectric.Robolectric
 import org.robolectric.RobolectricTestRunner
 
 @RunWith(RobolectricTestRunner::class)
@@ -265,5 +270,25 @@ class ExternalAppBrowserActivityTest {
         assertFalse(activity.hasExternalTab())
         assertEquals("mozilla", activity.getExternalTabId())
         assertNull(activity.getExternalTab())
+    }
+
+    @Test
+    fun `GIVEN a custom tab activity WHEN an extension opens its options page THEN the options page gets the custom tab ID`() {
+        val activeOptionsPage =
+            ActiveOptionsPage(
+                instanceId = "instanceId",
+                url = "moz-extension://extensionId/options.html",
+                name = "Test extension",
+            )
+        val extension = WebExtensionState(id = "extensionId", activeOptionsPage = activeOptionsPage)
+        every { testContext.components.core.store } returns
+            BrowserStore(BrowserState(extensions = mapOf(extension.id to extension)))
+        every { testContext.components.strictMode } returns TestStrictModeManager()
+        val intent = Intent(Intent.ACTION_VIEW).apply { putSessionId("custom-tab-id") }
+        val activity = Robolectric.buildActivity(ExternalAppBrowserActivity::class.java, intent).get()
+
+        val directions = activity.createOpenOptionsPageDirections(activeOptionsPage)
+
+        assertEquals("custom-tab-id", directions?.arguments?.getString("customTabSessionId"))
     }
 }

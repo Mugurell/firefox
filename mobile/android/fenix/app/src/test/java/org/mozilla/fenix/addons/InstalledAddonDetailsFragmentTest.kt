@@ -7,6 +7,7 @@ package org.mozilla.fenix.addons
 import android.view.LayoutInflater
 import android.view.View
 import android.widget.TextView
+import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.isVisible
 import androidx.navigation.NavController
 import androidx.navigation.Navigation
@@ -47,6 +48,7 @@ import org.mozilla.fenix.components.usecases.FenixBrowserUseCases
 import org.mozilla.fenix.databinding.FragmentInstalledAddOnDetailsBinding
 import org.mozilla.fenix.ext.components
 import org.mozilla.fenix.settings.SupportUtils
+import org.robolectric.Robolectric
 import org.robolectric.RobolectricTestRunner
 
 @RunWith(RobolectricTestRunner::class)
@@ -62,7 +64,7 @@ class InstalledAddonDetailsFragmentTest {
 
     @Before
     fun setup() {
-        fragment = spyk(InstalledAddonDetailsFragment())
+        fragment = createFragment()
         tabsUseCases = mockk(relaxed = true)
         loadUrlUseCase = mockk(relaxed = true)
         searchUseCases = mockk(relaxed = true)
@@ -72,6 +74,19 @@ class InstalledAddonDetailsFragmentTest {
                 every { getProfilerTime() } returns PROFILER_START_TIME
                 every { isProfilerActive() } returns true
             }
+    }
+
+    private fun createFragment(customTabSessionId: String? = null): InstalledAddonDetailsFragment {
+        val target =
+            InstalledAddonDetailsFragment().apply {
+                arguments =
+                    InstalledAddonDetailsFragmentArgs(
+                            addon = Addon("some-addon-id"),
+                            customTabSessionId = customTabSessionId,
+                        )
+                        .toBundle()
+            }
+        return spyk(target)
     }
 
     @Test
@@ -431,6 +446,101 @@ class InstalledAddonDetailsFragmentTest {
     }
 
     @Test
+    fun `GIVEN an add-on shown from a custom tab WHEN clicking the report button THEN the report page loads in the custom tab and no tab is added`() {
+        val sessionUseCases: SessionUseCases = mockk(relaxed = true)
+        every { testContext.components.useCases.sessionUseCases } returns sessionUseCases
+        every { testContext.components.useCases.tabsUseCases } returns tabsUseCases
+        val (shownFragment, navController) =
+            showFragment(mockAddon(relaxed = true), customTabSessionId = "custom-tab-id")
+
+        shownFragment.binding.reportAddOn.performClick()
+
+        verify {
+            sessionUseCases.loadUrl(
+                url = "${BuildConfig.AMO_BASE_URL}/android/feedback/addon/some-addon-id/",
+                sessionId = "custom-tab-id",
+                flags = any(),
+            )
+            navController.popBackStack(R.id.externalAppBrowserFragment, false)
+        }
+        verify(exactly = 0) { tabsUseCases.selectOrAddTab(any(), any(), any(), any(), any()) }
+    }
+
+    @Test
+    fun `GIVEN an add-on whose options page opens in a tab, shown from a custom tab WHEN clicking the settings button THEN the options page loads in the custom tab and no tab is added`() {
+        val sessionUseCases: SessionUseCases = mockk(relaxed = true)
+        every { testContext.components.useCases.sessionUseCases } returns sessionUseCases
+        every { testContext.components.useCases.tabsUseCases } returns tabsUseCases
+        val (shownFragment, navController) =
+            showFragment(mockAddon(openOptionsPageInTab = true, relaxed = true), customTabSessionId = "custom-tab-id")
+
+        shownFragment.binding.settings.performClick()
+
+        verify {
+            sessionUseCases.loadUrl(
+                url = "some-addon-options-page-url",
+                sessionId = "custom-tab-id",
+                flags = any(),
+            )
+            navController.popBackStack(R.id.externalAppBrowserFragment, false)
+        }
+        verify(exactly = 0) { tabsUseCases.selectOrAddTab(any(), any(), any(), any(), any()) }
+    }
+
+    @Test
+    fun `GIVEN an add-on whose options page opens in Firefox, shown from a custom tab WHEN clicking the settings button THEN the options page screen gets the custom tab ID`() {
+        val (shownFragment, navController) =
+            showFragment(mockAddon(openOptionsPageInTab = false, relaxed = true), customTabSessionId = "custom-tab-id")
+
+        shownFragment.binding.settings.performClick()
+
+        verify {
+            navController.navigate(
+                InstalledAddonDetailsFragmentDirections.actionInstalledAddonFragmentToAddonInternalSettingsFragment(
+                    webExtensionName = "some-name",
+                    optionsPageUrl = "some-addon-options-page-url",
+                    webExtensionId = "some-addon-id",
+                    customTabSessionId = "custom-tab-id",
+                )
+            )
+        }
+    }
+
+    @Test
+    fun `GIVEN an add-on shown from a custom tab WHEN clicking the details button THEN the details screen gets the custom tab ID`() {
+        val addon = mockAddon(relaxed = true)
+        val (shownFragment, navController) = showFragment(addon, customTabSessionId = "custom-tab-id")
+
+        shownFragment.binding.details.performClick()
+
+        verify {
+            navController.navigate(
+                InstalledAddonDetailsFragmentDirections.actionInstalledAddonFragmentToAddonDetailsFragment(
+                    addon = addon,
+                    customTabSessionId = "custom-tab-id",
+                )
+            )
+        }
+    }
+
+    @Test
+    fun `GIVEN an add-on shown from a custom tab WHEN clicking the permissions button THEN the permissions screen gets the custom tab ID`() {
+        val addon = mockAddon(relaxed = true)
+        val (shownFragment, navController) = showFragment(addon, customTabSessionId = "custom-tab-id")
+
+        shownFragment.binding.permissions.performClick()
+
+        verify {
+            navController.navigate(
+                InstalledAddonDetailsFragmentDirections.actionInstalledAddonFragmentToAddonPermissionsDetailsFragment(
+                    addon = addon,
+                    customTabSessionId = "custom-tab-id",
+                )
+            )
+        }
+    }
+
+    @Test
     fun `GIVEN addon does not allow private browsing WHEN binding THEN update switch`() {
         val addon = mockAddon()
         val privateBrowsingSwitch = mockk<MaterialSwitch>(relaxed = true)
@@ -661,8 +771,27 @@ class InstalledAddonDetailsFragmentTest {
         }
     }
 
-    private fun mockAddon(openOptionsPageInTab: Boolean = true): Addon {
-        val addon: Addon = mockk()
+    private fun showFragment(
+        addon: Addon,
+        customTabSessionId: String?,
+    ): Pair<InstalledAddonDetailsFragment, NavController> {
+        every { testContext.components.addonManager } returns addonManager
+        val addonId = addon.id
+        coEvery { addonManager.getAddonByID(addonId) } returns addon
+        val shownFragment =
+            InstalledAddonDetailsFragment().apply {
+                arguments =
+                    InstalledAddonDetailsFragmentArgs(addon = addon, customTabSessionId = customTabSessionId).toBundle()
+            }
+        val activity = Robolectric.buildActivity(AppCompatActivity::class.java).setup().get()
+        activity.supportFragmentManager.beginTransaction().add(android.R.id.content, shownFragment).commitNow()
+        val navController = mockk<NavController>(relaxed = true)
+        Navigation.setViewNavController(shownFragment.requireView(), navController)
+        return shownFragment to navController
+    }
+
+    private fun mockAddon(openOptionsPageInTab: Boolean = true, relaxed: Boolean = false): Addon {
+        val addon: Addon = mockk(relaxed = relaxed)
         every { addon.id } returns "some-addon-id"
         every { addon.version } returns "1.2.3"
         every { addon.incognito } returns Addon.Incognito.SPANNING

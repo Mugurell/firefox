@@ -75,7 +75,7 @@ class AddonsManagementFragment : Fragment(R.layout.fragment_add_ons_management),
                 onInstallButtonClicked = ::installAddon,
                 onMoreAddonsButtonClicked = ::openAMO,
                 onLearnMoreClicked = { link, addon ->
-                    binding?.root?.openLearnMoreLink(link, addon)
+                    binding?.root?.openLearnMoreLink(link, addon, customTabSessionId = null)
                 },
             )
 

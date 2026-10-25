@@ -125,7 +125,10 @@ class AddonInternalSettingsFragment : AddonPopupBaseFragment(), SystemInsetsPadd
         if (addon != null) {
             provideNavController()
                 .navigate(
-                    NavGraphDirections.actionGlobalToInstalledAddonDetailsFragment(addon),
+                    NavGraphDirections.actionGlobalToInstalledAddonDetailsFragment(
+                        addon = addon,
+                        customTabSessionId = args.customTabSessionId,
+                    ),
                     NavOptions.Builder().setPopUpTo(R.id.addonInternalSettingsFragment, true).build(),
                 )
         } else {

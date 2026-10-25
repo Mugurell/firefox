@@ -5,17 +5,27 @@
 package org.mozilla.fenix.settings
 
 import androidx.appcompat.app.AlertDialog
+import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.FragmentActivity
+import androidx.navigation.NavController
+import androidx.navigation.Navigation
+import androidx.preference.Preference
 import io.mockk.Runs
 import io.mockk.every
 import io.mockk.just
 import io.mockk.mockk
 import io.mockk.spyk
 import io.mockk.verify
+import mozilla.components.concept.engine.EngineSession
+import mozilla.components.feature.session.SessionUseCases
+import mozilla.components.feature.tabs.TabsUseCases
 import mozilla.components.support.test.robolectric.testContext
 import org.junit.Assert.assertEquals
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.mozilla.fenix.R
+import org.mozilla.fenix.components.AppStore
+import org.mozilla.fenix.components.usecases.FenixBrowserUseCases
 import org.mozilla.fenix.ext.components
 import org.mozilla.fenix.utils.Settings
 import org.robolectric.Robolectric
@@ -80,9 +90,10 @@ class TrackingProtectionFragmentTest {
         every { testContext.components.settings } returns settings
         every { testContext.components.core } returns mockk(relaxed = true)
 
-        val settingsFragment = TrackingProtectionFragment()
-        val activity = Robolectric.buildActivity(FragmentActivity::class.java).create().get()
-        activity.supportFragmentManager.beginTransaction().add(settingsFragment, "settingsFragment").commitNow()
+        val settingsFragment =
+            TrackingProtectionFragment().apply { arguments = TrackingProtectionFragmentArgs().toBundle() }
+        val activity = Robolectric.buildActivity(AppCompatActivity::class.java).setup().get()
+        activity.supportFragmentManager.beginTransaction().add(android.R.id.content, settingsFragment).commitNow()
 
         settings.strictAllowListBaselineTrackingProtection = true
         val baselineCheckbox = settingsFragment.strictAllowListBaselineTrackingProtection
@@ -137,5 +148,109 @@ class TrackingProtectionFragmentTest {
         fragmentSpy.onDialogCancel(true, dialog)
 
         verify { mockSettings.strictAllowListBaselineTrackingProtection = true }
+    }
+
+    @Test
+    fun `GIVEN the settings are shown from a custom tab WHEN opening the exceptions THEN they get the custom tab ID`() {
+        every { testContext.components.analytics } returns mockk(relaxed = true)
+        every { testContext.components.settings } returns Settings(testContext)
+        every { testContext.components.core } returns mockk(relaxed = true)
+
+        val customTabSessionId = "custom-tab-id"
+        val settingsFragment =
+            TrackingProtectionFragment().apply {
+                arguments = TrackingProtectionFragmentArgs(customTabSessionId = customTabSessionId).toBundle()
+            }
+        val activity = Robolectric.buildActivity(AppCompatActivity::class.java).setup().get()
+        activity.supportFragmentManager.beginTransaction().add(android.R.id.content, settingsFragment).commitNow()
+
+        val navController = mockk<NavController>(relaxed = true)
+        Navigation.setViewNavController(settingsFragment.requireView(), navController)
+
+        val exceptionsPref =
+            settingsFragment.findPreference<Preference>(
+                settingsFragment.getString(R.string.pref_key_tracking_protection_exceptions)
+            )!!
+        exceptionsPref.onPreferenceClickListener!!.onPreferenceClick(exceptionsPref)
+
+        verify {
+            navController.navigate(
+                TrackingProtectionFragmentDirections.actionTrackingProtectionFragmentToExceptionsFragment(
+                    customTabSessionId = customTabSessionId
+                )
+            )
+        }
+    }
+
+    @Test
+    fun `GIVEN the settings are shown from a custom tab WHEN tapping learn more THEN the help page loads in the custom tab`() {
+        val sessionUseCases: SessionUseCases = mockk(relaxed = true)
+        every { testContext.components.analytics } returns mockk(relaxed = true)
+        every { testContext.components.settings } returns Settings(testContext)
+        every { testContext.components.core } returns mockk(relaxed = true)
+        every { testContext.components.useCases.sessionUseCases } returns sessionUseCases
+
+        val customTabSessionId = "custom-tab-id"
+        val settingsFragment =
+            TrackingProtectionFragment().apply {
+                arguments = TrackingProtectionFragmentArgs(customTabSessionId = customTabSessionId).toBundle()
+            }
+        val activity = Robolectric.buildActivity(AppCompatActivity::class.java).setup().get()
+        activity.supportFragmentManager.beginTransaction().add(android.R.id.content, settingsFragment).commitNow()
+
+        val navController = mockk<NavController>(relaxed = true)
+        Navigation.setViewNavController(settingsFragment.requireView(), navController)
+
+        val learnMorePref =
+            settingsFragment.findPreference<Preference>(settingsFragment.getString(R.string.pref_key_etp_learn_more))!!
+        learnMorePref.onPreferenceClickListener!!.onPreferenceClick(learnMorePref)
+
+        val expectedUrl = SupportUtils.getGenericSumoURLForTopic(SupportUtils.SumoTopic.TRACKING_PROTECTION)
+        verify {
+            sessionUseCases.loadUrl(expectedUrl, customTabSessionId, any())
+            navController.popBackStack(R.id.externalAppBrowserFragment, false)
+        }
+    }
+
+    @Test
+    fun `GIVEN the settings are shown from the regular tabs activity WHEN tapping learn more THEN the help page opens in a new tab`() {
+        val tabsUseCases: TabsUseCases = mockk(relaxed = true)
+        val fenixBrowserUseCases =
+            FenixBrowserUseCases(
+                appStore = AppStore(),
+                tabsUseCases = tabsUseCases,
+                loadUrlUseCase = mockk(relaxed = true),
+                searchUseCases = mockk(relaxed = true),
+                homepageTitle = "",
+                profiler = null,
+            )
+        every { testContext.components.analytics } returns mockk(relaxed = true)
+        every { testContext.components.settings } returns Settings(testContext)
+        every { testContext.components.core } returns mockk(relaxed = true)
+        every { testContext.components.useCases.fenixBrowserUseCases } returns fenixBrowserUseCases
+
+        val settingsFragment =
+            TrackingProtectionFragment().apply { arguments = TrackingProtectionFragmentArgs().toBundle() }
+        val activity = Robolectric.buildActivity(AppCompatActivity::class.java).setup().get()
+        activity.supportFragmentManager.beginTransaction().add(android.R.id.content, settingsFragment).commitNow()
+
+        val navController = mockk<NavController>(relaxed = true)
+        Navigation.setViewNavController(settingsFragment.requireView(), navController)
+
+        val learnMorePref =
+            settingsFragment.findPreference<Preference>(settingsFragment.getString(R.string.pref_key_etp_learn_more))!!
+        learnMorePref.onPreferenceClickListener!!.onPreferenceClick(learnMorePref)
+
+        val expectedUrl = SupportUtils.getGenericSumoURLForTopic(SupportUtils.SumoTopic.TRACKING_PROTECTION)
+        verify {
+            navController.navigate(R.id.browserFragment)
+            tabsUseCases.addTab.invoke(
+                url = expectedUrl,
+                flags = EngineSession.LoadUrlFlags.none(),
+                private = false,
+                historyMetadata = null,
+                originalInput = expectedUrl,
+            )
+        }
     }
 }

@@ -60,7 +60,8 @@ class TrustPanelNavigationMiddleware(
                     navController.nav(
                         R.id.trustPanelFragment,
                         TrustPanelFragmentDirections.actionGlobalTrackingProtectionFragment(
-                            preferenceToScrollTo = privacySecurityPrefKey
+                            preferenceToScrollTo = privacySecurityPrefKey,
+                            customTabSessionId = (store.state.sessionState as? CustomTabSessionState)?.id,
                         ),
                     )
 

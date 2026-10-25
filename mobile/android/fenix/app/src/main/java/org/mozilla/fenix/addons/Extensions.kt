@@ -14,6 +14,7 @@ import org.mozilla.fenix.compose.core.Action
 import org.mozilla.fenix.compose.snackbar.Snackbar
 import org.mozilla.fenix.compose.snackbar.SnackbarState
 import org.mozilla.fenix.ext.components
+import org.mozilla.fenix.ext.loadInCustomTab
 import org.mozilla.fenix.ext.openToBrowser
 import org.mozilla.fenix.settings.SupportUtils
 
@@ -70,8 +71,13 @@ internal fun showRetryableSnackBar(
 internal fun View.openLearnMoreLink(
     link: AddonsManagerAdapterDelegate.LearnMoreLinks,
     addon: Addon,
+    customTabSessionId: String?,
 ) {
     val url = resolveLearnMoreUrl(link, addon) ?: return
+    customTabSessionId?.let {
+        loadInCustomTab(url, it)
+        return
+    }
     findNavController().openToBrowser()
     context.components.useCases.fenixBrowserUseCases.loadUrlOrSearch(
         searchTermOrURL = url,

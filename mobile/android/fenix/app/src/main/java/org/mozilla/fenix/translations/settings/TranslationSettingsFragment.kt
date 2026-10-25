@@ -17,6 +17,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.fragment.app.Fragment
 import androidx.fragment.compose.content
 import androidx.navigation.fragment.findNavController
+import androidx.navigation.fragment.navArgs
 import kotlinx.coroutines.launch
 import mozilla.components.browser.state.action.TranslationsAction
 import mozilla.components.browser.state.selector.selectedTab
@@ -39,6 +40,7 @@ import org.mozilla.fenix.translations.TranslationsEnabledSettings
 
 /** A fragment displaying the Firefox Translation settings screen. */
 class TranslationSettingsFragment : Fragment(), UserInteractionHandler, SystemInsetsPaddedFragment {
+    private val args by navArgs<TranslationSettingsFragmentArgs>()
     private val browserStore: BrowserStore by lazy { requireComponents.core.store }
 
     private val translationsFeature by lazy {
@@ -101,7 +103,9 @@ class TranslationSettingsFragment : Fragment(), UserInteractionHandler, SystemIn
                     findNavController()
                         .navigate(
                             TranslationSettingsFragmentDirections
-                                .actionTranslationSettingsFragmentToDownloadLanguagesPreferenceFragment()
+                                .actionTranslationSettingsFragmentToDownloadLanguagesPreferenceFragment(
+                                    customTabSessionId = args.customTabSessionId
+                                )
                         )
                 },
                 onFeatureControlToggled = { enabled ->
