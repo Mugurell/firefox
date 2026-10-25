@@ -76,7 +76,10 @@ class IntentReceiverActivity : Activity() {
         // Call process for side effects, short on the first that returns true
 
         var private = components.settings.openLinksInAPrivateTab
-        if (!private) {
+        if (intent.data == null && intent.hasExtra(PRIVATE_BROWSING_MODE)) {
+            // Without a link to open, an explicit privacy is the privacy of the tab to show, e.g. "Open in Firefox".
+            private = intent.getBooleanExtra(PRIVATE_BROWSING_MODE, false)
+        } else if (!private) {
             // if PRIVATE_BROWSING_MODE is already set to true, honor that
             private = intent.getBooleanExtra(PRIVATE_BROWSING_MODE, false)
         }

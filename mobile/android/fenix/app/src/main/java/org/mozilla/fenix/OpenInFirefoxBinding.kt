@@ -14,6 +14,7 @@ import mozilla.components.feature.session.SessionFeature
 import mozilla.components.feature.tabs.CustomTabsUseCases
 import mozilla.components.lib.state.helpers.AbstractBinding
 import mozilla.components.support.base.feature.ViewBoundFeatureWrapper
+import org.mozilla.fenix.components.ActivityPrivacy
 import org.mozilla.fenix.components.AppStore
 import org.mozilla.fenix.components.appstate.AppAction
 import org.mozilla.fenix.components.appstate.AppState
@@ -23,6 +24,7 @@ import org.mozilla.fenix.components.appstate.AppState
  *
  * @param activity The [HomeActivity] used to switch to the actual browser.
  * @param appStore The [AppStore] used to observe [AppState.openInFirefoxRequested].
+ * @param activityPrivacy The [ActivityPrivacy] giving the privacy the browser opens with.
  * @param customTabSessionId Optional custom tab session ID if navigating from a custom tab or null if the selected
  *   session should be used.
  * @param customTabsUseCases The [CustomTabsUseCases] used to turn the session into a regular tab and select it.
@@ -34,6 +36,7 @@ import org.mozilla.fenix.components.appstate.AppState
 class OpenInFirefoxBinding(
     private val activity: HomeActivity,
     private val appStore: AppStore,
+    private val activityPrivacy: ActivityPrivacy,
     private val customTabSessionId: String?,
     private val customTabsUseCases: CustomTabsUseCases,
     private val openInFenixIntent: Intent,
@@ -49,6 +52,8 @@ class OpenInFirefoxBinding(
                 when (state) {
                     true -> {
                         customTabSessionId?.let {
+                            val private = activityPrivacy.isPrivate(it)
+
                             // Stop the SessionFeature from updating the EngineView and let it release the session
                             // from the EngineView so that it can immediately be rendered by a different view once
                             // we switch to the actual browser.
@@ -65,6 +70,7 @@ class OpenInFirefoxBinding(
                                     // right thing and take care of routing to an already existing browser and avoid
                                     // cloning a new one.
                                     flags = flags or Intent.FLAG_ACTIVITY_NEW_TASK
+                                    putExtra(HomeActivity.PRIVATE_BROWSING_MODE, private)
                                 }
                             )
 

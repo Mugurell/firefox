@@ -28,7 +28,6 @@ import mozilla.components.support.base.feature.UserInteractionHandler
 import mozilla.telemetry.glean.private.NoExtras
 import org.mozilla.fenix.GleanMetrics.RecentlyClosedTabs
 import org.mozilla.fenix.R
-import org.mozilla.fenix.components.appstate.AppAction
 import org.mozilla.fenix.databinding.FragmentRecentlyClosedTabsBinding
 import org.mozilla.fenix.e2e.SystemInsetsPaddedFragment
 import org.mozilla.fenix.ext.openToBrowser
@@ -146,9 +145,6 @@ class RecentlyClosedFragment :
     }
 
     private fun openItem(url: String) {
-        requireComponents.appStore.dispatch(
-            AppAction.BrowsingModeManagerModeChanged(mode = requireComponents.appStore.state.mode)
-        )
         findNavController().openToBrowser()
         requireComponents.useCases.fenixBrowserUseCases.loadUrlOrSearch(
             searchTermOrURL = url,

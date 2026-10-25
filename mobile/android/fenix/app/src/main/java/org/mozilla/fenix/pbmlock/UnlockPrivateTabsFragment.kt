@@ -11,6 +11,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.activity.result.ActivityResultLauncher
+import androidx.annotation.VisibleForTesting
 import androidx.core.content.getSystemService
 import androidx.fragment.app.Fragment
 import androidx.fragment.compose.content
@@ -20,11 +21,14 @@ import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
 import kotlinx.coroutines.launch
 import mozilla.components.browser.state.selector.normalTabs
+import mozilla.components.browser.state.state.TabSessionState
+import mozilla.components.feature.tabs.TabsUseCases
 import mozilla.components.support.base.feature.UserInteractionHandler
 import org.mozilla.fenix.GleanMetrics.PrivateBrowsingLocked
 import org.mozilla.fenix.HomeActivity
 import org.mozilla.fenix.R
 import org.mozilla.fenix.browser.browsingmode.BrowsingMode
+import org.mozilla.fenix.components.usecases.FenixBrowserUseCases
 import org.mozilla.fenix.e2e.SystemInsetsPaddedFragment
 import org.mozilla.fenix.ext.registerForActivityResult
 import org.mozilla.fenix.ext.requireComponents
@@ -115,10 +119,18 @@ class UnlockPrivateTabsFragment : Fragment(), UserInteractionHandler, SystemInse
             // to normal mode. If they have opened regular tabs, we open the tabs tray as well.
             NavigationOrigin.TAB,
             NavigationOrigin.HOME_PAGE -> {
+                val normalTabs = requireComponents.core.store.state.normalTabs
+                val hasNormalTabs = normalTabs.isNotEmpty()
+                if (requireComponents.settings.enableHomepageAsNewTab) {
+                    showNormalTab(
+                        normalTabs = normalTabs,
+                        tabsUseCases = requireComponents.useCases.tabsUseCases,
+                        fenixBrowserUseCases = requireComponents.useCases.fenixBrowserUseCases,
+                    )
+                }
                 (activity as HomeActivity).browsingModeManager.mode = BrowsingMode.Normal
                 findNavController().navigate(UnlockPrivateTabsFragmentDirections.actionGlobalHome())
 
-                val hasNormalTabs = requireComponents.core.store.state.normalTabs.isNotEmpty()
                 if (hasNormalTabs) {
                     findNavController()
                         .navigate(HomeFragmentDirections.actionGlobalTabManagementFragment(page = Page.NormalTabs))
@@ -167,4 +179,26 @@ enum class NavigationOrigin {
     HOME_PAGE,
     TAB,
     CUSTOM_TAB,
+}
+
+/**
+ * Shows a normal tab when leaving the private tabs: selects the most recently used one, or adds a normal homepage tab
+ * when there is none.
+ *
+ * @param normalTabs The normal tabs.
+ * @param tabsUseCases The [TabsUseCases] used to select a tab.
+ * @param fenixBrowserUseCases The [FenixBrowserUseCases] used to add a homepage tab.
+ */
+@VisibleForTesting
+internal fun showNormalTab(
+    normalTabs: List<TabSessionState>,
+    tabsUseCases: TabsUseCases,
+    fenixBrowserUseCases: FenixBrowserUseCases,
+) {
+    val mostRecentNormalTab = normalTabs.maxByOrNull { it.lastAccess }
+    if (mostRecentNormalTab != null) {
+        tabsUseCases.selectTab(mostRecentNormalTab.id)
+    } else {
+        fenixBrowserUseCases.addNewHomepageTab(private = false)
+    }
 }

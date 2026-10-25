@@ -602,6 +602,7 @@ abstract class BaseBrowserFragment :
                 OpenInFirefoxBinding(
                     activity = activity,
                     appStore = context.components.appStore,
+                    activityPrivacy = context.components.activityPrivacy,
                     customTabSessionId = customTabSessionId,
                     customTabsUseCases = context.components.useCases.customTabsUseCases,
                     openInFenixIntent = openInFenixIntent,
@@ -1326,7 +1327,10 @@ abstract class BaseBrowserFragment :
 
                     if (parentSession is CustomTabSessionState) {
                         useCase.invoke(request.query)
-                        requireActivity().startActivity(openInFenixIntent)
+                        val shownTabPrivate = store.state.selectedTab?.content?.private ?: request.isPrivate
+                        val intent =
+                            Intent(openInFenixIntent).putExtra(HomeActivity.PRIVATE_BROWSING_MODE, shownTabPrivate)
+                        requireActivity().startActivity(intent)
                     } else {
                         useCase.invoke(request.query, parentSessionId = parentSession?.id)
                     }

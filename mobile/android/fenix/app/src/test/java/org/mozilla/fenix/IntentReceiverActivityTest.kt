@@ -28,6 +28,7 @@ import org.hamcrest.CoreMatchers.allOf
 import org.hamcrest.CoreMatchers.not
 import org.hamcrest.MatcherAssert.assertThat
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -240,6 +241,20 @@ class IntentReceiverActivityTest {
         assertTrue(actualIntent.getBooleanExtra(HomeActivity.PRIVATE_BROWSING_MODE, false))
         assertNotNull(Events.openedLink.testGetValue())
     }
+
+    @Test
+    fun `GIVEN links open in a private tab WHEN an intent without a link asks for normal mode THEN it opens in normal mode`() =
+        runTest {
+            every { settings.openLinksInAPrivateTab } returns true
+            val intent = Intent(Intent.ACTION_VIEW).putExtra(HomeActivity.PRIVATE_BROWSING_MODE, false)
+            val activity = Robolectric.buildActivity(IntentReceiverActivity::class.java, intent).get()
+            attachMocks(activity)
+
+            activity.processIntent(intent)
+
+            val actualIntent = shadowOf(activity).peekNextStartedActivity()
+            assertFalse(actualIntent.getBooleanExtra(HomeActivity.PRIVATE_BROWSING_MODE, true))
+        }
 
     @Test
     fun `process intent with launchLinksInPrivateTab set to false`() = runTest {

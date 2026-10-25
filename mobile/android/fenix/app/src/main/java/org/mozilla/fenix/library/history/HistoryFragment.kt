@@ -556,10 +556,7 @@ class HistoryFragment :
             (selectedItem as? History.Regular)?.url ?: (selectedItem as? History.Metadata)?.url
         }
 
-        (activity as HomeActivity).apply {
-            browsingModeManager.mode = BrowsingMode.Private
-            supportActionBar?.hide()
-        }
+        (activity as HomeActivity).supportActionBar?.hide()
 
         showTabTray(openInPrivate = true)
         historyStore.dispatch(HistoryFragmentAction.ExitEditMode)

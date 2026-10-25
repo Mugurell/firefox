@@ -36,7 +36,9 @@ import org.mozilla.fenix.NavGraphDirections
 import org.mozilla.fenix.browser.browsingmode.BrowsingMode
 import org.mozilla.fenix.components.accounts.FenixFxAEntryPoint
 import org.mozilla.fenix.components.share.ShareSource
+import org.mozilla.fenix.components.usecases.FenixBrowserUseCases
 import org.mozilla.fenix.components.usecases.ShareUseCases
+import org.mozilla.fenix.ext.components
 import org.mozilla.fenix.helpers.FenixGleanTestRule
 import org.mozilla.fenix.onboarding.MARKETING_CHANNEL_ID
 import org.mozilla.fenix.utils.Settings
@@ -225,6 +227,19 @@ class HomeDeepLinkIntentProcessorTest {
         verify { activity.browsingModeManager.mode = BrowsingMode.Private }
         verify { navController.navigate(NavGraphDirections.actionGlobalHome()) }
         verify { out wasNot Called }
+    }
+
+    @Test
+    fun `GIVEN homepage as a new tab WHEN the enable_private_browsing deep link is processed THEN a private homepage tab is added and private mode is on`() {
+        val fenixBrowserUseCases: FenixBrowserUseCases = mockk(relaxed = true)
+        every { settings.enableHomepageAsNewTab } returns true
+        every { activity.applicationContext } returns testContext
+        every { testContext.components.useCases.fenixBrowserUseCases } returns fenixBrowserUseCases
+
+        assertTrue(processorHome.process(testIntent("enable_private_browsing"), navController, out, settings))
+
+        verify { fenixBrowserUseCases.addNewHomepageTab(private = true) }
+        verify { activity.browsingModeManager.mode = BrowsingMode.Private }
     }
 
     @Test

@@ -26,8 +26,12 @@ abstract class LibraryPageFragment<T> : Fragment() {
     }
 
     protected fun openItemsInNewTab(private: Boolean = false, toUrl: (T) -> String?) {
+        val urls = selectedItems.mapNotNull(toUrl)
+        if (urls.isEmpty()) {
+            return
+        }
         context?.components?.useCases?.tabsUseCases?.let { tabsUseCases ->
-            selectedItems.asSequence().mapNotNull(toUrl).forEach { url ->
+            urls.forEach { url ->
                 tabsUseCases.addTab.invoke(url, private = private)
             }
         }

@@ -43,6 +43,8 @@ import org.mozilla.fenix.GleanMetrics.Pings
 import org.mozilla.fenix.GleanMetrics.ShortcutsLibrary
 import org.mozilla.fenix.GleanMetrics.TopSites
 import org.mozilla.fenix.R
+import org.mozilla.fenix.browser.browsingmode.BrowsingMode
+import org.mozilla.fenix.browser.browsingmode.SimpleBrowsingModeManager
 import org.mozilla.fenix.components.Analytics
 import org.mozilla.fenix.components.AppStore
 import org.mozilla.fenix.components.appstate.AppAction
@@ -64,6 +66,7 @@ class DefaultTopSiteControllerTest {
     private val activity: Activity = mockk(relaxed = true)
     private val navController: NavController = mockk(relaxed = true)
     private val appStore: AppStore = mockk(relaxed = true)
+    private val browsingModeManager = SimpleBrowsingModeManager(BrowsingMode.Normal)
     private val tabsUseCases: TabsUseCases = mockk(relaxed = true)
     private val selectTabUseCase: TabsUseCases = mockk(relaxed = true)
     private val topSitesUseCases: TopSitesUseCases = mockk(relaxed = true)
@@ -1322,6 +1325,24 @@ class DefaultTopSiteControllerTest {
         }
 
     @Test
+    fun `WHEN a top site is opened in a private tab THEN the activity switches to private mode`() = runTest {
+        val topSite =
+            TopSite.Provided(
+                id = 1L,
+                title = "Mozilla",
+                url = "mozilla.org",
+                clickUrl = "",
+                imageUrl = "",
+                impressionUrl = "",
+                createdAt = 0,
+            )
+
+        createController(this).handleOpenInPrivateTabClicked(topSite)
+
+        assertEquals(BrowsingMode.Private, browsingModeManager.mode)
+    }
+
+    @Test
     fun `GIVEN current destination is the shortcuts fragment WHEN handleOpenInPrivateTabClicked is called with a TopSite#Provided site THEN navigate to the top site and record telemetry`() =
         runTest {
             every { navController.currentDestination } returns
@@ -1468,6 +1489,7 @@ class DefaultTopSiteControllerTest {
             navControllerRef = WeakReference(navController),
             store = store,
             appStore = appStore,
+            browsingModeManager = browsingModeManager,
             settings = settings,
             addTabUseCase = tabsUseCases.addTab,
             selectTabUseCase = selectTabUseCase.selectTab,
