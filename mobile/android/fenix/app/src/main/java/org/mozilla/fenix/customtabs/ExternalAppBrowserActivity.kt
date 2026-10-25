@@ -69,6 +69,12 @@ open class ExternalAppBrowserActivity : HomeActivity() {
      */
     @VisibleForTesting override fun addAboutHomeBinding(lifecycle: Lifecycle) = Unit
 
+    /**
+     * Extension actions can only be used from the regular tabs activity, so their popups belong to it. Observing them
+     * here too would show a popup opened next to a custom tab in split screen in both activities.
+     */
+    @VisibleForTesting override fun addWebExtensionPopupObserver(lifecycle: Lifecycle) = Unit
+
     override fun getCustomTabSessionId(): String? = getExternalTabId()
 
     @VisibleForTesting override fun addHomepageTabBinding(lifecycle: Lifecycle) = Unit

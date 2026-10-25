@@ -8,6 +8,8 @@ import android.content.Intent
 import android.os.Bundle
 import android.view.WindowManager.LayoutParams.FLAG_SECURE
 import androidx.fragment.app.FragmentManager
+import androidx.lifecycle.LifecycleOwner
+import androidx.lifecycle.LifecycleRegistry
 import io.mockk.Runs
 import io.mockk.every
 import io.mockk.just
@@ -589,5 +591,16 @@ class HomeActivityTest {
         assertEquals(BrowsingMode.Normal, settings.lastKnownMode)
         assertEquals(BrowsingMode.Normal, appStore.state.mode)
         assertFalse(homeActivity.window.attributes.flags and FLAG_SECURE != 0)
+    }
+
+    @Test
+    fun `GIVEN the regular tabs activity WHEN it starts observing THEN it opens extension popups`() {
+        every { testContext.components.strictMode } returns TestStrictModeManager()
+        val lifecycle = LifecycleRegistry(mockk<LifecycleOwner>(relaxed = true))
+        val homeActivity = Robolectric.buildActivity(HomeActivity::class.java).get()
+
+        homeActivity.addWebExtensionPopupObserver(lifecycle)
+
+        assertEquals(1, lifecycle.observerCount)
     }
 }

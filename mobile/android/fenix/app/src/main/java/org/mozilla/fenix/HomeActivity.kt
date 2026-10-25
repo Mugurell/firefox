@@ -633,7 +633,6 @@ open class HomeActivity : LocaleAwareAppCompatActivity(), NavHostActivity, Crash
         supportActionBar?.hide()
 
         lifecycle.addObservers(
-            webExtensionPopupObserver,
             webExtensionOptionsPageObserver,
             extensionsProcessDisabledForegroundController,
             extensionsProcessDisabledBackgroundController,
@@ -658,6 +657,7 @@ open class HomeActivity : LocaleAwareAppCompatActivity(), NavHostActivity, Crash
 
         addAboutHomeBinding(lifecycle)
         addHomepageTabBinding(lifecycle)
+        addWebExtensionPopupObserver(lifecycle)
 
         if (!isCustomTabIntent(intent)) {
             lifecycle.addObserver(webExtensionPromptFeature)
@@ -1620,6 +1620,11 @@ open class HomeActivity : LocaleAwareAppCompatActivity(), NavHostActivity, Crash
 
     /** The ID of the custom tab this activity shows, or null for the regular tabs activity. */
     protected open fun getCustomTabSessionId(): String? = null
+
+    @VisibleForTesting
+    internal open fun addWebExtensionPopupObserver(lifecycle: Lifecycle) {
+        lifecycle.addObserver(webExtensionPopupObserver)
+    }
 
     @VisibleForTesting
     internal open fun addAboutHomeBinding(lifecycle: Lifecycle) {

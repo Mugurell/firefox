@@ -8,6 +8,8 @@ import android.content.Intent
 import android.os.Bundle
 import android.view.WindowManager.LayoutParams.FLAG_SECURE
 import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleOwner
+import androidx.lifecycle.LifecycleRegistry
 import androidx.navigation.NavController
 import io.mockk.Called
 import io.mockk.Runs
@@ -361,5 +363,16 @@ class ExternalAppBrowserActivityTest {
             }
         every { testContext.components.strictMode } returns TestStrictModeManager()
         return Robolectric.buildActivity(ExternalAppBrowserActivity::class.java, intent).get()
+    }
+
+    @Test
+    fun `GIVEN a custom tab activity WHEN it starts observing THEN it doesn't open extension popups`() {
+        every { testContext.components.strictMode } returns TestStrictModeManager()
+        val lifecycle = LifecycleRegistry(mockk<LifecycleOwner>(relaxed = true))
+        val activity = Robolectric.buildActivity(ExternalAppBrowserActivity::class.java).get()
+
+        activity.addWebExtensionPopupObserver(lifecycle)
+
+        assertEquals(0, lifecycle.observerCount)
     }
 }
