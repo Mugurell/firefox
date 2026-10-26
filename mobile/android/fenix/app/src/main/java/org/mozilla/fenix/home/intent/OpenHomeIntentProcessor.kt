@@ -8,7 +8,7 @@ import android.content.Intent
 import androidx.navigation.NavController
 import org.mozilla.fenix.HomeActivity
 import org.mozilla.fenix.NavGraphDirections
-import org.mozilla.fenix.browser.browsingmode.resolveBrowsingMode
+import org.mozilla.fenix.browser.browsingmode.BrowsingMode
 import org.mozilla.fenix.components.usecases.FenixBrowserUseCases
 import org.mozilla.fenix.ext.nav
 import org.mozilla.fenix.home.intent.StartSearchIntentProcessor.Companion.PRIVATE_BROWSING_PINNED_SHORTCUT
@@ -21,8 +21,12 @@ import org.mozilla.fenix.utils.Settings
  * before that setting existed open the private homepage rather than focusing the address bar.
  *
  * @param fenixBrowserUseCases [FenixBrowserUseCases] used to add a new homepage tab.
+ * @param browsingMode [BrowsingMode] giving the privacy of the homepage tab to open.
  */
-class OpenHomeIntentProcessor(private val fenixBrowserUseCases: FenixBrowserUseCases) : HomeIntentProcessor {
+class OpenHomeIntentProcessor(
+    private val fenixBrowserUseCases: FenixBrowserUseCases,
+    private val browsingMode: BrowsingMode,
+) : HomeIntentProcessor {
     override fun process(intent: Intent, navController: NavController, out: Intent, settings: Settings): Boolean {
         return if (
             intent.extras?.getBoolean(HomeActivity.OPEN_TO_HOME) == true ||
@@ -32,9 +36,9 @@ class OpenHomeIntentProcessor(private val fenixBrowserUseCases: FenixBrowserUseC
             out.putExtra(HomeActivity.OPEN_TO_HOME, false)
             out.removeExtra(HomeActivity.OPEN_TO_SEARCH)
 
-            val mode = resolveBrowsingMode(sessionMode = null, intent = intent, lastKnownMode = settings.lastKnownMode)
-            fenixBrowserUseCases.addNewHomepageTab(private = mode.isPrivate)
-            settings.lastKnownMode = mode
+            val isPrivate = browsingMode.isPrivate(customTabSessionId = null, intent = intent)
+            fenixBrowserUseCases.addNewHomepageTab(private = isPrivate)
+            settings.lastKnownModeIsPrivate = isPrivate
             navController.nav(
                 null,
                 directions = NavGraphDirections.actionGlobalHome(),

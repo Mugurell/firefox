@@ -73,8 +73,6 @@ import org.junit.runner.RunWith
 import org.mozilla.fenix.GleanMetrics.Events
 import org.mozilla.fenix.NavGraphDirections
 import org.mozilla.fenix.R
-import org.mozilla.fenix.browser.browsingmode.BrowsingMode.Normal
-import org.mozilla.fenix.browser.browsingmode.BrowsingMode.Private
 import org.mozilla.fenix.components.AppStore
 import org.mozilla.fenix.components.appstate.AppAction
 import org.mozilla.fenix.components.appstate.AppAction.SearchAction.SearchEngineSelected
@@ -580,7 +578,7 @@ class BrowserToolbarMiddlewareTest {
 
         toolbarStore.dispatch((tabCounterMenuItems[0] as BrowserToolbarMenuButton).onClick!!)
 
-        verify { testContext.components.settings.lastKnownMode = Private }
+        verify { testContext.components.settings.lastKnownModeIsPrivate = true }
         assertEquals("", toolbarStore.state.editState.query.current)
         verify { appStore.dispatch(SearchStarted()) }
     }
@@ -596,7 +594,7 @@ class BrowserToolbarMiddlewareTest {
 
         toolbarStore.dispatch((tabCounterMenuItems[0] as BrowserToolbarMenuButton).onClick!!)
 
-        verify { testContext.components.settings.lastKnownMode = Normal }
+        verify { testContext.components.settings.lastKnownModeIsPrivate = false }
         assertEquals("", toolbarStore.state.editState.query.current)
         verify { appStore.dispatch(SearchStarted()) }
     }
@@ -630,7 +628,7 @@ class BrowserToolbarMiddlewareTest {
 
             verify { fenixBrowserUseCases.addNewHomepageTab(private = false) }
             verify(exactly = 0) { appStore.dispatch(SearchStarted()) }
-            verify { testContext.components.settings.lastKnownMode = Normal }
+            verify { testContext.components.settings.lastKnownModeIsPrivate = false }
         }
 
     @Test
@@ -647,7 +645,7 @@ class BrowserToolbarMiddlewareTest {
 
             verify { fenixBrowserUseCases.addNewHomepageTab(private = true) }
             verify(exactly = 0) { appStore.dispatch(SearchStarted()) }
-            verify { testContext.components.settings.lastKnownMode = Private }
+            verify { testContext.components.settings.lastKnownModeIsPrivate = true }
         }
 
     @Test
@@ -663,7 +661,7 @@ class BrowserToolbarMiddlewareTest {
 
         verify { fenixBrowserUseCases.addNewHomepageTab(private = false) }
         verify(exactly = 0) { appStore.dispatch(SearchStarted()) }
-        verify { testContext.components.settings.lastKnownMode = Normal }
+        verify { testContext.components.settings.lastKnownModeIsPrivate = false }
     }
 
     @Test

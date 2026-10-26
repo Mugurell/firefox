@@ -70,7 +70,6 @@ class ExternalAppBrowserActivityTest {
     @Test
     fun `navigateToBrowserOnColdStart does nothing for external app browser activity`() {
         val activity = spyk(ExternalAppBrowserActivity())
-        every { activity.browsingMode } returns BrowsingMode.Normal
 
         val settings: Settings = mockk()
         every { settings.shouldReturnToBrowser } returns true
@@ -296,36 +295,36 @@ class ExternalAppBrowserActivityTest {
     fun `GIVEN a private custom tab, a normal intent and normal last known mode WHEN its activity starts THEN it is private`() {
         val activity = buildCustomTabActivity(customTabPrivate = true, intentPrivate = false)
 
-        assertEquals(BrowsingMode.Private, activity.resolveCreationBrowsingMode(savedInstanceState = null))
+        assertTrue(activity.resolveCreationPrivacy(savedInstanceState = null))
     }
 
     @Test
     fun `GIVEN a normal custom tab and a private intent WHEN its activity starts THEN it is normal`() {
         val activity = buildCustomTabActivity(customTabPrivate = false, intentPrivate = true)
 
-        assertEquals(BrowsingMode.Normal, activity.resolveCreationBrowsingMode(savedInstanceState = null))
+        assertFalse(activity.resolveCreationPrivacy(savedInstanceState = null))
     }
 
     @Test
     fun `GIVEN the custom tab is gone and a private intent WHEN its activity starts THEN it is private`() {
         val activity = buildCustomTabActivity(customTabPrivate = null, intentPrivate = true)
 
-        assertEquals(BrowsingMode.Private, activity.resolveCreationBrowsingMode(savedInstanceState = null))
+        assertTrue(activity.resolveCreationPrivacy(savedInstanceState = null))
     }
 
     @Test
     fun `GIVEN the regular tabs activity is private WHEN a normal custom tab activity asking for normal mode starts THEN the last known mode stays private`() {
-        val settings = Settings(testContext).apply { lastKnownMode = BrowsingMode.Private }
+        val settings = Settings(testContext).apply { lastKnownModeIsPrivate = true }
         val activity = buildCustomTabActivity(customTabPrivate = false, intentPrivate = false, settings = settings)
 
-        assertEquals(BrowsingMode.Normal, activity.resolveCreationBrowsingMode(savedInstanceState = null))
-        assertEquals(BrowsingMode.Private, settings.lastKnownMode)
+        assertFalse(activity.resolveCreationPrivacy(savedInstanceState = null))
+        assertTrue(settings.lastKnownModeIsPrivate)
     }
 
     private fun buildCustomTabActivity(
         customTabPrivate: Boolean?,
         intentPrivate: Boolean?,
-        settings: Settings = Settings(testContext).apply { lastKnownMode = BrowsingMode.Normal },
+        settings: Settings = Settings(testContext).apply { lastKnownModeIsPrivate = false },
     ): ExternalAppBrowserActivity {
         val customTabs =
             listOfNotNull(
@@ -335,6 +334,10 @@ class ExternalAppBrowserActivityTest {
             )
         every { testContext.components.core.store } returns BrowserStore(BrowserState(customTabs = customTabs))
         every { testContext.components.settings } returns settings
+        every { testContext.components.browsingMode } answers
+            {
+                BrowsingMode(testContext.components.core.store, settings)
+            }
         val intent =
             Intent(Intent.ACTION_VIEW).apply {
                 putSessionId("mozilla")

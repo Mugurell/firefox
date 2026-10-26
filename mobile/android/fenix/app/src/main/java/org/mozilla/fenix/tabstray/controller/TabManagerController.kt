@@ -38,7 +38,6 @@ import org.mozilla.fenix.GleanMetrics.Events
 import org.mozilla.fenix.GleanMetrics.TabsTray
 import org.mozilla.fenix.GleanMetrics.TrackingProtection
 import org.mozilla.fenix.R
-import org.mozilla.fenix.browser.browsingmode.BrowsingMode
 import org.mozilla.fenix.collections.CollectionsDialog
 import org.mozilla.fenix.collections.show
 import org.mozilla.fenix.components.AppStore
@@ -278,7 +277,7 @@ class DefaultTabManagerController(
      */
     private fun openNewTab(isPrivate: Boolean) {
         val startTime = profiler?.getProfilerTime()
-        settings.lastKnownMode = BrowsingMode.fromBoolean(isPrivate)
+        settings.lastKnownModeIsPrivate = isPrivate
 
         if (settings.enableHomepageAsNewTab) {
             fenixBrowserUseCases.addNewHomepageTab(private = isPrivate)
@@ -648,7 +647,7 @@ class DefaultTabManagerController(
             selected.isEmpty() && tabsTrayStore.state.mode.isSelect().not() -> {
                 TabsTray.openedExistingTab.record(TabsTray.OpenedExistingTabExtra(source ?: "unknown"))
                 tabsUseCases.selectTab(tab.id)
-                settings.lastKnownMode = BrowsingMode.fromBoolean(tab.private)
+                settings.lastKnownModeIsPrivate = tab.private
 
                 handleNavigationRequested()
             }

@@ -122,8 +122,6 @@ import org.mozilla.fenix.R
 import org.mozilla.fenix.browser.BrowserFragmentDirections
 import org.mozilla.fenix.browser.PageTranslationStatus
 import org.mozilla.fenix.browser.ReaderModeStatus
-import org.mozilla.fenix.browser.browsingmode.BrowsingMode.Normal
-import org.mozilla.fenix.browser.browsingmode.BrowsingMode.Private
 import org.mozilla.fenix.browser.readermode.ReaderModeController
 import org.mozilla.fenix.browser.store.BrowserScreenAction
 import org.mozilla.fenix.browser.store.BrowserScreenAction.ClosingLastPrivateTab
@@ -290,7 +288,7 @@ class BrowserToolbarMiddlewareTest {
     @Test
     fun `GIVEN normal browsing mode WHEN initializing the toolbar THEN show the number of normal tabs in the tabs counter button`() =
         runTest(testDispatcher) {
-            settings.lastKnownMode = Normal
+            settings.lastKnownModeIsPrivate = false
             val browserStore =
                 BrowserStore(initialState = BrowserState(tabs = listOf(createTab("test.com", private = false))))
             val middleware = buildMiddleware(browserStore = browserStore)
@@ -305,7 +303,7 @@ class BrowserToolbarMiddlewareTest {
     @Test
     fun `GIVEN private browsing mode WHEN initializing the toolbar THEN show the number of private tabs in the tabs counter button`() =
         runTest(testDispatcher) {
-            settings.lastKnownMode = Private
+            settings.lastKnownModeIsPrivate = true
             val browserStore =
                 BrowserStore(
                     initialState =
@@ -471,7 +469,7 @@ class BrowserToolbarMiddlewareTest {
     @Test
     fun `GIVEN in normal browsing WHEN the number of normal opened tabs is modified THEN update the tab counter`() =
         runTest(testDispatcher) {
-            settings.lastKnownMode = Normal
+            settings.lastKnownModeIsPrivate = false
             val browserStore = BrowserStore()
             val middleware = buildMiddleware(browserStore = browserStore)
 
@@ -497,7 +495,7 @@ class BrowserToolbarMiddlewareTest {
     @Test
     fun `GIVEN in private browsing WHEN the number of private opened tabs is modified THEN update the tab counter`() =
         runTest(testDispatcher) {
-            settings.lastKnownMode = Private
+            settings.lastKnownModeIsPrivate = true
             val initialNormalTab = createTab("test.com", private = false)
             val initialPrivateTab = createTab("test.com", private = true)
             val browserStore = BrowserStore(BrowserState(tabs = listOf(initialNormalTab, initialPrivateTab)))
@@ -602,7 +600,7 @@ class BrowserToolbarMiddlewareTest {
     @Test
     fun `GIVEN browsing in normal mode WHEN clicking the tab counter button THEN open the tabs tray in normal mode`() {
         every { navController.currentDestination?.id } returns R.id.browserFragment
-        settings.lastKnownMode = Normal
+        settings.lastKnownModeIsPrivate = false
         val middleware = buildMiddleware(browserStore = browserStore)
         val toolbarStore = buildStore(middleware)
         val tabCounterButton = toolbarStore.state.displayState.browserActionsEnd[1] as TabCounterAction
@@ -628,7 +626,7 @@ class BrowserToolbarMiddlewareTest {
             mockk(relaxed = true) {
                 every { currentDestination?.id } returns R.id.browserFragment
             }
-        settings.lastKnownMode = Private
+        settings.lastKnownModeIsPrivate = true
         val thumbnailsFeature: BrowserThumbnails = mockk(relaxed = true)
         val middleware =
             buildMiddleware(
@@ -660,7 +658,7 @@ class BrowserToolbarMiddlewareTest {
     @Test
     fun `WHEN clicking on the first option in the toolbar long click menu THEN open a new normal tab`() {
         val navController: NavController = mockk(relaxed = true)
-        settings.lastKnownMode = Normal
+        settings.lastKnownModeIsPrivate = false
         val middleware = buildMiddleware(navController = navController)
         val toolbarStore = buildStore(middleware)
         val tabCounterButton = toolbarStore.state.displayState.browserActionsEnd[1] as TabCounterAction
@@ -669,7 +667,7 @@ class BrowserToolbarMiddlewareTest {
 
         toolbarStore.dispatch((tabCounterMenuItems[0] as BrowserToolbarMenuButton).onClick!!)
 
-        assertEquals(Normal, settings.lastKnownMode)
+        assertFalse(settings.lastKnownModeIsPrivate)
         verify {
             navController.navigate(BrowserFragmentDirections.actionGlobalHome(focusOnAddressBar = true))
         }
@@ -910,7 +908,7 @@ class BrowserToolbarMiddlewareTest {
 
     @Test
     fun `WHEN clicking on the second option in the toolbar long click menu THEN open a new private tab`() {
-        settings.lastKnownMode = Normal
+        settings.lastKnownModeIsPrivate = false
         val middleware = buildMiddleware()
         val toolbarStore = buildStore(middleware)
         val tabCounterButton = toolbarStore.state.displayState.browserActionsEnd[1] as TabCounterAction
@@ -919,7 +917,7 @@ class BrowserToolbarMiddlewareTest {
 
         toolbarStore.dispatch((tabCounterMenuItems[1] as BrowserToolbarMenuButton).onClick!!)
 
-        assertEquals(Private, settings.lastKnownMode)
+        assertTrue(settings.lastKnownModeIsPrivate)
         verify {
             navController.navigate(BrowserFragmentDirections.actionGlobalHome(focusOnAddressBar = true))
         }
@@ -927,7 +925,7 @@ class BrowserToolbarMiddlewareTest {
 
     @Test
     fun `GIVEN multiple tabs opened WHEN clicking on the close tab item in the tab counter long click menu THEN close the current tab`() {
-        settings.lastKnownMode = Private
+        settings.lastKnownModeIsPrivate = true
         val currentTab = createTab("test.com", private = true)
         val browserStore =
             BrowserStore(
@@ -948,7 +946,7 @@ class BrowserToolbarMiddlewareTest {
 
         toolbarStore.dispatch((tabCounterMenuItems[3] as BrowserToolbarMenuButton).onClick!!)
 
-        assertEquals(Private, settings.lastKnownMode)
+        assertTrue(settings.lastKnownModeIsPrivate)
         verify {
             tabsUseCases.removeTab(currentTab.id, true)
             appStore.dispatch(CurrentTabClosed(true))
@@ -980,7 +978,7 @@ class BrowserToolbarMiddlewareTest {
 
         toolbarStore.dispatch((tabCounterMenuItems[3] as BrowserToolbarMenuButton).onClick!!)
 
-        assertEquals(Normal, settings.lastKnownMode)
+        assertFalse(settings.lastKnownModeIsPrivate)
         verify(exactly = 0) {
             tabsUseCases.removeTab(any(), any(), any())
             appStore.dispatch(CurrentTabClosed(true))
@@ -993,7 +991,7 @@ class BrowserToolbarMiddlewareTest {
 
     @Test
     fun `GIVEN on the last open private tab and no private downloads WHEN clicking on the close tab item THEN navigate to home before closing the tab`() {
-        settings.lastKnownMode = Private
+        settings.lastKnownModeIsPrivate = true
         val currentTab = createTab("test.com", private = true)
         val browserStore =
             BrowserStore(
@@ -1014,7 +1012,7 @@ class BrowserToolbarMiddlewareTest {
 
         toolbarStore.dispatch((tabCounterMenuItems[3] as BrowserToolbarMenuButton).onClick!!)
 
-        assertEquals(Private, settings.lastKnownMode)
+        assertTrue(settings.lastKnownModeIsPrivate)
         verify(exactly = 0) {
             tabsUseCases.removeTab(any(), any(), any())
             appStore.dispatch(CurrentTabClosed(true))
@@ -1028,7 +1026,7 @@ class BrowserToolbarMiddlewareTest {
     @Test
     fun `GIVEN on the last open private tab with private downloads in progress WHEN clicking on the close tab item THEN navigate to home before closing the tab`() {
         every { browserScreenStore.state } returns BrowserScreenState(cancelPrivateDownloadsAccepted = false)
-        settings.lastKnownMode = Private
+        settings.lastKnownModeIsPrivate = true
         val currentTab = createTab("test.com", private = true)
         val browserStore =
             BrowserStore(
@@ -1055,7 +1053,7 @@ class BrowserToolbarMiddlewareTest {
 
         toolbarStore.dispatch((tabCounterMenuItems[3] as BrowserToolbarMenuButton).onClick!!)
 
-        assertEquals(Private, settings.lastKnownMode)
+        assertTrue(settings.lastKnownModeIsPrivate)
         verify(exactly = 0) {
             tabsUseCases.removeTab(any(), any(), any())
             appStore.dispatch(CurrentTabClosed(true))
@@ -1075,7 +1073,7 @@ class BrowserToolbarMiddlewareTest {
     @Test
     fun `GIVEN on the last open private tab and accepted cancelling private downloads WHEN clicking on the close tab item THEN inform about closing the last private tab`() {
         every { browserScreenStore.state } returns BrowserScreenState(cancelPrivateDownloadsAccepted = true)
-        settings.lastKnownMode = Private
+        settings.lastKnownModeIsPrivate = true
         val currentTab = createTab("test.com", private = true)
         val browserStore =
             BrowserStore(
@@ -1102,7 +1100,7 @@ class BrowserToolbarMiddlewareTest {
 
         toolbarStore.dispatch((tabCounterMenuItems[3] as BrowserToolbarMenuButton).onClick!!)
 
-        assertEquals(Private, settings.lastKnownMode)
+        assertTrue(settings.lastKnownModeIsPrivate)
         verify(exactly = 0) {
             tabsUseCases.removeTab(any(), any(), any())
             appStore.dispatch(CurrentTabClosed(true))
@@ -1958,7 +1956,7 @@ class BrowserToolbarMiddlewareTest {
     @Test
     fun `GIVEN device has wide window WHEN a website is loaded THEN show refresh button`() =
         runTest(testDispatcher) {
-            settings.lastKnownMode = Private
+            settings.lastKnownModeIsPrivate = true
             val currentNavDestination: NavDestination = mockk {
                 every { id } returns R.id.browserFragment
             }
@@ -2015,7 +2013,7 @@ class BrowserToolbarMiddlewareTest {
     @Test
     fun `GIVEN device have a wide window WHEN a website is loaded THEN show refresh button`() =
         runTest(testDispatcher) {
-            settings.lastKnownMode = Private
+            settings.lastKnownModeIsPrivate = true
             val currentNavDestination: NavDestination = mockk {
                 every { id } returns R.id.browserFragment
             }
@@ -2071,7 +2069,7 @@ class BrowserToolbarMiddlewareTest {
     @Test
     fun `GIVEN a loaded tab WHEN the refresh button is pressed THEN show stop refresh button`() =
         runTest(testDispatcher) {
-            settings.lastKnownMode = Private
+            settings.lastKnownModeIsPrivate = true
             val currentNavDestination: NavDestination = mockk {
                 every { id } returns R.id.browserFragment
             }
@@ -3855,7 +3853,7 @@ class BrowserToolbarMiddlewareTest {
         runTest(testDispatcher) {
             settings.toolbarSimpleShortcutKey = ShortcutType.SUMMARIZE.value
             every { summarizationFeatureSettings.canShowFeature } returns true
-            settings.lastKnownMode = Private
+            settings.lastKnownModeIsPrivate = true
 
             val toolbarStore = buildStore(buildMiddleware())
 
@@ -4468,7 +4466,7 @@ class BrowserToolbarMiddlewareTest {
         translationsFeatureSettings: TranslationsEnabledSettings = this.translationsFeatureSettings,
         navController: NavController = this.navController,
         summarizationNavigator: SummarizationNavigator = this.summarizationNavigator,
-        isPrivate: () -> Boolean = { settings.lastKnownMode.isPrivate },
+        isPrivate: () -> Boolean = { settings.lastKnownModeIsPrivate },
         readerModeController: ReaderModeController = this.readerModeController,
         thumbnailsFeature: () -> BrowserThumbnails = { this.thumbnailsFeature },
         isWideScreen: () -> Boolean = { false },

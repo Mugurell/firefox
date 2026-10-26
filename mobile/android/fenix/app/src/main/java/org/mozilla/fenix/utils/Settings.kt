@@ -48,7 +48,6 @@ import org.mozilla.fenix.FeatureFlags
 import org.mozilla.fenix.GleanMetrics.TopSites
 import org.mozilla.fenix.R
 import org.mozilla.fenix.autofill.address.RegionAddressFeatureGate
-import org.mozilla.fenix.browser.browsingmode.BrowsingMode
 import org.mozilla.fenix.components.lens.CameraMode
 import org.mozilla.fenix.components.settings.counterPreference
 import org.mozilla.fenix.components.settings.featureFlagBooleanPreference
@@ -1245,7 +1244,7 @@ class Settings(
     fun getOpenLinksInAppsString(): String =
         when (openLinksInExternalApp) {
             appContext.getString(R.string.pref_key_open_links_in_apps_always) -> {
-                if (lastKnownMode == BrowsingMode.Normal) {
+                if (!lastKnownModeIsPrivate) {
                     appContext.getString(R.string.preferences_open_links_in_apps_always)
                 } else {
                     appContext.getString(R.string.preferences_open_links_in_apps_ask)
@@ -1509,32 +1508,12 @@ class Settings(
             return touchExplorationIsEnabled || switchServiceIsEnabled
         }
 
-    var lastKnownMode: BrowsingMode = BrowsingMode.Normal
-        get() {
-            val lastKnownModeWasPrivate =
-                preferences.getBoolean(
-                    appContext.getPreferenceKey(R.string.pref_key_last_known_mode_private),
-                    false,
-                )
-
-            return if (lastKnownModeWasPrivate) {
-                BrowsingMode.Private
-            } else {
-                BrowsingMode.Normal
-            }
-        }
-        set(value) {
-            val lastKnownModeWasPrivate = (value == BrowsingMode.Private)
-
-            preferences.edit {
-                putBoolean(
-                    appContext.getPreferenceKey(R.string.pref_key_last_known_mode_private),
-                    lastKnownModeWasPrivate,
-                )
-            }
-
-            field = value
-        }
+    /** Whether the regular tabs activity was last known to be in private mode. */
+    var lastKnownModeIsPrivate by
+        booleanPreference(
+            appContext.getPreferenceKey(R.string.pref_key_last_known_mode_private),
+            default = { false },
+        )
 
     /**
      * The state of the OS power saving (battery saver) mode the last time it was observed, or `null` if it has never

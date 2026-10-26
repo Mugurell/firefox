@@ -10,7 +10,6 @@ import androidx.navigation.fragment.findNavController
 import com.google.android.material.R as materialR
 import mozilla.components.support.ktx.android.content.getColorFromAttr
 import org.mozilla.fenix.R
-import org.mozilla.fenix.browser.browsingmode.BrowsingMode
 import org.mozilla.fenix.ext.components
 import org.mozilla.fenix.ext.requireComponents
 import org.mozilla.fenix.ext.setToolbarColors
@@ -36,7 +35,7 @@ abstract class LibraryPageFragment<T> : Fragment() {
             }
         }
 
-        requireComponents.settings.lastKnownMode = BrowsingMode.fromBoolean(private)
+        requireComponents.settings.lastKnownModeIsPrivate = private
     }
 
     override fun onDetach() {

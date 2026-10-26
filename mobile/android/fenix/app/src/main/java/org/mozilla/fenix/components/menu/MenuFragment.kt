@@ -120,7 +120,7 @@ class MenuFragment : BottomSheetDialogFragment() {
             .apply {
                 setOnShowListener {
                     val safeActivity = activity ?: return@setOnShowListener
-                    val isPrivate = safeActivity.components.activityPrivacy.isPrivate(args.customTabSessionId)
+                    val isPrivate = safeActivity.components.browsingMode.isPrivate(args.customTabSessionId)
 
                     if (isPrivate && args.accessPoint == MenuAccessPoint.Home) {
                         window?.setBackgroundDrawable(

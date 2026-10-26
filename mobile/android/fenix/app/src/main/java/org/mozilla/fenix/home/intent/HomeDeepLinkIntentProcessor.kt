@@ -8,7 +8,6 @@ import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
-import android.os.Bundle
 import android.provider.Settings
 import androidx.annotation.VisibleForTesting
 import androidx.navigation.NavController
@@ -21,7 +20,6 @@ import org.mozilla.fenix.GleanMetrics.TrackingProtection
 import org.mozilla.fenix.GlobalDirections
 import org.mozilla.fenix.HomeActivity
 import org.mozilla.fenix.NavGraphDirections
-import org.mozilla.fenix.browser.browsingmode.BrowsingMode
 import org.mozilla.fenix.components.share.ShareSource
 import org.mozilla.fenix.components.usecases.ShareUseCases
 import org.mozilla.fenix.ext.alreadyOnDestination
@@ -48,7 +46,7 @@ class HomeDeepLinkIntentProcessor(
     override fun process(intent: Intent, navController: NavController, out: Intent, settings: AppSettings): Boolean {
         val scheme = intent.scheme?.equals(BuildConfig.DEEP_LINK_SCHEME, ignoreCase = true) ?: return false
         return if (scheme) {
-            intent.data?.let { handleDeepLink(it, intent.extras, settings, navController) }
+            intent.data?.let { handleDeepLink(it, intent, settings, navController) }
             true
         } else {
             false
@@ -58,11 +56,11 @@ class HomeDeepLinkIntentProcessor(
     @Suppress("CyclomaticComplexMethod")
     private fun handleDeepLink(
         deepLink: Uri,
-        extras: Bundle?,
+        deepLinkIntent: Intent,
         settings: AppSettings,
         navController: NavController,
     ) {
-        handleDeepLinkSideEffects(deepLink, extras, settings, navController)
+        handleDeepLinkSideEffects(deepLink, deepLinkIntent, settings, navController)
 
         val globalDirections =
             when (deepLink.host) {
@@ -102,10 +100,11 @@ class HomeDeepLinkIntentProcessor(
     /** Handle links that require more than just simple navigation. */
     private fun handleDeepLinkSideEffects(
         deepLink: Uri,
-        extras: Bundle?,
+        deepLinkIntent: Intent,
         settings: AppSettings,
         navController: NavController,
     ) {
+        val extras = deepLinkIntent.extras
         when (deepLink.host) {
             "home" -> {
                 if (extras?.containsKey(EXTRA_TAB_TRAY_ANIMATION) == true) {
@@ -121,7 +120,7 @@ class HomeDeepLinkIntentProcessor(
                 if (settings.enableHomepageAsNewTab) {
                     activity.components.useCases.fenixBrowserUseCases.addNewHomepageTab(private = true)
                 }
-                settings.lastKnownMode = BrowsingMode.Private
+                settings.lastKnownModeIsPrivate = true
             }
             "make_default_browser" -> {
                 activity.openSetDefaultBrowserOption(
@@ -142,6 +141,7 @@ class HomeDeepLinkIntentProcessor(
                     newTab = true,
                     from = BrowserDirection.FromGlobal,
                     flags = EngineSession.LoadUrlFlags.external(),
+                    private = activity.components.browsingMode.isPrivate(null, deepLinkIntent),
                 )
             }
             "settings_notifications" -> {

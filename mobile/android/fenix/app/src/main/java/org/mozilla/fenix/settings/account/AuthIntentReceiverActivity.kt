@@ -27,7 +27,7 @@ class AuthIntentReceiverActivity : Activity() {
             // the HomeActivity.
             val intent = intent?.let { Intent(intent) } ?: Intent()
 
-            if (components.settings.lastKnownMode.isPrivate) {
+            if (components.settings.lastKnownModeIsPrivate) {
                 components.intentProcessors.privateCustomTabIntentProcessor.process(intent)
             } else {
                 components.intentProcessors.customTabIntentProcessor.process(intent)

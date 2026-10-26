@@ -21,6 +21,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.mozilla.fenix.BrowserDirection
 import org.mozilla.fenix.HomeActivity
+import org.mozilla.fenix.browser.browsingmode.BrowsingMode
 import org.mozilla.fenix.ext.components
 import org.mozilla.fenix.helpers.perf.TestStrictModeManager
 import org.mozilla.fenix.utils.Settings
@@ -109,6 +110,35 @@ class SpeechProcessingIntentProcessorTest {
                 from = BrowserDirection.FromGlobal,
                 forceSearch = true,
                 engine = searchEngine,
+                private = false,
+            )
+        }
+    }
+
+    @Test
+    fun `GIVEN an intent asking for private mode WHEN the speech processing extra is read THEN the search loads in a private tab`() {
+        every { testContext.components.strictMode } returns TestStrictModeManager()
+        every { testContext.components.nimbus.events } returns mockk(relaxed = true)
+        every { testContext.components.browsingMode } returns BrowsingMode(store, Settings(testContext))
+
+        val intent =
+            Intent().apply {
+                putExtra(HomeActivity.OPEN_TO_BROWSER_AND_LOAD, true)
+                putExtra(SPEECH_PROCESSING, "hello world")
+                putExtra(HomeActivity.PRIVATE_BROWSING_MODE, true)
+            }
+
+        SpeechProcessingIntentProcessor(activity, store).process(intent, mockk(), mockk(relaxed = true), settings)
+
+        verify {
+            @Suppress("DEPRECATION")
+            activity.openToBrowserAndLoad(
+                searchTermOrURL = "hello world",
+                newTab = true,
+                from = BrowserDirection.FromGlobal,
+                forceSearch = true,
+                engine = searchEngine,
+                private = true,
             )
         }
     }

@@ -49,7 +49,6 @@ import org.mozilla.fenix.GleanMetrics.History
 import org.mozilla.fenix.GleanMetrics.Toolbar
 import org.mozilla.fenix.NavGraphDirections
 import org.mozilla.fenix.R
-import org.mozilla.fenix.browser.browsingmode.BrowsingMode
 import org.mozilla.fenix.components.AppStore
 import org.mozilla.fenix.components.NimbusComponents
 import org.mozilla.fenix.components.UseCases
@@ -498,7 +497,7 @@ class FenixSearchMiddleware(
                 store.dispatch(
                     SearchFragmentAction.SearchDefaultEngineSelected(
                         engine = searchEngine,
-                        browsingMode = BrowsingMode.fromBoolean(isPrivate()),
+                        isPrivate = isPrivate(),
                         settings = settings,
                     )
                 )
@@ -507,7 +506,7 @@ class FenixSearchMiddleware(
                 store.dispatch(
                     SearchFragmentAction.SearchShortcutEngineSelected(
                         engine = searchEngine,
-                        browsingMode = BrowsingMode.fromBoolean(isPrivate()),
+                        isPrivate = isPrivate(),
                         settings = settings,
                     )
                 )
@@ -542,11 +541,7 @@ class FenixSearchMiddleware(
      */
     @VisibleForTesting
     internal fun isSearchSuggestionsFeatureEnabled(): Boolean {
-        return when (BrowsingMode.fromBoolean(isPrivate())) {
-            BrowsingMode.Normal -> settings.shouldShowSearchSuggestions
-            BrowsingMode.Private ->
-                settings.shouldShowSearchSuggestions && settings.shouldShowSearchSuggestionsInPrivate
-        }
+        return settings.shouldShowSearchSuggestions && (!isPrivate() || settings.shouldShowSearchSuggestionsInPrivate)
     }
 
     private fun handleReloadingCurrentWebsite() {

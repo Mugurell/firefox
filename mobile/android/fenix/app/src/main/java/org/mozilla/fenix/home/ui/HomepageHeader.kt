@@ -35,7 +35,6 @@ import mozilla.components.compose.base.theme.PreviewThemeProvider
 import mozilla.components.compose.base.theme.Theme
 import mozilla.components.ui.icons.R as iconsR
 import org.mozilla.fenix.R
-import org.mozilla.fenix.browser.browsingmode.BrowsingMode
 import org.mozilla.fenix.home.ui.HomepageTestTag.PRIVATE_BROWSING_HOMEPAGE_BUTTON
 import org.mozilla.fenix.theme.FirefoxTheme
 import org.mozilla.fenix.wallpapers.WallpaperTheme
@@ -43,29 +42,29 @@ import org.mozilla.fenix.wallpapers.WallpaperTheme
 /**
  * Header for the homepage.
  *
- * @param browsingMode The current [BrowsingMode].
+ * @param isPrivate Whether the homepage is private.
  * @param showStoriesButton Whether to show the stories button or not.
- * @param browsingModeChanged Callback for when the browsing mode is toggled.
+ * @param browsingModeChanged Callback for when the browsing mode is toggled, with whether it is now private.
  * @param onStoriesTapped Callback for when the stories button is tapped.
  */
 @Composable
 fun HomepageHeader(
-    browsingMode: BrowsingMode,
+    isPrivate: Boolean,
     showStoriesButton: Boolean,
-    browsingModeChanged: (BrowsingMode) -> Unit,
+    browsingModeChanged: (isPrivate: Boolean) -> Unit,
     onStoriesTapped: () -> Unit,
 ) {
     // In normal mode the wordmark and private-browsing button follow the wallpaper text color; in
     // private mode there is no wallpaper, so the wordmark is untinted and the button uses its
     // dedicated private-mode icon color.
     val wordmarkTextColor =
-        if (browsingMode.isPrivate) {
+        if (isPrivate) {
             null
         } else {
             WallpaperTheme.onWallpaper
         }
     val privateBrowsingButtonColor =
-        if (browsingMode.isPrivate) {
+        if (isPrivate) {
             colorResource(getAttr(iconsR.attr.mozac_ic_private_mode_circle_fill_icon_color))
         } else {
             WallpaperTheme.onWallpaper
@@ -94,12 +93,12 @@ fun HomepageHeader(
 
             PrivateBrowsingButton(
                 color = privateBrowsingButtonColor,
-                browsingMode = browsingMode,
+                isPrivate = isPrivate,
                 browsingModeChanged = browsingModeChanged,
             )
         }
 
-        if (!browsingMode.isPrivate) {
+        if (!isPrivate) {
             WordmarkAndLogo(wordmarkTextColor = wordmarkTextColor)
         }
     }
@@ -122,8 +121,8 @@ private fun StoriesButton(
 @Composable
 private fun PrivateBrowsingButton(
     color: Color,
-    browsingMode: BrowsingMode,
-    browsingModeChanged: (BrowsingMode) -> Unit,
+    isPrivate: Boolean,
+    browsingModeChanged: (isPrivate: Boolean) -> Unit,
 ) {
     IconToggleButton(
         modifier =
@@ -136,9 +135,9 @@ private fun PrivateBrowsingButton(
                     testTagsAsResourceId = true
                     testTag = PRIVATE_BROWSING_HOMEPAGE_BUTTON
                 },
-        checked = browsingMode.isPrivate,
+        checked = isPrivate,
         onCheckedChange = {
-            browsingModeChanged(BrowsingMode.fromBoolean(!browsingMode.isPrivate))
+            browsingModeChanged(!isPrivate)
         },
     ) {
         Icon(
@@ -164,7 +163,7 @@ private fun HomepageHeaderPreview(@PreviewParameter(PreviewThemeProvider::class)
     FirefoxTheme(theme) {
         Surface {
             HomepageHeader(
-                browsingMode = BrowsingMode.Normal,
+                isPrivate = false,
                 showStoriesButton = true,
                 browsingModeChanged = {},
                 onStoriesTapped = {},

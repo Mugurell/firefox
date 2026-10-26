@@ -53,7 +53,7 @@ fun BrowserSimpleToolbar(store: BrowserToolbarStore) {
     val browserActionsEnd = uiState.displayState.browserActionsEnd
     val onInteraction: (BrowserToolbarEvent) -> Unit = { store.dispatch(it) }
 
-    val isPrivateMode = !inComposePreview && components.activityPrivacy.isPrivate(customTabSessionId = null)
+    val isPrivateMode = !inComposePreview && components.browsingMode.isPrivate(customTabSessionId = null)
     // Tint the browser action icons with the wallpaper text color only under the universal
     // treatment. WallpaperTheme.onWallpaper falls back to onSurface for the default wallpaper, in
     // previews, and anywhere LocalWallpaperState is not provided (e.g. tab previews).

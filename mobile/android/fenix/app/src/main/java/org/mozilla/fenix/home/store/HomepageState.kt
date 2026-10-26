@@ -8,7 +8,6 @@ import android.content.res.Configuration
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalWindowInfo
-import org.mozilla.fenix.browser.browsingmode.BrowsingMode
 import org.mozilla.fenix.components.appstate.AppState
 import org.mozilla.fenix.components.appstate.setup.checklist.SetupChecklistState
 import org.mozilla.fenix.components.components
@@ -100,12 +99,8 @@ internal sealed class HomepageState {
         val bottomPadding: Int,
     ) : HomepageState()
 
-    val browsingMode: BrowsingMode
-        get() =
-            when (this) {
-                is Normal -> BrowsingMode.Normal
-                is Private -> BrowsingMode.Private
-            }
+    val isPrivate: Boolean
+        get() = this is Private
 
     /**
      * Returns whether the homepage is in the "Minimal Layout" state, where only the shortcuts and stories are visible

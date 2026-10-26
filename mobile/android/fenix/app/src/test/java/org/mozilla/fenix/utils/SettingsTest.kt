@@ -28,7 +28,6 @@ import org.junit.Assert.fail
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
-import org.mozilla.fenix.browser.browsingmode.BrowsingMode
 import org.mozilla.fenix.components.toolbar.ToolbarPosition
 import org.mozilla.fenix.nimbus.DefaultBrowserPrompt
 import org.mozilla.fenix.nimbus.FakeNimbusEventStore
@@ -981,7 +980,7 @@ class SettingsTest {
     @Test
     fun `GIVEN open links in apps setting THEN return the correct display string`() {
         settings.openLinksInExternalApp = "pref_key_open_links_in_apps_always"
-        settings.lastKnownMode = BrowsingMode.Normal
+        settings.lastKnownModeIsPrivate = false
         assertEquals(settings.getOpenLinksInAppsString(), "Always")
 
         settings.openLinksInExternalApp = "pref_key_open_links_in_apps_ask"
@@ -991,7 +990,7 @@ class SettingsTest {
         assertEquals(settings.getOpenLinksInAppsString(), "Never")
 
         settings.openLinksInExternalApp = "pref_key_open_links_in_apps_always"
-        settings.lastKnownMode = BrowsingMode.Private
+        settings.lastKnownModeIsPrivate = true
         assertEquals(settings.getOpenLinksInAppsString(), "Ask before opening")
 
         settings.openLinksInExternalApp = "pref_key_open_links_in_apps_ask"

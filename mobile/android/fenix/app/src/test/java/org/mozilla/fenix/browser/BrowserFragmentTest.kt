@@ -39,7 +39,6 @@ import org.junit.runner.RunWith
 import org.mozilla.fenix.FenixApplication
 import org.mozilla.fenix.HomeActivity
 import org.mozilla.fenix.R
-import org.mozilla.fenix.browser.browsingmode.BrowsingMode
 import org.mozilla.fenix.components.AppStore
 import org.mozilla.fenix.components.appstate.AppState
 import org.mozilla.fenix.components.toolbar.BrowserToolbarComposable
@@ -94,7 +93,7 @@ class BrowserFragmentTest {
         every { context.components.settings } returns settings
 
         every { context.components.appStore } returns appStore
-        every { context.components.activityPrivacy.isPrivate(any()) } returns false
+        every { context.components.browsingMode.isPrivate(any()) } returns false
         every { browserFragment.requireContext() } returns context
         every { browserFragment.initializeUI(any(), any()) } returns mockk()
         every { browserFragment.fullScreenChanged(any()) } just Runs
@@ -111,12 +110,12 @@ class BrowserFragmentTest {
             false,
             coroutineContext[ContinuationInterceptor] as CoroutineDispatcher,
         )
-        verify(exactly = 0) { settings.lastKnownMode = any() }
+        verify(exactly = 0) { settings.lastKnownModeIsPrivate = any() }
 
         addAndSelectTab(testTab)
         testScheduler.advanceUntilIdle()
 
-        verify(exactly = 1) { settings.lastKnownMode = BrowsingMode.Normal }
+        verify(exactly = 1) { settings.lastKnownModeIsPrivate = false }
     }
 
     @Test
@@ -128,12 +127,12 @@ class BrowserFragmentTest {
         )
         testScheduler.advanceUntilIdle()
 
-        verify(exactly = 0) { settings.lastKnownMode = any() }
+        verify(exactly = 0) { settings.lastKnownModeIsPrivate = any() }
 
         addAndSelectTab(testTab)
         testScheduler.advanceUntilIdle()
 
-        verify(exactly = 0) { settings.lastKnownMode = any() }
+        verify(exactly = 0) { settings.lastKnownModeIsPrivate = any() }
     }
 
     @Test
@@ -148,7 +147,7 @@ class BrowserFragmentTest {
         addAndSelectTab(testTab)
         testScheduler.advanceUntilIdle()
 
-        verify(exactly = 0) { settings.lastKnownMode = any() }
+        verify(exactly = 0) { settings.lastKnownModeIsPrivate = any() }
     }
 
     @Test

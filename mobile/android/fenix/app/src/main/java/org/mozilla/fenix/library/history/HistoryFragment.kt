@@ -138,7 +138,7 @@ private const val MATERIAL_DESIGN_SCRIM = "#52000000"
 @SuppressWarnings("TooManyFunctions", "LargeClass")
 class HistoryFragment :
     LibraryPageFragment<History>(), UserInteractionHandler, MenuProvider, SystemInsetsPaddedFragment {
-    private fun isActivityPrivate() = requireComponents.activityPrivacy.isPrivate(customTabSessionId = null)
+    private fun isActivityPrivate() = requireComponents.browsingMode.isPrivate(customTabSessionId = null)
 
     private lateinit var historyStore: HistoryFragmentStore
     private lateinit var searchStore: SearchFragmentStore

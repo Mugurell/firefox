@@ -31,7 +31,7 @@ class IPProtectionUnavailableDialogFragment : AppCompatDialogFragment() {
     private val args by navArgs<IPProtectionUnavailableDialogFragmentArgs>()
 
     private val isPrivateMode by lazy {
-        requireComponents.activityPrivacy.isPrivate(args.customTabSessionId)
+        requireComponents.browsingMode.isPrivate(args.customTabSessionId)
     }
 
     override fun onCreateView(

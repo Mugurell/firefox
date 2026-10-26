@@ -17,6 +17,7 @@ import io.mockk.mockk
 import io.mockk.slot
 import io.mockk.verify
 import mozilla.appservices.places.BookmarkRoot
+import mozilla.components.browser.state.store.BrowserStore
 import mozilla.components.concept.engine.EngineSession
 import mozilla.components.concept.engine.prompt.ShareData
 import mozilla.components.support.test.robolectric.testContext
@@ -224,7 +225,7 @@ class HomeDeepLinkIntentProcessorTest {
     fun `process enable_private_browsing deep link`() {
         assertTrue(processorHome.process(testIntent("enable_private_browsing"), navController, out, settings))
 
-        verify { settings.lastKnownMode = BrowsingMode.Private }
+        verify { settings.lastKnownModeIsPrivate = true }
         verify { navController.navigate(NavGraphDirections.actionGlobalHome()) }
         verify { out wasNot Called }
     }
@@ -239,11 +240,13 @@ class HomeDeepLinkIntentProcessorTest {
         assertTrue(processorHome.process(testIntent("enable_private_browsing"), navController, out, settings))
 
         verify { fenixBrowserUseCases.addNewHomepageTab(private = true) }
-        verify { settings.lastKnownMode = BrowsingMode.Private }
+        verify { settings.lastKnownModeIsPrivate = true }
     }
 
     @Test
     fun `process open deep link`() {
+        every { activity.applicationContext } returns testContext
+
         assertTrue(processorHome.process(testIntent("open"), navController, out, settings))
 
         verify { activity wasNot Called }
@@ -267,10 +270,32 @@ class HomeDeepLinkIntentProcessorTest {
                 newTab = true,
                 from = BrowserDirection.FromGlobal,
                 flags = EngineSession.LoadUrlFlags.external(),
+                private = false,
             )
         }
         verify { navController wasNot Called }
         verify { out wasNot Called }
+    }
+
+    @Test
+    fun `GIVEN an intent asking for private mode WHEN the open deep link is processed THEN the url loads in a private tab`() {
+        every { activity.applicationContext } returns testContext
+        every { testContext.components.browsingMode } returns BrowsingMode(BrowserStore(), Settings(testContext))
+        val intent =
+            testIntent("open?url=https%3A%2F%2Fwww.example.org%2F").putExtra(HomeActivity.PRIVATE_BROWSING_MODE, true)
+
+        assertTrue(processorHome.process(intent, navController, out, settings))
+
+        verify {
+            @Suppress("DEPRECATION")
+            activity.openToBrowserAndLoad(
+                "https://www.example.org/",
+                newTab = true,
+                from = BrowserDirection.FromGlobal,
+                flags = EngineSession.LoadUrlFlags.external(),
+                private = true,
+            )
+        }
     }
 
     @Test

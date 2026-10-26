@@ -34,7 +34,6 @@ import org.junit.runner.RunWith
 import org.mozilla.fenix.GleanMetrics.Metrics
 import org.mozilla.fenix.GleanMetrics.NativeShareSheet
 import org.mozilla.fenix.browser.browsingmode.BrowsingMode
-import org.mozilla.fenix.components.ActivityPrivacy
 import org.mozilla.fenix.components.AppStore
 import org.mozilla.fenix.components.appstate.AppAction
 import org.mozilla.fenix.components.share.QR_CODE_URI_KEY
@@ -112,7 +111,7 @@ class HomeActivityTest {
 
     @Test
     fun `navigateToBrowserOnColdStart in normal mode navigates to browser`() {
-        every { activity.browsingMode } returns BrowsingMode.Normal
+        every { activity.components.browsingMode.isPrivate(customTabSessionId = null) } returns false
 
         every { settings.shouldReturnToBrowser } returns true
         every { activity.components.settings.shouldReturnToBrowser } returns true
@@ -125,7 +124,7 @@ class HomeActivityTest {
 
     @Test
     fun `navigateToBrowserOnColdStart in private mode does not navigate to browser`() {
-        every { activity.browsingMode } returns BrowsingMode.Private
+        every { activity.components.browsingMode.isPrivate(customTabSessionId = null) } returns true
 
         every { settings.shouldReturnToBrowser } returns true
         every { activity.components.settings.shouldReturnToBrowser } returns true
@@ -569,52 +568,52 @@ class HomeActivityTest {
 
     @Test
     fun `GIVEN a fresh launch asking for private mode WHEN the regular tabs activity is created THEN it is private and saves private as the last known mode`() {
-        val settings = buildSettings(lastKnownMode = BrowsingMode.Normal)
+        val settings = buildSettings(lastKnownModeIsPrivate = false)
         val intent = Intent().putExtra(HomeActivity.PRIVATE_BROWSING_MODE, true)
         val homeActivity = Robolectric.buildActivity(HomeActivity::class.java, intent).get()
 
-        assertEquals(BrowsingMode.Private, homeActivity.resolveCreationBrowsingMode(savedInstanceState = null))
-        assertEquals(BrowsingMode.Private, settings.lastKnownMode)
+        assertTrue(homeActivity.resolveCreationPrivacy(savedInstanceState = null))
+        assertTrue(settings.lastKnownModeIsPrivate)
     }
 
     @Test
     fun `GIVEN a fresh launch asking for normal mode WHEN the regular tabs activity is created THEN it is normal and saves normal as the last known mode`() {
-        val settings = buildSettings(lastKnownMode = BrowsingMode.Private)
+        val settings = buildSettings(lastKnownModeIsPrivate = true)
         val intent = Intent().putExtra(HomeActivity.PRIVATE_BROWSING_MODE, false)
         val homeActivity = Robolectric.buildActivity(HomeActivity::class.java, intent).get()
 
-        assertEquals(BrowsingMode.Normal, homeActivity.resolveCreationBrowsingMode(savedInstanceState = null))
-        assertEquals(BrowsingMode.Normal, settings.lastKnownMode)
+        assertFalse(homeActivity.resolveCreationPrivacy(savedInstanceState = null))
+        assertFalse(settings.lastKnownModeIsPrivate)
     }
 
     @Test
     fun `GIVEN a launch not asking for a mode and a private last known mode WHEN the regular tabs activity is created THEN it is private`() {
-        val settings = buildSettings(lastKnownMode = BrowsingMode.Private)
+        val settings = buildSettings(lastKnownModeIsPrivate = true)
         val homeActivity = Robolectric.buildActivity(HomeActivity::class.java, Intent()).get()
 
-        assertEquals(BrowsingMode.Private, homeActivity.resolveCreationBrowsingMode(savedInstanceState = null))
-        assertEquals(BrowsingMode.Private, settings.lastKnownMode)
+        assertTrue(homeActivity.resolveCreationPrivacy(savedInstanceState = null))
+        assertTrue(settings.lastKnownModeIsPrivate)
     }
 
     @Test
     fun `GIVEN a launch that asked for private mode and a normal last known mode WHEN the regular tabs activity is recreated THEN it is normal`() {
-        val settings = buildSettings(lastKnownMode = BrowsingMode.Normal)
+        val settings = buildSettings(lastKnownModeIsPrivate = false)
         val intent = Intent().putExtra(HomeActivity.PRIVATE_BROWSING_MODE, true)
         val homeActivity = Robolectric.buildActivity(HomeActivity::class.java, intent).get()
 
-        assertEquals(BrowsingMode.Normal, homeActivity.resolveCreationBrowsingMode(savedInstanceState = Bundle()))
-        assertEquals(BrowsingMode.Normal, settings.lastKnownMode)
+        assertFalse(homeActivity.resolveCreationPrivacy(savedInstanceState = Bundle()))
+        assertFalse(settings.lastKnownModeIsPrivate)
     }
 
     @Test
     fun `GIVEN homepage as a new tab and a selected private tab WHEN the regular tabs activity is created THEN it is private`() {
-        buildSettings(lastKnownMode = BrowsingMode.Normal, enableHomepageAsNewTab = true)
+        buildSettings(lastKnownModeIsPrivate = false, enableHomepageAsNewTab = true)
         val tab = createTab(url = "https://www.mozilla.org", private = true)
         every { testContext.components.core.store } returns
             BrowserStore(BrowserState(tabs = listOf(tab), selectedTabId = tab.id))
         val homeActivity = Robolectric.buildActivity(HomeActivity::class.java, Intent()).get()
 
-        assertEquals(BrowsingMode.Private, homeActivity.resolveCreationBrowsingMode(savedInstanceState = null))
+        assertTrue(homeActivity.resolveCreationPrivacy(savedInstanceState = null))
     }
 
     @Test
@@ -628,19 +627,19 @@ class HomeActivityTest {
         assertEquals(1, lifecycle.observerCount)
     }
 
-    private fun buildSettings(lastKnownMode: BrowsingMode, enableHomepageAsNewTab: Boolean = false): Settings {
+    private fun buildSettings(lastKnownModeIsPrivate: Boolean, enableHomepageAsNewTab: Boolean = false): Settings {
         val settings =
             Settings(testContext).apply {
-                this.lastKnownMode = lastKnownMode
+                this.lastKnownModeIsPrivate = lastKnownModeIsPrivate
                 this.enableHomepageAsNewTab = enableHomepageAsNewTab
             }
         val browserStore = BrowserStore()
         every { testContext.components.strictMode } returns TestStrictModeManager()
         every { testContext.components.settings } returns settings
         every { testContext.components.core.store } returns browserStore
-        every { testContext.components.activityPrivacy } answers
+        every { testContext.components.browsingMode } answers
             {
-                ActivityPrivacy(testContext.components.core.store, settings)
+                BrowsingMode(testContext.components.core.store, settings)
             }
         return settings
     }

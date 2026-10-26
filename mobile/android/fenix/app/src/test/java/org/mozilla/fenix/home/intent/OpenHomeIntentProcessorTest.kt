@@ -40,7 +40,7 @@ class OpenHomeIntentProcessorTest {
 
     @Before
     fun setup() {
-        every { settings.lastKnownMode } returns BrowsingMode.Normal
+        every { settings.lastKnownModeIsPrivate } returns false
         browserStore =
             BrowserStore(
                 initialState = BrowserState(tabs = listOf()),
@@ -59,7 +59,8 @@ class OpenHomeIntentProcessorTest {
 
     @Test
     fun `WHEN intent does not have OPEN_TO_HOME flag THEN do not process`() {
-        val processor = OpenHomeIntentProcessor(fenixBrowserUseCases = fenixBrowserUseCases)
+        val processor =
+            OpenHomeIntentProcessor(fenixBrowserUseCases, browsingMode = BrowsingMode(browserStore, settings))
 
         val initIntent = Intent()
         val outIntent = Intent()
@@ -73,14 +74,15 @@ class OpenHomeIntentProcessorTest {
         )
 
         assertNull(outIntent.extras?.getBoolean(HomeActivity.OPEN_TO_HOME))
-        verify(exactly = 0) { settings.lastKnownMode = any() }
+        verify(exactly = 0) { settings.lastKnownModeIsPrivate = any() }
         assertEquals(0, browserStore.state.tabs.size)
         verify { navController wasNot Called }
     }
 
     @Test
     fun `WHEN intent has OPEN_TO_HOME flag with false value THEN do not process`() {
-        val processor = OpenHomeIntentProcessor(fenixBrowserUseCases = fenixBrowserUseCases)
+        val processor =
+            OpenHomeIntentProcessor(fenixBrowserUseCases, browsingMode = BrowsingMode(browserStore, settings))
 
         val initIntent =
             Intent().apply {
@@ -97,14 +99,15 @@ class OpenHomeIntentProcessorTest {
         )
 
         assertNull(outIntent.extras?.getBoolean(HomeActivity.OPEN_TO_HOME))
-        verify(exactly = 0) { settings.lastKnownMode = any() }
+        verify(exactly = 0) { settings.lastKnownModeIsPrivate = any() }
         assertEquals(0, browserStore.state.tabs.size)
         verify { navController wasNot Called }
     }
 
     @Test
     fun `GIVEN normal browsing mode WHEN intent has OPEN_TO_HOME flag with true value THEN process`() {
-        val processor = OpenHomeIntentProcessor(fenixBrowserUseCases = fenixBrowserUseCases)
+        val processor =
+            OpenHomeIntentProcessor(fenixBrowserUseCases, browsingMode = BrowsingMode(browserStore, settings))
 
         val initIntent =
             Intent().apply {
@@ -122,7 +125,7 @@ class OpenHomeIntentProcessorTest {
 
         assertNotNull(outIntent.extras)
         assertFalse(outIntent.extras!!.getBoolean(HomeActivity.OPEN_TO_HOME))
-        verify { settings.lastKnownMode = BrowsingMode.Normal }
+        verify { settings.lastKnownModeIsPrivate = false }
         assertEquals(1, browserStore.state.tabs.size)
         val tab = browserStore.state.tabs[0]
         assertEquals(false, tab.content.private)
@@ -131,8 +134,9 @@ class OpenHomeIntentProcessorTest {
 
     @Test
     fun `GIVEN private browsing mode WHEN intent has OPEN_TO_HOME flag with true value THEN process`() {
-        every { settings.lastKnownMode } returns BrowsingMode.Private
-        val processor = OpenHomeIntentProcessor(fenixBrowserUseCases = fenixBrowserUseCases)
+        every { settings.lastKnownModeIsPrivate } returns true
+        val processor =
+            OpenHomeIntentProcessor(fenixBrowserUseCases, browsingMode = BrowsingMode(browserStore, settings))
 
         val initIntent =
             Intent().apply {
@@ -150,7 +154,7 @@ class OpenHomeIntentProcessorTest {
 
         assertNotNull(outIntent.extras)
         assertFalse(outIntent.extras!!.getBoolean(HomeActivity.OPEN_TO_HOME))
-        verify { settings.lastKnownMode = BrowsingMode.Private }
+        verify { settings.lastKnownModeIsPrivate = true }
         assertEquals(1, browserStore.state.tabs.size)
         val tab = browserStore.state.tabs[0]
         assertEquals(true, tab.content.private)
@@ -160,8 +164,9 @@ class OpenHomeIntentProcessorTest {
     @Test
     fun `GIVEN homepage as a new tab is enabled WHEN intent is from the private browsing pinned shortcut THEN process`() {
         every { settings.enableHomepageAsNewTab } returns true
-        every { settings.lastKnownMode } returns BrowsingMode.Private
-        val processor = OpenHomeIntentProcessor(fenixBrowserUseCases = fenixBrowserUseCases)
+        every { settings.lastKnownModeIsPrivate } returns true
+        val processor =
+            OpenHomeIntentProcessor(fenixBrowserUseCases, browsingMode = BrowsingMode(browserStore, settings))
 
         val initIntent =
             Intent().apply {
@@ -184,7 +189,7 @@ class OpenHomeIntentProcessorTest {
         assertNotNull(outIntent.extras)
         assertFalse(outIntent.extras!!.getBoolean(HomeActivity.OPEN_TO_HOME))
         assertNull(outIntent.extras!!.getString(HomeActivity.OPEN_TO_SEARCH))
-        verify { settings.lastKnownMode = BrowsingMode.Private }
+        verify { settings.lastKnownModeIsPrivate = true }
         assertEquals(1, browserStore.state.tabs.size)
         val tab = browserStore.state.tabs[0]
         assertEquals(true, tab.content.private)
@@ -194,7 +199,8 @@ class OpenHomeIntentProcessorTest {
     @Test
     fun `GIVEN homepage as a new tab is disabled WHEN intent is from the private browsing pinned shortcut THEN do not process`() {
         every { settings.enableHomepageAsNewTab } returns false
-        val processor = OpenHomeIntentProcessor(fenixBrowserUseCases = fenixBrowserUseCases)
+        val processor =
+            OpenHomeIntentProcessor(fenixBrowserUseCases, browsingMode = BrowsingMode(browserStore, settings))
 
         val initIntent =
             Intent().apply {
@@ -215,7 +221,7 @@ class OpenHomeIntentProcessorTest {
         )
 
         assertNull(outIntent.extras?.getBoolean(HomeActivity.OPEN_TO_HOME))
-        verify(exactly = 0) { settings.lastKnownMode = any() }
+        verify(exactly = 0) { settings.lastKnownModeIsPrivate = any() }
         assertEquals(0, browserStore.state.tabs.size)
         verify { navController wasNot Called }
     }

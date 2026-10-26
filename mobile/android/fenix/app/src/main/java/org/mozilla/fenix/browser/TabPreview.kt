@@ -111,7 +111,7 @@ constructor(
         tab: TabSessionState?,
     ): Action {
         val tabsCount = currentOpenedTabsCount
-        val isPrivateMode = context.components.activityPrivacy.isPrivate(customTabSessionId = null)
+        val isPrivateMode = context.components.browsingMode.isPrivate(customTabSessionId = null)
 
         return when (toolbarAction) {
             ToolbarAction.NewTab ->
@@ -261,7 +261,7 @@ constructor(
                     drawableResId = iconsR.drawable.mozac_ic_lightning_24,
                     contentDescription = summariesR.string.mozac_summarize_settings_summarize_pages,
                     state =
-                        if (context.components.activityPrivacy.isPrivate(customTabSessionId = null)) {
+                        if (context.components.browsingMode.isPrivate(customTabSessionId = null)) {
                             ActionButton.State.DISABLED
                         } else {
                             ActionButton.State.DEFAULT

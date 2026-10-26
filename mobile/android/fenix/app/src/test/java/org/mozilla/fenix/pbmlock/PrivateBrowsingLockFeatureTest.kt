@@ -25,7 +25,6 @@ import mozilla.components.browser.state.store.BrowserStore
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
-import org.mozilla.fenix.browser.browsingmode.BrowsingMode
 import org.mozilla.fenix.components.AppStore
 import org.mozilla.fenix.components.appstate.AppAction
 import org.mozilla.fenix.components.appstate.AppState
@@ -56,10 +55,10 @@ class PrivateBrowsingLockFeatureTest {
     @Test
     fun `GIVEN feature is enabled and mode is normal WHEN number of private tabs reaches zero THEN we unlock private mode`() {
         val isFeatureEnabled = true
-        val mode = BrowsingMode.Normal
-        isPrivateMode = mode.isPrivate
+        val isPrivate = false
+        isPrivateMode = isPrivate
 
-        val appStore = createAppStore(mode, isPrivateScreenLocked = true)
+        val appStore = createAppStore(isPrivate, isPrivateScreenLocked = true)
         val browserStore = createBrowserStore(mixedTabs)
         createFeature(appStore, browserStore, createStorage(isFeatureEnabled))
 
@@ -73,10 +72,10 @@ class PrivateBrowsingLockFeatureTest {
 
     @Test
     fun `GIVEN feature is enabled and mode is private WHEN authenticated and number of private tabs reaches zero THEN private mode is unchanged`() {
-        val mode = BrowsingMode.Private
-        isPrivateMode = mode.isPrivate
+        val isPrivate = true
+        isPrivateMode = isPrivate
 
-        val appStore = createAppStore(mode)
+        val appStore = createAppStore(isPrivate)
         val browserStore = createBrowserStore(mixedTabs)
         val useCase = PrivateBrowsingLockUseCases.AuthenticatedUseCase(appStore)
 
@@ -92,10 +91,10 @@ class PrivateBrowsingLockFeatureTest {
     @Test
     fun `GIVEN the feature is disabled and mode is normal WHEN number of private tabs reaches zero THEN private mode is unchanged `() {
         val isFeatureEnabled = false
-        val mode = BrowsingMode.Normal
-        isPrivateMode = mode.isPrivate
+        val isPrivate = false
+        isPrivateMode = isPrivate
 
-        val appStore = createAppStore(mode)
+        val appStore = createAppStore(isPrivate)
         val browserStore = createBrowserStore(mixedTabs)
         createFeature(
             browserStore = browserStore,
@@ -113,8 +112,8 @@ class PrivateBrowsingLockFeatureTest {
     @Test
     fun `GIVEN the feature is disabled and mode is private WHEN number of private tabs reaches zero THEN private mode is unchanged `() {
         val isFeatureEnabled = false
-        val mode = BrowsingMode.Private
-        isPrivateMode = mode.isPrivate
+        val isPrivate = true
+        isPrivateMode = isPrivate
 
         val appStore = AppStore(initialState = AppState())
         val browserStore = createBrowserStore(mixedTabs)
@@ -131,10 +130,10 @@ class PrivateBrowsingLockFeatureTest {
     @Test
     fun `GIVEN feature is enabled and mode is private and there are private tabs WHEN initializing feature THEN we lock private mode`() {
         val isFeatureEnabled = true
-        val mode = BrowsingMode.Private
-        isPrivateMode = mode.isPrivate
+        val isPrivate = true
+        isPrivateMode = isPrivate
 
-        val appStore = createAppStore(mode, isPrivateScreenLocked = true)
+        val appStore = createAppStore(isPrivate, isPrivateScreenLocked = true)
         val browserStore = createBrowserStore(mixedTabs)
         createFeature(appStore, browserStore, createStorage(isFeatureEnabled))
 
@@ -144,10 +143,10 @@ class PrivateBrowsingLockFeatureTest {
     @Test
     fun `GIVEN feature is enabled and mode is normal and there are private tabs WHEN initializing feature THEN we lock private mode`() {
         val isFeatureEnabled = true
-        val mode = BrowsingMode.Normal
-        isPrivateMode = mode.isPrivate
+        val isPrivate = false
+        isPrivateMode = isPrivate
 
-        val appStore = createAppStore(mode, isPrivateScreenLocked = true)
+        val appStore = createAppStore(isPrivate, isPrivateScreenLocked = true)
         val browserStore = createBrowserStore(mixedTabs)
         createFeature(appStore, browserStore, createStorage(isFeatureEnabled))
 
@@ -157,10 +156,10 @@ class PrivateBrowsingLockFeatureTest {
     @Test
     fun `GIVEN feature is disabled and mode is private and there are private tabs WHEN initializing the app THEN we do not lock private mode`() {
         val isFeatureEnabled = false
-        val mode = BrowsingMode.Private
-        isPrivateMode = mode.isPrivate
+        val isPrivate = true
+        isPrivateMode = isPrivate
 
-        val appStore = createAppStore(mode)
+        val appStore = createAppStore(isPrivate)
         val browserStore = createBrowserStore(mixedTabs)
         createFeature(appStore, browserStore, createStorage(isFeatureEnabled))
 
@@ -170,10 +169,10 @@ class PrivateBrowsingLockFeatureTest {
     @Test
     fun `GIVEN feature is disabled and mode is normal and there are private tabs WHEN initializing the app THEN we do not lock private mode`() {
         val isFeatureEnabled = false
-        val mode = BrowsingMode.Normal
-        isPrivateMode = mode.isPrivate
+        val isPrivate = false
+        isPrivateMode = isPrivate
 
-        val appStore = createAppStore(mode)
+        val appStore = createAppStore(isPrivate)
         val browserStore = createBrowserStore(mixedTabs)
         createFeature(appStore, browserStore, createStorage(isFeatureEnabled))
 
@@ -183,10 +182,10 @@ class PrivateBrowsingLockFeatureTest {
     @Test
     fun `GIVEN feature is enabled and mode is private and there are no private tabs WHEN initializing feature THEN we do not lock private mode`() {
         val isFeatureEnabled = true
-        val mode = BrowsingMode.Private
-        isPrivateMode = mode.isPrivate
+        val isPrivate = true
+        isPrivateMode = isPrivate
 
-        val appStore = createAppStore(mode)
+        val appStore = createAppStore(isPrivate)
         val browserStore = createBrowserStore(regularTabs)
         createFeature(appStore, browserStore, createStorage(isFeatureEnabled))
 
@@ -196,10 +195,10 @@ class PrivateBrowsingLockFeatureTest {
     @Test
     fun `GIVEN feature is enabled and mode is normal and there are no private tabs WHEN initializing feature THEN we do not lock private mode`() {
         val isFeatureEnabled = true
-        val mode = BrowsingMode.Normal
-        isPrivateMode = mode.isPrivate
+        val isPrivate = false
+        isPrivateMode = isPrivate
 
-        val appStore = createAppStore(mode)
+        val appStore = createAppStore(isPrivate)
         val browserStore = createBrowserStore(regularTabs)
         createFeature(appStore, browserStore, createStorage(isFeatureEnabled))
 
@@ -287,10 +286,10 @@ class PrivateBrowsingLockFeatureTest {
     @Test
     fun `GIVEN feature is on and mode is private and there are unlocked private tabs WHEN Activity stops without config change THEN we lock private mode`() {
         val isFeatureEnabled = true
-        val mode = BrowsingMode.Private
-        isPrivateMode = mode.isPrivate
+        val isPrivate = true
+        isPrivateMode = isPrivate
 
-        val appStore = createAppStore(mode)
+        val appStore = createAppStore(isPrivate)
         val browserStore = createBrowserStore(mixedTabs)
         val feature = createFeature(appStore, browserStore, createStorage(isFeatureEnabled))
 
@@ -309,10 +308,10 @@ class PrivateBrowsingLockFeatureTest {
     @Test
     fun `GIVEN feature is on and mode is normal and there are unlocked private tabs WHEN Activity stops without config change THEN we lock private mode`() {
         val isFeatureEnabled = true
-        val mode = BrowsingMode.Normal
-        isPrivateMode = mode.isPrivate
+        val isPrivate = false
+        isPrivateMode = isPrivate
 
-        val appStore = createAppStore(mode)
+        val appStore = createAppStore(isPrivate)
         val browserStore = createBrowserStore(mixedTabs)
         val feature = createFeature(appStore, browserStore, createStorage(isFeatureEnabled))
 
@@ -330,10 +329,10 @@ class PrivateBrowsingLockFeatureTest {
     @Test
     fun `GIVEN feature is on and mode is private and there are no private tabs WHEN Activity stops without config change THEN we do not lock private mode`() {
         val isFeatureEnabled = true
-        val mode = BrowsingMode.Private
-        isPrivateMode = mode.isPrivate
+        val isPrivate = true
+        isPrivateMode = isPrivate
 
-        val appStore = createAppStore(mode)
+        val appStore = createAppStore(isPrivate)
         val browserStore = createBrowserStore(regularTabs)
         val feature = createFeature(appStore, browserStore, createStorage(isFeatureEnabled))
         assertFalse(appStore.state.isPrivateScreenLocked)
@@ -349,10 +348,10 @@ class PrivateBrowsingLockFeatureTest {
     @Test
     fun `GIVEN feature is on and mode is normal and there are no private tabs WHEN Activity stops without config change THEN we do not lock private mode`() {
         val isFeatureEnabled = true
-        val mode = BrowsingMode.Normal
-        isPrivateMode = mode.isPrivate
+        val isPrivate = false
+        isPrivateMode = isPrivate
 
-        val appStore = createAppStore(mode)
+        val appStore = createAppStore(isPrivate)
         val browserStore = createBrowserStore(regularTabs)
         val feature =
             createFeature(
@@ -373,10 +372,10 @@ class PrivateBrowsingLockFeatureTest {
     @Test
     fun `GIVEN feature is off and mode is private and there are private tabs WHEN Activity stops without config change THEN we do not lock private mode`() {
         val isFeatureEnabled = false
-        val mode = BrowsingMode.Private
-        isPrivateMode = mode.isPrivate
+        val isPrivate = true
+        isPrivateMode = isPrivate
 
-        val appStore = createAppStore(mode)
+        val appStore = createAppStore(isPrivate)
         val browserStore = createBrowserStore(mixedTabs)
         val feature = createFeature(appStore, browserStore, createStorage(isFeatureEnabled))
         assertFalse(appStore.state.isPrivateScreenLocked)
@@ -392,10 +391,10 @@ class PrivateBrowsingLockFeatureTest {
     @Test
     fun `GIVEN feature is off and mode is normal and there are private tabs WHEN Activity stops without config change THEN we do not lock private mode`() {
         val isFeatureEnabled = false
-        val mode = BrowsingMode.Normal
-        isPrivateMode = mode.isPrivate
+        val isPrivate = false
+        isPrivateMode = isPrivate
 
-        val appStore = createAppStore(mode)
+        val appStore = createAppStore(isPrivate)
         val browserStore = createBrowserStore(mixedTabs)
         val feature = createFeature(appStore, browserStore, createStorage(isFeatureEnabled))
         assertFalse(appStore.state.isPrivateScreenLocked)
@@ -415,8 +414,8 @@ class PrivateBrowsingLockFeatureTest {
     @Test
     fun `GIVEN feature is on and mode is private and there are private tabs WHEN Activity stops with config change THEN we do not lock private mode`() {
         val isFeatureEnabled = true
-        val mode = BrowsingMode.Private
-        isPrivateMode = mode.isPrivate
+        val isPrivate = true
+        isPrivateMode = isPrivate
 
         val appStore = AppStore(initialState = AppState())
         val browserStore = createBrowserStore(mixedTabs)
@@ -583,10 +582,10 @@ class PrivateBrowsingLockFeatureTest {
     @Test
     fun `GIVEN the feature is on and there are private tabs WHEN we turn off the feature THEN we unlock private tabs and don't lock it`() {
         val isFeatureEnabled = true
-        val mode = BrowsingMode.Private
-        isPrivateMode = mode.isPrivate
+        val isPrivate = true
+        isPrivateMode = isPrivate
 
-        val appStore = createAppStore(mode, isPrivateScreenLocked = true)
+        val appStore = createAppStore(isPrivate, isPrivateScreenLocked = true)
         val browserStore = createBrowserStore(mixedTabs)
         val storage = createStorage(isFeatureEnabled)
 
@@ -612,7 +611,7 @@ class PrivateBrowsingLockFeatureTest {
 
         // verify that going to normal mode doesn't lock private mode
         isPrivateMode = false
-        feature.onBrowsingModeChanged(BrowsingMode.Normal)
+        feature.onBrowsingModeChanged(isPrivate = false)
 
         assertTrue(browserStore.state.privateTabs.isNotEmpty())
         assertFalse(appStore.state.isPrivateScreenLocked)
@@ -621,10 +620,10 @@ class PrivateBrowsingLockFeatureTest {
     @Test
     fun `GIVEN the feature is off and mode is normal and there are private tabs WHEN we turn on the feature THEN we lock private tabs`() {
         val isFeatureEnabled = false
-        val mode = BrowsingMode.Normal
-        isPrivateMode = mode.isPrivate
+        val isPrivate = false
+        isPrivateMode = isPrivate
 
-        val appStore = createAppStore(mode)
+        val appStore = createAppStore(isPrivate)
         val browserStore = createBrowserStore(mixedTabs)
         val storage = createStorage(isFeatureEnabled)
 
@@ -643,10 +642,10 @@ class PrivateBrowsingLockFeatureTest {
     @Test
     fun `GIVEN the feature is off and mode is private and there are private tabs WHEN we turn on the feature THEN we do not lock private tabs`() {
         val isFeatureEnabled = false
-        val mode = BrowsingMode.Private
-        isPrivateMode = mode.isPrivate
+        val isPrivate = true
+        isPrivateMode = isPrivate
 
-        val appStore = createAppStore(mode)
+        val appStore = createAppStore(isPrivate)
         val browserStore = createBrowserStore(mixedTabs)
         val storage = createStorage(isFeatureEnabled)
 
@@ -666,10 +665,10 @@ class PrivateBrowsingLockFeatureTest {
     @Test
     fun `GIVEN the feature is on, there are private tabs and the user unlocked them WHEN switching to normal mode THEN private tabs are locked again`() {
         val isFeatureEnabled = true
-        val mode = BrowsingMode.Private
-        isPrivateMode = mode.isPrivate
+        val isPrivate = true
+        isPrivateMode = isPrivate
 
-        val appStore = createAppStore(mode, isPrivateScreenLocked = true)
+        val appStore = createAppStore(isPrivate, isPrivateScreenLocked = true)
         val browserStore = createBrowserStore(mixedTabs)
 
         val feature = createFeature(appStore, browserStore, createStorage(isFeatureEnabled))
@@ -681,7 +680,7 @@ class PrivateBrowsingLockFeatureTest {
         assertFalse(appStore.state.isPrivateScreenLocked)
 
         isPrivateMode = false
-        feature.onBrowsingModeChanged(BrowsingMode.Normal)
+        feature.onBrowsingModeChanged(isPrivate = false)
         assertTrue(appStore.state.isPrivateScreenLocked)
     }
 
@@ -689,7 +688,7 @@ class PrivateBrowsingLockFeatureTest {
     @Test
     fun `GIVEN the feature is enabled and private tabs are open WHEN switching from private to normal mode THEN private mode is locked`() {
         val isFeatureEnabled = true
-        val appStore = createAppStore(BrowsingMode.Private, isPrivateScreenLocked = false)
+        val appStore = createAppStore(isPrivate = true, isPrivateScreenLocked = false)
         val browserStore = createBrowserStore(mixedTabs)
         val feature = createFeature(appStore, browserStore, createStorage(isFeatureEnabled))
         val activity = mockk<AppCompatActivity>(relaxed = true)
@@ -697,7 +696,7 @@ class PrivateBrowsingLockFeatureTest {
         assertFalse(appStore.state.isPrivateScreenLocked)
 
         isPrivateMode = false
-        feature.onBrowsingModeChanged(BrowsingMode.Normal)
+        feature.onBrowsingModeChanged(isPrivate = false)
         testDispatcher.scheduler.advanceUntilIdle()
         feature.onResume(activity)
         assertTrue(appStore.state.isPrivateScreenLocked)
@@ -706,7 +705,7 @@ class PrivateBrowsingLockFeatureTest {
     @Test
     fun `GIVEN the feature is enabled and there are no private tabs open WHEN switching from private to normal mode THEN private mode is not locked`() {
         val isFeatureEnabled = true
-        val appStore = createAppStore(BrowsingMode.Private, isPrivateScreenLocked = false)
+        val appStore = createAppStore(isPrivate = true, isPrivateScreenLocked = false)
         val browserStore = createBrowserStore(regularTabs)
         val feature = createFeature(appStore, browserStore, createStorage(isFeatureEnabled))
         val activity = mockk<AppCompatActivity>(relaxed = true)
@@ -714,7 +713,7 @@ class PrivateBrowsingLockFeatureTest {
         assertFalse(appStore.state.isPrivateScreenLocked)
 
         isPrivateMode = false
-        feature.onBrowsingModeChanged(BrowsingMode.Normal)
+        feature.onBrowsingModeChanged(isPrivate = false)
         testDispatcher.scheduler.advanceUntilIdle()
         feature.onResume(activity)
         assertFalse(appStore.state.isPrivateScreenLocked)
@@ -723,7 +722,7 @@ class PrivateBrowsingLockFeatureTest {
     @Test
     fun `GIVEN the feature is not enabled and private tabs are open WHEN switching from private to normal mode THEN private mode is not locked`() {
         val isFeatureEnabled = false
-        val appStore = createAppStore(BrowsingMode.Private, isPrivateScreenLocked = false)
+        val appStore = createAppStore(isPrivate = true, isPrivateScreenLocked = false)
         val browserStore = createBrowserStore(mixedTabs)
         val feature = createFeature(appStore, browserStore, createStorage(isFeatureEnabled))
         val activity = mockk<AppCompatActivity>(relaxed = true)
@@ -731,7 +730,7 @@ class PrivateBrowsingLockFeatureTest {
         assertFalse(appStore.state.isPrivateScreenLocked)
 
         isPrivateMode = false
-        feature.onBrowsingModeChanged(BrowsingMode.Normal)
+        feature.onBrowsingModeChanged(isPrivate = false)
         testDispatcher.scheduler.advanceUntilIdle()
         feature.onResume(activity)
         assertFalse(appStore.state.isPrivateScreenLocked)
@@ -795,10 +794,10 @@ class PrivateBrowsingLockFeatureTest {
         )
 
     private fun createAppStore(
-        mode: BrowsingMode,
+        isPrivate: Boolean,
         isPrivateScreenLocked: Boolean = false,
     ): AppStore {
-        isPrivateMode = mode.isPrivate
+        isPrivateMode = isPrivate
         return AppStore(initialState = AppState(isPrivateScreenLocked = isPrivateScreenLocked))
     }
 }

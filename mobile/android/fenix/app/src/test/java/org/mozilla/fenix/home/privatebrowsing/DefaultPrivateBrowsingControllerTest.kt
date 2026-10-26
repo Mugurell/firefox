@@ -20,7 +20,6 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.mozilla.fenix.GleanMetrics.Homepage
 import org.mozilla.fenix.R
-import org.mozilla.fenix.browser.browsingmode.BrowsingMode
 import org.mozilla.fenix.components.AppStore
 import org.mozilla.fenix.components.appstate.AppState
 import org.mozilla.fenix.components.usecases.FenixBrowserUseCases
@@ -107,15 +106,15 @@ class DefaultPrivateBrowsingControllerTest {
 
         assertNull(Homepage.privateModeIconTapped.testGetValue())
 
-        val newMode = BrowsingMode.Private
+        val isPrivate = true
 
-        controller.handlePrivateModeButtonClicked(newMode)
+        controller.handlePrivateModeButtonClicked(isPrivate)
 
         val snapshot = Homepage.privateModeIconTapped.testGetValue()!!
         assertEquals(1, snapshot.size)
 
         verify {
-            settings.lastKnownMode = newMode
+            settings.lastKnownModeIsPrivate = true
             settings.incrementNumTimesPrivateModeOpened()
         }
     }
@@ -131,16 +130,16 @@ class DefaultPrivateBrowsingControllerTest {
 
         assertNull(Homepage.privateModeIconTapped.testGetValue())
 
-        val newMode = BrowsingMode.Normal
+        val isPrivate = false
 
-        controller.handlePrivateModeButtonClicked(newMode)
+        controller.handlePrivateModeButtonClicked(isPrivate)
 
         val snapshot = Homepage.privateModeIconTapped.testGetValue()!!
         assertEquals(1, snapshot.size)
 
         verify {
             fenixBrowserUseCases.addNewHomepageTab(private = false)
-            settings.lastKnownMode = BrowsingMode.Normal
+            settings.lastKnownModeIsPrivate = false
         }
     }
 
@@ -155,16 +154,16 @@ class DefaultPrivateBrowsingControllerTest {
 
         assertNull(Homepage.privateModeIconTapped.testGetValue())
 
-        val newMode = BrowsingMode.Private
+        val isPrivate = true
 
-        controller.handlePrivateModeButtonClicked(newMode)
+        controller.handlePrivateModeButtonClicked(isPrivate)
 
         val snapshot = Homepage.privateModeIconTapped.testGetValue()!!
         assertEquals(1, snapshot.size)
 
         verify {
             fenixBrowserUseCases.addNewHomepageTab(private = true)
-            settings.lastKnownMode = BrowsingMode.Private
+            settings.lastKnownModeIsPrivate = true
             settings.incrementNumTimesPrivateModeOpened()
         }
     }

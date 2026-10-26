@@ -484,7 +484,7 @@ open class FenixApplication : Application(), Provider, ThemeProvider {
         val sessionStorage = components.core.sessionStorage
         val settings = components.settings
 
-        if (settings.enableHomepageAsNewTab && settings.lastKnownMode.isPrivate) {
+        if (settings.enableHomepageAsNewTab && settings.lastKnownModeIsPrivate) {
             restoreWithoutSelectedTab(sessionStorage, settings.getTabTimeout())
         } else {
             components.useCases.tabsUseCases.restore(sessionStorage, settings.getTabTimeout())
@@ -959,7 +959,7 @@ open class FenixApplication : Application(), Provider, ThemeProvider {
             WebExtensionSupport.initialize(
                 components.core.engine,
                 components.core.store,
-                isInPrivateBrowsingMode = { components.activityPrivacy.isPrivate(customTabSessionId = null) },
+                isInPrivateBrowsingMode = { components.browsingMode.isPrivate(customTabSessionId = null) },
                 onNewTabOverride = { _, engineSession, url, selected, isPrivate ->
                     components.useCases.tabsUseCases.addTab(
                         url = url,

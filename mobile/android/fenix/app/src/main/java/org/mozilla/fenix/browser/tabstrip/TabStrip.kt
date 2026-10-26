@@ -123,7 +123,7 @@ fun TabStrip(
     showTabCounterButton: Boolean = true,
     tabStripColors: TabStripColors = TabStripColors.default(),
     browserStore: BrowserStore = components.core.store,
-    isPrivate: Boolean = components.activityPrivacy.isPrivate(customTabSessionId = null),
+    isPrivate: Boolean = components.browsingMode.isPrivate(customTabSessionId = null),
     tabsUseCases: TabsUseCases = components.useCases.tabsUseCases,
     hideWhenKeyboardShown: Boolean,
     onAddTabClick: () -> Unit,

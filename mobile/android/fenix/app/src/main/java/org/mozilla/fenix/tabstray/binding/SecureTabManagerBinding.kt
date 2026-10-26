@@ -36,7 +36,7 @@ class SecureTabManagerBinding(
             .collect { state ->
                 if (state.selectedPage == Page.PrivateTabs && !settings.shouldSecureModeBeOverridden) {
                     setSecureMode(true)
-                } else if (!settings.lastKnownMode.isPrivate) {
+                } else if (!settings.lastKnownModeIsPrivate) {
                     setSecureMode(false)
                 }
             }
@@ -44,7 +44,7 @@ class SecureTabManagerBinding(
 
     override fun stop() {
         super.stop()
-        if (!settings.lastKnownMode.isPrivate) {
+        if (!settings.lastKnownModeIsPrivate) {
             setSecureMode(false)
         }
     }

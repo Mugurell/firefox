@@ -43,7 +43,6 @@ import org.mozilla.fenix.GleanMetrics.Pings
 import org.mozilla.fenix.GleanMetrics.ShortcutsLibrary
 import org.mozilla.fenix.GleanMetrics.TopSites
 import org.mozilla.fenix.R
-import org.mozilla.fenix.browser.browsingmode.BrowsingMode
 import org.mozilla.fenix.components.Analytics
 import org.mozilla.fenix.components.AppStore
 import org.mozilla.fenix.components.appstate.AppAction
@@ -1338,7 +1337,7 @@ class DefaultTopSiteControllerTest {
 
             createController(this).handleOpenInPrivateTabClicked(topSite)
 
-            verify { settings.lastKnownMode = BrowsingMode.Private }
+            verify { settings.lastKnownModeIsPrivate = true }
         }
 
     @Test

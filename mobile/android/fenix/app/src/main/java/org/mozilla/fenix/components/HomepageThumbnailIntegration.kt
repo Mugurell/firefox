@@ -22,7 +22,6 @@ import mozilla.components.compose.base.theme.acornLightColorScheme
 import mozilla.components.compose.base.theme.acornPrivateColorScheme
 import mozilla.components.concept.engine.utils.ABOUT_HOME_URL
 import mozilla.components.support.base.feature.LifecycleAwareFeature
-import org.mozilla.fenix.browser.browsingmode.BrowsingMode
 
 /**
  * Homepage delegate to take screenshot of homepage when view loads and display as a thumbnail in tabs tray.
@@ -53,7 +52,7 @@ class HomepageThumbnailIntegration(
     private var backgroundColor: Int = 0
 
     override fun start() {
-        backgroundColor = getColor(context, BrowsingMode.fromBoolean(isPrivate())).surface.toArgb()
+        backgroundColor = getColor(context, isPrivate()).surface.toArgb()
         feature.start()
     }
 
@@ -101,9 +100,9 @@ class HomepageThumbnailIntegration(
      * N.B: This logic was taken from [Theme.getTheme] in FirefoxTheme, however we cannot use it directly because those
      * functions are annotated to be Composable and refactoring that can be done in a follow-up when needed.
      */
-    private fun getColor(context: Context, mode: BrowsingMode): ColorScheme {
+    private fun getColor(context: Context, isPrivate: Boolean): ColorScheme {
         val isDarkMode = context.resources?.configuration?.uiMode?.and(Configuration.UI_MODE_NIGHT_MASK)
-        return if (mode == BrowsingMode.Private) {
+        return if (isPrivate) {
             acornPrivateColorScheme()
         } else if (isDarkMode == Configuration.UI_MODE_NIGHT_YES) {
             acornDarkColorScheme()

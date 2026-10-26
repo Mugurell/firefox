@@ -7,7 +7,6 @@ package org.mozilla.fenix.browser.tabstrip.ext
 import androidx.annotation.IdRes
 import androidx.navigation.NavController
 import org.mozilla.fenix.NavGraphDirections
-import org.mozilla.fenix.browser.browsingmode.BrowsingMode
 import org.mozilla.fenix.components.AppStore
 import org.mozilla.fenix.components.appstate.AppAction
 import org.mozilla.fenix.ext.nav
@@ -21,7 +20,7 @@ import org.mozilla.fenix.tabstray.redux.state.Page
  * @param isLastTabClosedPrivate Whether the closed tab was private.
  * @param navigateFromId The id of the current navigation destination.
  * @param appStore [AppStore] used to update tabs tray visibility and last closed tab information.
- * @param browsingMode The current [BrowsingMode], used to pick the tabs tray page to open.
+ * @param isActivityPrivate Whether the activity is private, used to pick the tabs tray page to open.
  * @param navController [NavController] used to navigate to the tabs tray.
  * @param onHomepageAsNewTabDisabled Invoked instead of opening the tabs tray when homepage as a new tab is disabled.
  */
@@ -30,7 +29,7 @@ internal fun handleTabStripLastTabClosed(
     isLastTabClosedPrivate: Boolean,
     @IdRes navigateFromId: Int,
     appStore: AppStore,
-    browsingMode: BrowsingMode,
+    isActivityPrivate: Boolean,
     navController: NavController,
     onHomepageAsNewTabDisabled: () -> Unit,
 ) {
@@ -49,7 +48,7 @@ internal fun handleTabStripLastTabClosed(
         id = navigateFromId,
         directions =
             NavGraphDirections.actionGlobalTabManagementFragment(
-                page = if (browsingMode.isPrivate) Page.PrivateTabs else Page.NormalTabs
+                page = if (isActivityPrivate) Page.PrivateTabs else Page.NormalTabs
             ),
     )
 }

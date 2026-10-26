@@ -105,7 +105,7 @@ class HistoryMetadataGroupFragment :
                         historyStorage = requireComponents.core.historyStorage,
                         browserStore = requireComponents.core.store,
                         appStore = requireComponents.appStore,
-                        isPrivate = { requireComponents.activityPrivacy.isPrivate(customTabSessionId = null) },
+                        isPrivate = { requireComponents.browsingMode.isPrivate(customTabSessionId = null) },
                         store = historyMetadataGroupStore,
                         selectOrAddUseCase = requireComponents.useCases.tabsUseCases.selectOrAddTab,
                         fenixBrowserUseCases = requireComponents.useCases.fenixBrowserUseCases,

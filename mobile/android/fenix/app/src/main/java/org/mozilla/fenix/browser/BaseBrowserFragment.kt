@@ -177,7 +177,6 @@ import org.mozilla.fenix.bindings.SummarizeToolbarCFRBinding
 import org.mozilla.fenix.biometricauthentication.AuthenticationStatus
 import org.mozilla.fenix.biometricauthentication.BiometricAuthenticationManager
 import org.mozilla.fenix.browser.applinks.AppLinksPromptFragment
-import org.mozilla.fenix.browser.browsingmode.BrowsingMode
 import org.mozilla.fenix.browser.permissions.FenixSitePermissionLearnMoreUrlProvider
 import org.mozilla.fenix.browser.readermode.DefaultReaderModeController
 import org.mozilla.fenix.browser.readermode.ReaderModeController
@@ -482,7 +481,7 @@ abstract class BaseBrowserFragment :
             tabGroupsStripStore.dispatch(TabGroupsStripAction.InitializeDataObservation)
         }
 
-        observePrivateModeLock(isPrivate = { requireComponents.activityPrivacy.isPrivate(customTabSessionId) }) {
+        observePrivateModeLock(isPrivate = { requireComponents.browsingMode.isPrivate(customTabSessionId) }) {
             findNavController()
                 .navigate(
                     NavGraphDirections.actionGlobalUnlockPrivateTabsFragment(
@@ -543,7 +542,7 @@ abstract class BaseBrowserFragment :
             DefaultReaderModeController(
                 readerViewFeature,
                 binding.readerViewControlsBar,
-                isPrivate = context.components.activityPrivacy.isPrivate(customTabSessionId),
+                isPrivate = context.components.browsingMode.isPrivate(customTabSessionId),
                 onReaderModeChanged = { activity.finishActionMode() },
             )
         _findInPageLauncher = {
@@ -600,7 +599,7 @@ abstract class BaseBrowserFragment :
                 OpenInFirefoxBinding(
                     activity = activity,
                     appStore = context.components.appStore,
-                    activityPrivacy = context.components.activityPrivacy,
+                    browsingMode = context.components.browsingMode,
                     customTabSessionId = customTabSessionId,
                     customTabsUseCases = context.components.useCases.customTabsUseCases,
                     openInFenixIntent = openInFenixIntent,
@@ -621,7 +620,7 @@ abstract class BaseBrowserFragment :
                     tabId = customTabSessionId,
                     shouldHide = {
                         requireComponents.appStore.state.isPrivateScreenLocked &&
-                            requireComponents.activityPrivacy.isPrivate(customTabSessionId)
+                            requireComponents.browsingMode.isPrivate(customTabSessionId)
                     },
                 ),
             owner = this,
@@ -1369,7 +1368,7 @@ abstract class BaseBrowserFragment :
                     onShouldShowRequestPermissionRationale = {
                         shouldShowRequestPermissionRationale(it)
                     },
-                    shouldShowDoNotAskAgainCheckBox = !context.components.activityPrivacy.isPrivate(customTabSessionId),
+                    shouldShowDoNotAskAgainCheckBox = !context.components.browsingMode.isPrivate(customTabSessionId),
                     store = store,
                     coroutineScope = requireComponents.applicationScope,
                     shouldHide = {
@@ -1379,7 +1378,7 @@ abstract class BaseBrowserFragment :
                             true
                         } else {
                             requireComponents.appStore.state.isPrivateScreenLocked &&
-                                requireComponents.activityPrivacy.isPrivate(customTabSessionId)
+                                requireComponents.browsingMode.isPrivate(customTabSessionId)
                         }
                     },
                 ),
@@ -1572,7 +1571,7 @@ abstract class BaseBrowserFragment :
     @VisibleForTesting
     internal fun shouldAddBlackScreen(): Boolean =
         requireComponents.settings.privateBrowsingModeLocked &&
-            requireComponents.activityPrivacy.isPrivate(customTabSessionId) &&
+            requireComponents.browsingMode.isPrivate(customTabSessionId) &&
             requireComponents.core.store.state.systemPermissionRequestInProgress &&
             blackScreenOverlay == null
 
@@ -1618,7 +1617,7 @@ abstract class BaseBrowserFragment :
                         isLastTabClosedPrivate = isPrivate,
                         navigateFromId = R.id.browserFragment,
                         appStore = requireComponents.appStore,
-                        browsingMode = BrowsingMode.fromBoolean(isActivityPrivate()),
+                        isActivityPrivate = isActivityPrivate(),
                         navController = findNavController(),
                     ) {
                         requireComponents.appStore.dispatch(AppAction.TabStripAction.UpdateLastTabClosed(isPrivate))
@@ -1630,7 +1629,7 @@ abstract class BaseBrowserFragment :
                     showUndoSnackbar(requireContext().tabClosedUndoMessage(isPrivate))
                 },
                 onTabCounterClick = {
-                    onTabCounterClicked(BrowsingMode.fromBoolean(isActivityPrivate()))
+                    onTabCounterClicked(isActivityPrivate())
                 },
             )
         }
@@ -1866,7 +1865,7 @@ abstract class BaseBrowserFragment :
         }
     }
 
-    private fun onTabCounterClicked(browsingMode: BrowsingMode) {
+    private fun onTabCounterClicked(isPrivate: Boolean) {
         thumbnailsFeature
             .get()
             ?.requestScreenshot(trigger = BrowserThumbnailsFacts.CaptureAttemptedTriggers.TAB_COUNTER_CLICK)
@@ -1874,11 +1873,7 @@ abstract class BaseBrowserFragment :
             .nav(
                 R.id.browserFragment,
                 BrowserFragmentDirections.actionGlobalTabManagementFragment(
-                    page =
-                        when (browsingMode) {
-                            BrowsingMode.Normal -> Page.NormalTabs
-                            BrowsingMode.Private -> Page.PrivateTabs
-                        }
+                    page = if (isPrivate) Page.PrivateTabs else Page.NormalTabs
                 ),
             )
     }
@@ -2287,10 +2282,10 @@ abstract class BaseBrowserFragment :
     /** Saves the privacy of [session] as the last known browsing mode, which the regular tabs activity applies. */
     @VisibleForTesting
     internal fun persistLastBrowsingMode(session: SessionState) {
-        requireComponents.settings.lastKnownMode = BrowsingMode.fromBoolean(session.content.private)
+        requireComponents.settings.lastKnownModeIsPrivate = session.content.private
     }
 
-    private fun isActivityPrivate() = requireComponents.activityPrivacy.isPrivate(customTabSessionId)
+    private fun isActivityPrivate() = requireComponents.browsingMode.isPrivate(customTabSessionId)
 
     /** A safe version of [getCurrentTab] that safely checks for context nullability. */
     protected fun getSafeCurrentTab(): SessionState? {

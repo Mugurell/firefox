@@ -46,7 +46,7 @@ class SecureTabManagerBindingTest {
     fun `WHEN tab selected page switches to private THEN set window to secure`() =
         runTest(testDispatcher) {
             every { settings.shouldSecureModeBeOverridden } returns false
-            every { settings.lastKnownMode.isPrivate } returns false
+            every { settings.lastKnownModeIsPrivate } returns false
 
             secureTabManagerBinding.start()
             testDispatcher.scheduler.advanceUntilIdle()
@@ -61,7 +61,7 @@ class SecureTabManagerBindingTest {
     fun `WHEN tab selected page switches to private and allowScreenshotsInPrivateMode true THEN set window to un-secure`() =
         runTest(testDispatcher) {
             every { settings.shouldSecureModeBeOverridden } returns true
-            every { settings.lastKnownMode.isPrivate } returns false
+            every { settings.lastKnownModeIsPrivate } returns false
 
             secureTabManagerBinding.start()
             testDispatcher.scheduler.advanceUntilIdle()
@@ -76,7 +76,7 @@ class SecureTabManagerBindingTest {
     fun `WHEN tab selected page switches to private and allowScreenshotsInPrivateMode false and shouldSecureModeBeOverridden true THEN set window to un-secure`() =
         runTest(testDispatcher) {
             every { settings.shouldSecureModeBeOverridden } returns true
-            every { settings.lastKnownMode.isPrivate } returns false
+            every { settings.lastKnownModeIsPrivate } returns false
 
             secureTabManagerBinding.start()
             testDispatcher.scheduler.advanceUntilIdle()
@@ -90,7 +90,7 @@ class SecureTabManagerBindingTest {
     @Test
     fun `GIVEN not in private mode WHEN tab selected page switches to normal tabs from private THEN set window to un-secure`() =
         runTest(testDispatcher) {
-            every { settings.lastKnownMode.isPrivate } returns false
+            every { settings.lastKnownModeIsPrivate } returns false
 
             secureTabManagerBinding.start()
             testDispatcher.scheduler.advanceUntilIdle()
@@ -104,7 +104,7 @@ class SecureTabManagerBindingTest {
     @Test
     fun `GIVEN private mode WHEN tab selected page switches to normal tabs from private THEN do nothing`() =
         runTest(testDispatcher) {
-            every { settings.lastKnownMode.isPrivate } returns true
+            every { settings.lastKnownModeIsPrivate } returns true
 
             secureTabManagerBinding.start()
             testDispatcher.scheduler.advanceUntilIdle()
@@ -118,7 +118,7 @@ class SecureTabManagerBindingTest {
     @Test
     fun `GIVEN in Normal browsing mode WHEN fragment is stopped THEN set window to un-secure`() =
         runTest(testDispatcher) {
-            every { settings.lastKnownMode.isPrivate } returns false
+            every { settings.lastKnownModeIsPrivate } returns false
 
             secureTabManagerBinding.start()
             testDispatcher.scheduler.advanceUntilIdle()

@@ -155,7 +155,7 @@ class AwesomeBarComposable(
         val clipboardBarBackground =
             edgeToEdgeClipboardBarBackground(
                 shouldUseEdgeToEdgeColors = isEdgeToEdgeBackgroundEnabled,
-                isPrivateMode = activity.components.activityPrivacy.isPrivate(customTabSessionId = null),
+                isPrivateMode = activity.components.browsingMode.isPrivate(customTabSessionId = null),
             )
         val showCurrentTabData = remember { components.settings.showAddressBarInFocusMode }
         val view = LocalView.current
@@ -329,7 +329,7 @@ class AwesomeBarComposable(
                     listOf(
                         BrowserToolbarToFenixSearchMapperMiddleware(
                             toolbarStore = toolbarStore,
-                            isPrivate = { activity.components.activityPrivacy.isPrivate(customTabSessionId = null) },
+                            isPrivate = { activity.components.browsingMode.isPrivate(customTabSessionId = null) },
                             scope = lifecycleScope,
                             browserStore = browserStore,
                         ),
@@ -337,7 +337,7 @@ class AwesomeBarComposable(
                             browserStore = browserStore,
                             scope = lifecycleScope,
                             appStore = components.appStore,
-                            isPrivate = { activity.components.activityPrivacy.isPrivate(customTabSessionId = null) },
+                            isPrivate = { activity.components.browsingMode.isPrivate(customTabSessionId = null) },
                         ),
                         FenixSearchMiddleware(
                             fragment = fragment,
@@ -349,7 +349,7 @@ class AwesomeBarComposable(
                             browserStore = browserStore,
                             toolbarStore = toolbarStore,
                             navController = navController,
-                            isPrivate = { activity.components.activityPrivacy.isPrivate(customTabSessionId = null) },
+                            isPrivate = { activity.components.browsingMode.isPrivate(customTabSessionId = null) },
                             shareUseCases = components.useCases.shareUseCases,
                             clipboardHandler = components.clipboardHandler,
                         ),

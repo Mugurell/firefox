@@ -346,7 +346,7 @@ class InstalledAddonDetailsFragmentTest {
         val navController = mockk<NavController>(relaxed = true)
         Navigation.setViewNavController(fragment.binding.root, navController)
 
-        every { testContext.components.activityPrivacy.isPrivate(customTabSessionId = null) } returns false
+        every { testContext.components.browsingMode.isPrivate(customTabSessionId = null) } returns false
 
         // Click the report button.
         fragment.binding.reportAddOn.performClick()
@@ -372,7 +372,7 @@ class InstalledAddonDetailsFragmentTest {
         every { selectOrAddTab.invoke(any(), any(), any(), any(), any()) } returns "some-tab-id"
         every { useCases.selectOrAddTab } returns selectOrAddTab
         every { testContext.components.useCases.tabsUseCases } returns useCases
-        every { testContext.components.activityPrivacy.isPrivate(customTabSessionId = null) } returns true
+        every { testContext.components.browsingMode.isPrivate(customTabSessionId = null) } returns true
         // We create the `binding` instance and bind the UI here because `onCreateView()` checks a late init variable
         // and we cannot easily mock it to skip the check.
         fragment.setBindingAndBindUI(

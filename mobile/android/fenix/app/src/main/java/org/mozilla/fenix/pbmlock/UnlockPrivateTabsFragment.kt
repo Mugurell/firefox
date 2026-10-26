@@ -27,7 +27,6 @@ import mozilla.components.support.base.feature.UserInteractionHandler
 import org.mozilla.fenix.GleanMetrics.PrivateBrowsingLocked
 import org.mozilla.fenix.HomeActivity
 import org.mozilla.fenix.R
-import org.mozilla.fenix.browser.browsingmode.BrowsingMode
 import org.mozilla.fenix.components.usecases.FenixBrowserUseCases
 import org.mozilla.fenix.e2e.SystemInsetsPaddedFragment
 import org.mozilla.fenix.ext.registerForActivityResult
@@ -128,7 +127,7 @@ class UnlockPrivateTabsFragment : Fragment(), UserInteractionHandler, SystemInse
                         fenixBrowserUseCases = requireComponents.useCases.fenixBrowserUseCases,
                     )
                 }
-                requireComponents.settings.lastKnownMode = BrowsingMode.Normal
+                requireComponents.settings.lastKnownModeIsPrivate = false
                 findNavController().navigate(UnlockPrivateTabsFragmentDirections.actionGlobalHome())
 
                 if (hasNormalTabs) {

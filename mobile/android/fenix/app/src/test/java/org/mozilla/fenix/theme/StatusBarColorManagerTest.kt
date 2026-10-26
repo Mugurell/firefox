@@ -16,7 +16,6 @@ import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.runTest
 import org.junit.Test
 import org.mozilla.fenix.browser.BrowserFragment
-import org.mozilla.fenix.browser.browsingmode.BrowsingMode
 import org.mozilla.fenix.components.AppStore
 import org.mozilla.fenix.components.appstate.AppAction
 import org.mozilla.fenix.components.appstate.AppState
@@ -32,7 +31,7 @@ class StatusBarColorManagerTest {
     private val testDispatcher = StandardTestDispatcher()
     private val themeManager: ThemeManager =
         mockk(relaxed = true) {
-            every { currentTheme } returns BrowsingMode.Normal
+            every { isPrivate } returns false
         }
     private val activity: Activity = mockk(relaxed = true)
     private val settings: Settings = mockk(relaxed = true)
@@ -197,7 +196,7 @@ class StatusBarColorManagerTest {
     @Test
     fun `GIVEN private browsing mode is enabled WHEN a tab strip fragment resumes THEN the gradient is hidden`() =
         runTest(testDispatcher) {
-            every { themeManager.currentTheme } returns BrowsingMode.Private
+            every { themeManager.isPrivate } returns true
 
             val manager = buildStatusBarColorManager(isTabStripEnabled = true)
             manager.onFragmentResumed(fragmentManager, homeFragment)

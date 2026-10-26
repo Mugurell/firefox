@@ -98,7 +98,7 @@ class MenuItemProvidersFactory(
 ) {
 
     private fun isTargetPrivate() =
-        context.components.activityPrivacy.isPrivate((target as? MenuTarget.CustomTab)?.customTabId)
+        context.components.browsingMode.isPrivate((target as? MenuTarget.CustomTab)?.customTabId)
 
     /** Build a [MenuItemProvider] for the given [FenixMenuItem]. */
     @Suppress("LongMethod", "CyclomaticComplexMethod")

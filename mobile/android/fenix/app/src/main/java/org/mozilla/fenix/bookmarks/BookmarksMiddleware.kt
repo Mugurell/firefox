@@ -23,7 +23,6 @@ import mozilla.components.feature.tabs.TabsUseCases
 import mozilla.components.lib.state.Middleware
 import mozilla.components.lib.state.Store
 import org.mozilla.fenix.bookmarks.importer.FenixImporterEvent
-import org.mozilla.fenix.browser.browsingmode.BrowsingMode
 import org.mozilla.fenix.components.bookmarks.BookmarksUseCase
 import org.mozilla.fenix.components.usecases.FenixBrowserUseCases
 
@@ -49,7 +48,7 @@ private const val SEARCH_DELAY_MS = 250L
  * @param shareBookmarks Invoked when the share option is selected from a menu. Allows sharing of one or more bookmarks
  * @param showTabsTray Invoked after opening tabs from menus.
  * @param resolveFolderTitle Invoked to lookup user-friendly bookmark titles.
- * @param getBrowsingMode Invoked when retrieving the app's current [BrowsingMode].
+ * @param isPrivate Invoked when retrieving whether the activity is private.
  * @param saveBookmarkSortOrder Invoked to persist the new sort order.
  * @param editBookmarkUseCase Commits a bookmark edit and updates the last-saved-folder cache atomically with respect to
  *   caller cancellation.
@@ -74,7 +73,7 @@ internal class BookmarksMiddleware(
     private val shareBookmarks: (List<BookmarkItem.Bookmark>) -> Unit = {},
     private val showTabsTray: (isPrivateMode: Boolean) -> Unit,
     private val resolveFolderTitle: (BookmarkNode) -> String,
-    private val getBrowsingMode: () -> BrowsingMode,
+    private val isPrivate: () -> Boolean,
     private val saveBookmarkSortOrder: suspend (BookmarksListSortOrder) -> Unit,
     private val editBookmarkUseCase: BookmarksUseCase.EditBookmarkUseCase,
     private val reportResultGlobally: (BookmarksGlobalResultReport) -> Unit,
@@ -155,7 +154,7 @@ internal class BookmarksMiddleware(
                 fenixBrowserUseCases.loadUrlOrSearch(
                     searchTermOrURL = action.item.url,
                     newTab = openBookmarksInNewTab,
-                    private = getBrowsingMode().isPrivate,
+                    private = isPrivate(),
                     flags = EngineSession.LoadUrlFlags.select(EngineSession.LoadUrlFlags.ALLOW_JAVASCRIPT_URL),
                 )
                 navigateToBrowser()

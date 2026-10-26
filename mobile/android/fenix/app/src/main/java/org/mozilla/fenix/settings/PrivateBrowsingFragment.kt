@@ -81,9 +81,7 @@ class PrivateBrowsingFragment : PreferenceFragmentCompat(), SystemInsetsPaddedFr
             onPreferenceChangeListener =
                 object : SharedPreferenceUpdater() {
                     override fun onPreferenceChange(preference: Preference, newValue: Any?): Boolean {
-                        if (
-                            requireComponents.activityPrivacy.isPrivate(customTabSessionId = null) && newValue == false
-                        ) {
+                        if (requireComponents.browsingMode.isPrivate(customTabSessionId = null) && newValue == false) {
                             activity?.window?.addFlags(WindowManager.LayoutParams.FLAG_SECURE)
                         } else {
                             activity?.window?.clearFlags(WindowManager.LayoutParams.FLAG_SECURE)
@@ -189,7 +187,7 @@ class PrivateBrowsingFragment : PreferenceFragmentCompat(), SystemInsetsPaddedFr
             if (pbmLockEnabled) {
                 requireComponents.settings.allowScreenshotsInPrivateMode = false
                 isChecked = false
-                if (requireComponents.activityPrivacy.isPrivate(customTabSessionId = null)) {
+                if (requireComponents.browsingMode.isPrivate(customTabSessionId = null)) {
                     activity?.window?.addFlags(WindowManager.LayoutParams.FLAG_SECURE)
                 }
             }

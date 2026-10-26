@@ -120,7 +120,7 @@ class RecentlyClosedFragment :
                 .value
         recentlyClosedController =
             DefaultRecentlyClosedController(
-                isPrivate = { requireComponents.activityPrivacy.isPrivate(customTabSessionId = null) },
+                isPrivate = { requireComponents.browsingMode.isPrivate(customTabSessionId = null) },
                 navController = findNavController(),
                 browserStore = requireComponents.core.store,
                 recentlyClosedStore = recentlyClosedFragmentStore,

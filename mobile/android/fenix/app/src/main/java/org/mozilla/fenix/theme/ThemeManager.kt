@@ -24,21 +24,17 @@ import mozilla.components.support.ktx.android.view.setNavigationBarColorCompat
 import mozilla.components.support.ktx.android.view.setStatusBarColorCompat
 import org.mozilla.fenix.HomeActivity
 import org.mozilla.fenix.R
-import org.mozilla.fenix.browser.browsingmode.BrowsingMode
 import org.mozilla.fenix.customtabs.ExternalAppBrowserActivity
 
 abstract class ThemeManager {
 
-    abstract var currentTheme: BrowsingMode
+    /** Whether the private theme is applied. */
+    abstract var isPrivate: Boolean
 
-    /** Returns the style resource corresponding to the [currentTheme]. */
+    /** Returns the style resource corresponding to [isPrivate]. */
     @get:StyleRes
     val currentThemeResource
-        get() =
-            when (currentTheme) {
-                BrowsingMode.Normal -> R.style.NormalTheme
-                BrowsingMode.Private -> R.style.PrivateTheme
-            }
+        get() = if (isPrivate) R.style.PrivateTheme else R.style.NormalTheme
 
     /**
      * Handles status bar theme change since the window does not dynamically recreate
@@ -48,24 +44,21 @@ abstract class ThemeManager {
     fun applyStatusBarTheme(activity: Activity) = applyStatusBarTheme(activity.window, activity)
 
     private fun applyStatusBarTheme(window: Window, context: Context) {
-        when (currentTheme) {
-            BrowsingMode.Normal -> {
-                when (context.resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK) {
-                    Configuration.UI_MODE_NIGHT_UNDEFINED, // We assume light here per Android doc's recommendation
-                    Configuration.UI_MODE_NIGHT_NO -> {
-                        updateLightSystemBars(window, context)
-                    }
-                    Configuration.UI_MODE_NIGHT_YES -> {
-                        clearLightSystemBars(window)
-                        setStatusBarColor(window, context)
-                        updateNavigationBar(window, context)
-                    }
+        if (isPrivate) {
+            clearLightSystemBars(window)
+            setStatusBarColor(window, context)
+            updateNavigationBar(window, context)
+        } else {
+            when (context.resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK) {
+                Configuration.UI_MODE_NIGHT_UNDEFINED, // We assume light here per Android doc's recommendation
+                Configuration.UI_MODE_NIGHT_NO -> {
+                    updateLightSystemBars(window, context)
                 }
-            }
-            BrowsingMode.Private -> {
-                clearLightSystemBars(window)
-                setStatusBarColor(window, context)
-                updateNavigationBar(window, context)
+                Configuration.UI_MODE_NIGHT_YES -> {
+                    clearLightSystemBars(window)
+                    setStatusBarColor(window, context)
+                    updateNavigationBar(window, context)
+                }
             }
         }
     }
@@ -131,12 +124,12 @@ abstract class ThemeManager {
 }
 
 class DefaultThemeManager(
-    currentTheme: BrowsingMode,
+    isPrivate: Boolean,
     private val activity: Activity,
 ) : ThemeManager() {
-    override var currentTheme: BrowsingMode = currentTheme
+    override var isPrivate: Boolean = isPrivate
         set(value) {
-            if (currentTheme != value) {
+            if (isPrivate != value) {
                 // ExternalAppBrowserActivity doesn't need to switch between private and non-private.
                 if (activity is ExternalAppBrowserActivity) return
                 // Don't recreate if activity is finishing
@@ -145,7 +138,7 @@ class DefaultThemeManager(
                 field = value
 
                 val intent = activity.intent ?: Intent().also { activity.intent = it }
-                intent.putExtra(HomeActivity.PRIVATE_BROWSING_MODE, value == BrowsingMode.Private)
+                intent.putExtra(HomeActivity.PRIVATE_BROWSING_MODE, value)
 
                 activity.recreate()
             }

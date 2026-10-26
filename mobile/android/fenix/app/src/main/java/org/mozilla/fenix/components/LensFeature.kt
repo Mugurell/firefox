@@ -94,7 +94,7 @@ class LensFeature(
     }
 
     private fun launchCameraActivity() {
-        val isPrivate = context.components.activityPrivacy.isPrivate(customTabSessionId = null)
+        val isPrivate = context.components.browsingMode.isPrivate(customTabSessionId = null)
         val intent = LensCameraActivity.newIntent(context, isPrivate = isPrivate)
         try {
             lensLauncher.launch(intent)

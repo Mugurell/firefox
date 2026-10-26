@@ -30,7 +30,6 @@ import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
-import org.mozilla.fenix.browser.browsingmode.BrowsingMode
 import org.mozilla.fenix.components.bookmarks.BookmarksUseCase
 import org.mozilla.fenix.components.bookmarks.LastSavedFolderCache
 import org.mozilla.fenix.components.usecases.FenixBrowserUseCases
@@ -48,7 +47,7 @@ class BookmarksMiddlewareTest {
     private lateinit var navigateToImportDialog: () -> Unit
     private lateinit var shareBookmarks: (List<BookmarkItem.Bookmark>) -> Unit
     private lateinit var showTabsTray: (Boolean) -> Unit
-    private lateinit var getBrowsingMode: () -> BrowsingMode
+    private lateinit var isPrivate: () -> Boolean
     private lateinit var lastSavedFolderCache: LastSavedFolderCache
     private lateinit var saveSortOrder: suspend (BookmarksListSortOrder) -> Unit
     private val resolveFolderTitle = { node: BookmarkNode ->
@@ -105,7 +104,7 @@ class BookmarksMiddlewareTest {
         navigateToImportDialog = {}
         shareBookmarks = {}
         showTabsTray = { _ -> }
-        getBrowsingMode = { BrowsingMode.Normal }
+        isPrivate = { false }
         lastSavedFolderCache = mockk(relaxed = true)
         saveSortOrder = {}
     }
@@ -421,7 +420,7 @@ class BookmarksMiddlewareTest {
         val url = "url"
         val bookmarkItem = BookmarkItem.Bookmark(url, "title", url, guid = "", position = null)
         val openBookmarksInNewTab = true
-        getBrowsingMode = { BrowsingMode.Normal }
+        isPrivate = { false }
         var navigated = false
         navigateToBrowser = { navigated = true }
 
@@ -448,7 +447,7 @@ class BookmarksMiddlewareTest {
             val url = "url"
             val bookmarkItem = BookmarkItem.Bookmark(url, "title", url, guid = "", position = null)
             val openBookmarksInNewTab = false
-            getBrowsingMode = { BrowsingMode.Normal }
+            isPrivate = { false }
             var navigated = false
             navigateToBrowser = { navigated = true }
 
@@ -3639,7 +3638,7 @@ class BookmarksMiddlewareTest {
             shareBookmarks = shareBookmarks,
             showTabsTray = showTabsTray,
             resolveFolderTitle = resolveFolderTitle,
-            getBrowsingMode = getBrowsingMode,
+            isPrivate = isPrivate,
             saveBookmarkSortOrder = saveSortOrder,
             editBookmarkUseCase = BookmarksUseCase.EditBookmarkUseCase(bookmarksStorage, lastSavedFolderCache),
             reportResultGlobally = reportResultGlobally,

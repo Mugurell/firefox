@@ -517,7 +517,7 @@ class FenixSearchMiddlewareTest {
 
         searchActionsCaptor.assertLastAction(SearchShortcutEngineSelected::class) {
             assertEquals(newSearchEngineSelection, it.engine)
-            assertFalse(it.browsingMode.isPrivate)
+            assertFalse(it.isPrivate)
             assertEquals(settings, it.settings)
         }
         assertSearchEngineSelectedTelemetryRecorded(newSearchEngineSelection.telemetryName())

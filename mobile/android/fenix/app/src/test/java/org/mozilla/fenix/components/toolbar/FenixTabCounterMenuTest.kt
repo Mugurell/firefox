@@ -15,7 +15,6 @@ import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.mozilla.fenix.R
-import org.mozilla.fenix.browser.browsingmode.BrowsingMode
 import org.robolectric.RobolectricTestRunner
 
 @RunWith(RobolectricTestRunner::class)
@@ -34,7 +33,7 @@ class FenixTabCounterMenuTest {
 
     @Test
     fun `return only the new tab item`() {
-        val items = menu.menuItems(showOnly = BrowsingMode.Normal)
+        val items = menu.menuItems(showOnlyPrivate = false)
         assertEquals(1, items.size)
 
         val item = items[0] as TextMenuCandidate
@@ -46,7 +45,7 @@ class FenixTabCounterMenuTest {
 
     @Test
     fun `return only the new private tab item`() {
-        val items = menu.menuItems(showOnly = BrowsingMode.Private)
+        val items = menu.menuItems(showOnlyPrivate = true)
         assertEquals(1, items.size)
 
         val item = items[0] as TextMenuCandidate

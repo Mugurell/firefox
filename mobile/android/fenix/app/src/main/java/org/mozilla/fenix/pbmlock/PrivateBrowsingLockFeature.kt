@@ -33,7 +33,6 @@ import mozilla.components.lib.state.ext.flow
 import mozilla.components.lib.state.ext.flowScoped
 import org.mozilla.fenix.GleanMetrics.PrivateBrowsingLocked
 import org.mozilla.fenix.R
-import org.mozilla.fenix.browser.browsingmode.BrowsingMode
 import org.mozilla.fenix.components.AppStore
 import org.mozilla.fenix.components.appstate.AppAction.PrivateBrowsingLockAction
 import org.mozilla.fenix.components.appstate.AppState
@@ -162,10 +161,10 @@ class PrivateBrowsingLockFeature(
     /**
      * Locks private tabs when the regular tabs activity switches to normal mode.
      *
-     * @param mode The [BrowsingMode] the regular tabs activity switched to.
+     * @param isPrivate Whether the regular tabs activity switched to private mode.
      */
-    fun onBrowsingModeChanged(mode: BrowsingMode) {
-        if (isFeatureEnabled && mode == BrowsingMode.Normal) {
+    fun onBrowsingModeChanged(isPrivate: Boolean) {
+        if (isFeatureEnabled && !isPrivate) {
             maybeLockPrivateMode()
         }
     }
@@ -319,7 +318,7 @@ class PrivateBrowsingLockUseCases(appStore: AppStore) {
  */
 fun Fragment.observePrivateModeLock(
     lockNormalMode: Boolean = false,
-    isPrivate: () -> Boolean = { requireComponents.activityPrivacy.isPrivate(customTabSessionId = null) },
+    isPrivate: () -> Boolean = { requireComponents.browsingMode.isPrivate(customTabSessionId = null) },
     onPrivateModeLocked: () -> Unit,
 ) {
     viewLifecycleOwner.run {

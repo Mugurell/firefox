@@ -61,7 +61,6 @@ import org.mozilla.fenix.GleanMetrics.Events
 import org.mozilla.fenix.GleanMetrics.TabsTray
 import org.mozilla.fenix.GleanMetrics.TrackingProtection
 import org.mozilla.fenix.R
-import org.mozilla.fenix.browser.browsingmode.BrowsingMode
 import org.mozilla.fenix.components.AppStore
 import org.mozilla.fenix.components.TabCollectionStorage
 import org.mozilla.fenix.components.accounts.FenixFxAEntryPoint
@@ -190,7 +189,7 @@ class DefaultTabManagerControllerTest {
 
         verifyOrder {
             profiler.getProfilerTime()
-            settings.lastKnownMode = BrowsingMode.Private
+            settings.lastKnownModeIsPrivate = true
             fenixBrowserUseCases.addNewHomepageTab(private = true)
             navController.navigate(TabManagementFragmentDirections.actionGlobalHome())
             TabsTray.closed.record(NoExtras())
@@ -237,7 +236,7 @@ class DefaultTabManagerControllerTest {
 
         verifyOrder {
             profiler.getProfilerTime()
-            settings.lastKnownMode = BrowsingMode.Normal
+            settings.lastKnownModeIsPrivate = false
             fenixBrowserUseCases.addNewHomepageTab(private = false)
             navController.navigate(TabManagementFragmentDirections.actionGlobalHome())
             TabsTray.closed.record(NoExtras())

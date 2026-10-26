@@ -33,7 +33,6 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.mozilla.fenix.GleanMetrics.RecentlyClosedTabs
 import org.mozilla.fenix.R
-import org.mozilla.fenix.browser.browsingmode.BrowsingMode
 import org.mozilla.fenix.components.share.ShareSheetChooserAction
 import org.mozilla.fenix.components.share.ShareSource
 import org.mozilla.fenix.components.usecases.ShareUseCases
@@ -45,7 +44,7 @@ import org.robolectric.RobolectricTestRunner
 @RunWith(RobolectricTestRunner::class)
 class DefaultRecentlyClosedControllerTest {
     private val navController: NavController = mockk(relaxed = true)
-    private var currentMode: BrowsingMode = BrowsingMode.Normal
+    private var isPrivateMode = false
 
     private val captureActionsMiddleware = CaptureActionsMiddleware<BrowserState, BrowserAction>()
     private val browserStore: BrowserStore = BrowserStore(middleware = listOf(captureActionsMiddleware))
@@ -83,7 +82,7 @@ class DefaultRecentlyClosedControllerTest {
 
         val tabUrls = mutableListOf<String>()
 
-        currentMode = BrowsingMode.Normal
+        isPrivateMode = false
         var controller = createController(openToBrowser = { url -> tabUrls.add(url) })
         assertNull(RecentlyClosedTabs.menuOpenInNormalTab.testGetValue())
 
@@ -97,7 +96,7 @@ class DefaultRecentlyClosedControllerTest {
 
         tabUrls.clear()
 
-        currentMode = BrowsingMode.Private
+        isPrivateMode = true
         controller = createController(openToBrowser = { url -> tabUrls.add(url) })
         assertNull(RecentlyClosedTabs.menuOpenInPrivateTab.testGetValue())
 
@@ -262,7 +261,7 @@ class DefaultRecentlyClosedControllerTest {
     @Test
     fun handleRestore() = runTest {
         val item: TabState = mockk(relaxed = true)
-        currentMode = BrowsingMode.Normal
+        isPrivateMode = false
 
         assertNull(RecentlyClosedTabs.openTab.testGetValue())
 
@@ -283,7 +282,7 @@ class DefaultRecentlyClosedControllerTest {
 
         assertNull(RecentlyClosedTabs.openTab.testGetValue())
 
-        currentMode = BrowsingMode.Normal
+        isPrivateMode = false
 
         controller.handleRestore(item)
 
@@ -303,7 +302,7 @@ class DefaultRecentlyClosedControllerTest {
         runTest {
             val item: TabState = mockk(relaxed = true)
             var capturedUrl: String? = null
-            currentMode = BrowsingMode.Private
+            isPrivateMode = true
             val controller =
                 createController(
                     scope = this,
@@ -352,7 +351,7 @@ class DefaultRecentlyClosedControllerTest {
         openToBrowser: (String) -> Unit = { _ -> },
     ): RecentlyClosedController {
         return DefaultRecentlyClosedController(
-            isPrivate = { currentMode.isPrivate },
+            isPrivate = { isPrivateMode },
             navController = navController,
             browserStore = browserStore,
             recentlyClosedStore = recentlyClosedStore,

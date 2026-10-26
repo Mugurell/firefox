@@ -13,7 +13,6 @@ import mozilla.components.feature.top.sites.TopSite
 import mozilla.components.service.pocket.PocketStory
 import org.junit.Before
 import org.junit.Test
-import org.mozilla.fenix.browser.browsingmode.BrowsingMode
 import org.mozilla.fenix.components.appstate.AppState
 import org.mozilla.fenix.home.bookmarks.Bookmark
 import org.mozilla.fenix.home.bookmarks.controller.BookmarksController
@@ -195,10 +194,10 @@ class SessionControlInteractorTest {
 
     @Test
     fun `WHEN private mode button is clicked THEN the click is handled`() {
-        val newMode = BrowsingMode.Private
+        val isPrivate = true
 
-        interactor.onPrivateModeButtonClicked(newMode)
-        verify { privateBrowsingController.handlePrivateModeButtonClicked(newMode) }
+        interactor.onPrivateModeButtonClicked(isPrivate)
+        verify { privateBrowsingController.handlePrivateModeButtonClicked(isPrivate) }
     }
 
     @Test

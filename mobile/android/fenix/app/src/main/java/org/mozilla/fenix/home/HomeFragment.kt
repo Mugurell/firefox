@@ -98,7 +98,6 @@ import org.mozilla.fenix.biometricauthentication.BiometricAuthenticationManager
 import org.mozilla.fenix.browser.BrowserFragmentDirections
 import org.mozilla.fenix.browser.SwipeGestureLayout
 import org.mozilla.fenix.browser.TabPreview
-import org.mozilla.fenix.browser.browsingmode.BrowsingMode
 import org.mozilla.fenix.browser.tabstrip.TabStrip
 import org.mozilla.fenix.browser.tabstrip.TabStripColors
 import org.mozilla.fenix.browser.tabstrip.ext.handleTabStripLastTabClosed
@@ -226,7 +225,7 @@ class HomeFragment : Fragment(), UserInteractionHandler, OnLongPressedListener {
 
     private var awesomeBarComposable: AwesomeBarComposable? = null
 
-    private fun isActivityPrivate() = requireComponents.activityPrivacy.isPrivate(customTabSessionId = null)
+    private fun isActivityPrivate() = requireComponents.browsingMode.isPrivate(customTabSessionId = null)
 
     private val collectionStorageObserver =
         object : TabCollectionStorage.Observer {
@@ -1116,7 +1115,7 @@ class HomeFragment : Fragment(), UserInteractionHandler, OnLongPressedListener {
                         isLastTabClosedPrivate = isPrivate,
                         navigateFromId = R.id.homeFragment,
                         appStore = requireComponents.appStore,
-                        browsingMode = BrowsingMode.fromBoolean(isActivityPrivate()),
+                        isActivityPrivate = isActivityPrivate(),
                         navController = findNavController(),
                     ) {
                         showUndoSnackbar(requireContext().tabClosedUndoMessage(isPrivate))
@@ -1361,11 +1360,7 @@ class HomeFragment : Fragment(), UserInteractionHandler, OnLongPressedListener {
             .nav(
                 R.id.homeFragment,
                 HomeFragmentDirections.actionGlobalTabManagementFragment(
-                    page =
-                        when (BrowsingMode.fromBoolean(isActivityPrivate())) {
-                            BrowsingMode.Normal -> Page.NormalTabs
-                            BrowsingMode.Private -> Page.PrivateTabs
-                        }
+                    page = if (isActivityPrivate()) Page.PrivateTabs else Page.NormalTabs
                 ),
             )
     }

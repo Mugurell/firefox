@@ -28,9 +28,6 @@ import org.mozilla.fenix.GleanMetrics.Events
 import org.mozilla.fenix.R
 import org.mozilla.fenix.browser.BrowserFragmentDirections
 import org.mozilla.fenix.browser.browsingmode.BrowsingMode
-import org.mozilla.fenix.browser.browsingmode.BrowsingMode.Normal
-import org.mozilla.fenix.browser.browsingmode.BrowsingMode.Private
-import org.mozilla.fenix.components.ActivityPrivacy
 import org.mozilla.fenix.components.AppStore
 import org.mozilla.fenix.components.appstate.AppState
 import org.mozilla.fenix.components.appstate.search.SearchState
@@ -57,7 +54,7 @@ class ToolbarVerticalGesturesHandlerTest(private val scenario: Scenario) {
     private val appStore =
         AppStore(AppState(searchState = SearchState.EMPTY.copy(isSearchActive = scenario.isSearchActive)))
     private val navController: NavController = mockk(relaxed = true)
-    val activityPrivacy: ActivityPrivacy = mockk()
+    val browsingMode: BrowsingMode = mockk()
 
     @Before
     fun setup() {
@@ -79,7 +76,7 @@ class ToolbarVerticalGesturesHandlerTest(private val scenario: Scenario) {
         every { mockDestination.id } returns R.id.browserFragment
         every { navController.currentDestination } returns mockDestination
 
-        every { activityPrivacy.isPrivate("") } returns scenario.browsingMode.isPrivate
+        every { browsingMode.isPrivate("") } returns scenario.isPrivate
 
         val rootView =
             spyk(View(testContext)).also {
@@ -110,7 +107,7 @@ class ToolbarVerticalGesturesHandlerTest(private val scenario: Scenario) {
         val gesturesHandler =
             ToolbarVerticalGesturesHandler(
                 appStore = appStore,
-                isPrivate = { scenario.browsingMode.isPrivate },
+                isPrivate = { scenario.isPrivate },
                 toolbarLayout = toolbarLayout,
                 navBarLayout = navbarLayout,
                 toolbarPosition = scenario.toolbarPosition,
@@ -118,7 +115,7 @@ class ToolbarVerticalGesturesHandlerTest(private val scenario: Scenario) {
             )
         val expectedTabsTrayNavigations = if (scenario.shouldOpenTabsTray) 1 else 0
         val expectedTabsTrayPage =
-            if (scenario.browsingMode.isPrivate) {
+            if (scenario.isPrivate) {
                 Page.PrivateTabs
             } else {
                 Page.NormalTabs
@@ -201,7 +198,7 @@ class ToolbarVerticalGesturesHandlerTest(private val scenario: Scenario) {
                 ),
                 TopToolbarSwipe.copy(
                     initialSwipe = swipeDown(fromScreenTop = true),
-                    browsingMode = Private,
+                    isPrivate = true,
                     shouldOpenTabsTray = true,
                 ),
                 TopToolbarSwipe.copy(
@@ -252,7 +249,7 @@ class ToolbarVerticalGesturesHandlerTest(private val scenario: Scenario) {
                 BottomToolbarSwipe.copy(
                     initialSwipe = swipeUp(fromScreenTop = false, toolbarHeight = TOOLBAR_HEIGHT * 2),
                     isNavbarShown = true,
-                    browsingMode = Private,
+                    isPrivate = true,
                     shouldOpenTabsTray = true,
                 ),
                 BottomToolbarSwipe.copy(
@@ -282,7 +279,7 @@ class ToolbarVerticalGesturesHandlerTest(private val scenario: Scenario) {
                     initialSwipe =
                         swipeUp(fromScreenTop = false, toolbarHeight = TOOLBAR_HEIGHT * 2, yOffset = -TOOLBAR_HEIGHT),
                     isNavbarShown = true,
-                    browsingMode = Private,
+                    isPrivate = true,
                     shouldOpenTabsTray = true,
                 ),
                 BottomToolbarSwipe.copy(
@@ -315,7 +312,7 @@ class ToolbarVerticalGesturesHandlerTest(private val scenario: Scenario) {
                 BottomToolbarSwipe.copy(
                     initialSwipe = swipeUp(fromScreenTop = false),
                     isNavbarShown = false,
-                    browsingMode = Private,
+                    isPrivate = true,
                     shouldOpenTabsTray = true,
                 ),
                 BottomToolbarSwipe.copy(
@@ -380,7 +377,7 @@ class ToolbarVerticalGesturesHandlerTest(private val scenario: Scenario) {
                 ),
                 TopToolbarSwipe.copy(
                     initialSwipe = swipeDown(fromScreenTop = true, swipeDistance = 10),
-                    browsingMode = Private,
+                    isPrivate = true,
                     shouldOpenTabsTray = false,
                 ),
                 TopToolbarSwipe.copy(
@@ -416,7 +413,7 @@ class ToolbarVerticalGesturesHandlerTest(private val scenario: Scenario) {
                     initialSwipe =
                         swipeUp(fromScreenTop = false, toolbarHeight = TOOLBAR_HEIGHT * 2, swipeDistance = 10),
                     isNavbarShown = true,
-                    browsingMode = Private,
+                    isPrivate = true,
                     shouldOpenTabsTray = false,
                 ),
                 // Swipe vertically on the bottom toolbar while the navbar is also shown.
@@ -451,7 +448,7 @@ class ToolbarVerticalGesturesHandlerTest(private val scenario: Scenario) {
                             yOffset = -TOOLBAR_HEIGHT,
                         ),
                     isNavbarShown = true,
-                    browsingMode = Private,
+                    isPrivate = true,
                     shouldOpenTabsTray = false,
                 ),
                 // Swipe vertically on the bottom toolbar with navbar not shown.
@@ -468,7 +465,7 @@ class ToolbarVerticalGesturesHandlerTest(private val scenario: Scenario) {
                 BottomToolbarSwipe.copy(
                     initialSwipe = swipeUp(fromScreenTop = false, swipeDistance = 10),
                     isNavbarShown = false,
-                    browsingMode = Private,
+                    isPrivate = true,
                     shouldOpenTabsTray = false,
                 ),
                 // /////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -484,7 +481,7 @@ class ToolbarVerticalGesturesHandlerTest(private val scenario: Scenario) {
                 TopToolbarSwipe.copy(
                     initialSwipe = swipeDown(fromScreenTop = true, swipeDistance = 10),
                     followupSwipe = swipeDown(fromScreenTop = true, swipeDistance = 40),
-                    browsingMode = Private,
+                    isPrivate = true,
                     shouldOpenTabsTray = true,
                 ),
                 TopToolbarSwipe.copy(
@@ -529,7 +526,7 @@ class ToolbarVerticalGesturesHandlerTest(private val scenario: Scenario) {
                     followupSwipe =
                         swipeUp(fromScreenTop = false, toolbarHeight = TOOLBAR_HEIGHT * 2, swipeDistance = 40),
                     isNavbarShown = true,
-                    browsingMode = Private,
+                    isPrivate = true,
                     shouldOpenTabsTray = true,
                 ),
                 // Swipe vertically on the bottom toolbar while the navbar is also shown.
@@ -585,7 +582,7 @@ class ToolbarVerticalGesturesHandlerTest(private val scenario: Scenario) {
                             yOffset = -TOOLBAR_HEIGHT,
                         ),
                     isNavbarShown = true,
-                    browsingMode = Private,
+                    isPrivate = true,
                     shouldOpenTabsTray = true,
                 ),
                 // Swipe vertically on the bottom toolbar with navbar not shown.
@@ -605,7 +602,7 @@ class ToolbarVerticalGesturesHandlerTest(private val scenario: Scenario) {
                     initialSwipe = swipeUp(fromScreenTop = false, swipeDistance = 10),
                     followupSwipe = swipeUp(fromScreenTop = false, swipeDistance = 40),
                     isNavbarShown = false,
-                    browsingMode = Private,
+                    isPrivate = true,
                     shouldOpenTabsTray = true,
                 ),
                 // ///////////////////////////////////////////////////////////////////////////////////////
@@ -645,7 +642,7 @@ class ToolbarVerticalGesturesHandlerTest(private val scenario: Scenario) {
             Scenario(
                 toolbarPosition = TOP,
                 isNavbarShown = false,
-                browsingMode = Normal,
+                isPrivate = false,
                 initialSwipe =
                     Swipe(
                         start = PointF(0f, 10f),
@@ -658,7 +655,7 @@ class ToolbarVerticalGesturesHandlerTest(private val scenario: Scenario) {
             Scenario(
                 toolbarPosition = BOTTOM,
                 isNavbarShown = false,
-                browsingMode = Normal,
+                isPrivate = false,
                 initialSwipe =
                     Swipe(
                         start = PointF(0f, 10f),
@@ -755,7 +752,7 @@ class ToolbarVerticalGesturesHandlerTest(private val scenario: Scenario) {
     data class ToolbarVerticalGesturesHandlerTestScenario(
         val toolbarPosition: ToolbarPosition,
         val isNavbarShown: Boolean,
-        val browsingMode: BrowsingMode,
+        val isPrivate: Boolean,
         val initialSwipe: Swipe,
         val followupSwipe: Swipe? = null,
         val systemGestureInsetBottom: Int = 0,

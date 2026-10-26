@@ -22,7 +22,6 @@ import mozilla.components.lib.state.Action
 import mozilla.components.lib.state.Middleware
 import mozilla.components.lib.state.State
 import mozilla.components.lib.state.Store
-import org.mozilla.fenix.browser.browsingmode.BrowsingMode
 import org.mozilla.fenix.components.Components
 import org.mozilla.fenix.components.metrics.MetricsUtils
 import org.mozilla.fenix.search.SearchFragmentAction.Init
@@ -231,7 +230,7 @@ fun createInitialSearchFragmentState(
     isAndroidAutomotiveAvailable: Boolean = context.isAndroidAutomotiveAvailable(),
 ): SearchFragmentState {
     val settings = components.settings
-    val browsingMode = BrowsingMode.fromBoolean(components.activityPrivacy.isPrivate(customTabSessionId = null))
+    val isPrivate = components.browsingMode.isPrivate(customTabSessionId = null)
     val tab = tabId?.let { components.core.store.state.findTab(it) }
     val currentTabData = tab?.let {
         CurrentTabData(
@@ -261,7 +260,7 @@ fun createInitialSearchFragmentState(
         defaultEngine = null,
         showSearchSuggestionsFromCurrentEngine =
             shouldShowSearchSuggestions(
-                browsingMode = browsingMode,
+                isPrivate = isPrivate,
                 settings = settings,
             ),
         showSearchSuggestionsHint = false,
@@ -275,20 +274,18 @@ fun createInitialSearchFragmentState(
         showAllSyncedTabsSuggestions = settings.shouldShowSyncedTabsSuggestions,
         showSessionSuggestionsForCurrentEngine = false,
         showAllSessionSuggestions = true,
-        showSponsoredSuggestions =
-            browsingMode == BrowsingMode.Normal && settings.enableFxSuggest && settings.showSponsoredSuggestions,
-        showNonSponsoredSuggestions =
-            browsingMode == BrowsingMode.Normal && settings.enableFxSuggest && settings.showNonSponsoredSuggestions,
+        showSponsoredSuggestions = !isPrivate && settings.enableFxSuggest && settings.showSponsoredSuggestions,
+        showNonSponsoredSuggestions = !isPrivate && settings.enableFxSuggest && settings.showNonSponsoredSuggestions,
         showStocksSuggestions = shouldShowCardSuggestions(settings) && settings.shouldShowSearchOptimizationStockCard,
         showSportsSuggestions = shouldShowCardSuggestions(settings) && settings.shouldShowSearchOptimizationSportCard,
         showFlightsSuggestions = shouldShowCardSuggestions(settings) && settings.shouldShowSearchOptimizationFlightCard,
         showTrendingSearches =
             shouldShowTrendingSearchSuggestions(
-                browsingMode = browsingMode,
+                isPrivate = isPrivate,
                 settings = settings,
                 isTrendingSuggestionSupported =
                     components.core.store.state.search
-                        .selectedOrDefaultSearchEngine(private = browsingMode.isPrivate)
+                        .selectedOrDefaultSearchEngine(private = isPrivate)
                         ?.trendingUrl != null,
             ),
         showRecentSearches = settings.shouldShowRecentSearchSuggestions,
@@ -349,14 +346,14 @@ sealed class SearchFragmentAction : Action {
     /** Action when default search engine is selected. */
     data class SearchDefaultEngineSelected(
         val engine: SearchEngine,
-        val browsingMode: BrowsingMode,
+        val isPrivate: Boolean,
         val settings: Settings,
     ) : SearchEnginesSelectedActions()
 
     /** Action when shortcut search engine is selected. */
     data class SearchShortcutEngineSelected(
         val engine: SearchEngine,
-        val browsingMode: BrowsingMode,
+        val isPrivate: Boolean,
         val settings: Settings,
     ) : SearchEnginesSelectedActions()
 
@@ -430,8 +427,7 @@ private fun searchStateReducer(state: SearchFragmentState, action: SearchFragmen
         is SearchFragmentAction.SearchDefaultEngineSelected ->
             state.copy(
                 searchEngineSource = SearchEngineSource.Default(action.engine),
-                showSearchSuggestionsFromCurrentEngine =
-                    shouldShowSearchSuggestions(action.browsingMode, action.settings),
+                showSearchSuggestionsFromCurrentEngine = shouldShowSearchSuggestions(action.isPrivate, action.settings),
                 showClipboardSuggestions = action.settings.shouldShowClipboardSuggestions,
                 showSearchTermHistory = action.settings.shouldShowHistorySuggestions,
                 showHistorySuggestionsForCurrentEngine = false, // we'll show all history
@@ -442,13 +438,9 @@ private fun searchStateReducer(state: SearchFragmentState, action: SearchFragmen
                 showAllSyncedTabsSuggestions = action.settings.shouldShowSyncedTabsSuggestions,
                 showSessionSuggestionsForCurrentEngine = false, // we'll show all local tabs
                 showSponsoredSuggestions =
-                    action.browsingMode == BrowsingMode.Normal &&
-                        action.settings.enableFxSuggest &&
-                        action.settings.showSponsoredSuggestions,
+                    !action.isPrivate && action.settings.enableFxSuggest && action.settings.showSponsoredSuggestions,
                 showNonSponsoredSuggestions =
-                    action.browsingMode == BrowsingMode.Normal &&
-                        action.settings.enableFxSuggest &&
-                        action.settings.showNonSponsoredSuggestions,
+                    !action.isPrivate && action.settings.enableFxSuggest && action.settings.showNonSponsoredSuggestions,
                 showStocksSuggestions =
                     shouldShowCardSuggestions(action.settings) && action.settings.shouldShowSearchOptimizationStockCard,
                 showSportsSuggestions =
@@ -459,7 +451,7 @@ private fun searchStateReducer(state: SearchFragmentState, action: SearchFragmen
                 showAllSessionSuggestions = true,
                 showTrendingSearches =
                     shouldShowTrendingSearchSuggestions(
-                        browsingMode = action.browsingMode,
+                        isPrivate = action.isPrivate,
                         settings = action.settings,
                         isTrendingSuggestionSupported = action.engine.trendingUrl != null,
                     ),
@@ -468,8 +460,7 @@ private fun searchStateReducer(state: SearchFragmentState, action: SearchFragmen
         is SearchFragmentAction.SearchShortcutEngineSelected ->
             state.copy(
                 searchEngineSource = SearchEngineSource.Shortcut(action.engine),
-                showSearchSuggestionsFromCurrentEngine =
-                    shouldShowSearchSuggestions(action.browsingMode, action.settings),
+                showSearchSuggestionsFromCurrentEngine = shouldShowSearchSuggestions(action.isPrivate, action.settings),
                 showClipboardSuggestions = action.settings.shouldShowClipboardSuggestions,
                 showSearchTermHistory = action.settings.shouldShowHistorySuggestions,
                 showHistorySuggestionsForCurrentEngine =
@@ -490,7 +481,7 @@ private fun searchStateReducer(state: SearchFragmentState, action: SearchFragmen
                 showFlightsSuggestions = false,
                 showTrendingSearches =
                     shouldShowTrendingSearchSuggestions(
-                        browsingMode = action.browsingMode,
+                        isPrivate = action.isPrivate,
                         settings = action.settings,
                         isTrendingSuggestionSupported = action.engine.trendingUrl != null,
                     ),
@@ -623,36 +614,32 @@ private fun searchStateReducer(state: SearchFragmentState, action: SearchFragmen
 /**
  * Check whether search suggestions should be shown in the AwesomeBar.
  *
- * @param browsingMode Current browsing mode: normal or private.
+ * @param isPrivate Whether browsing in private mode.
  * @param settings Persistence layer containing user option's for showing search suggestions.
  * @return `true` if search suggestions should be shown `false` otherwise.
  */
 @VisibleForTesting
 internal fun shouldShowSearchSuggestions(
-    browsingMode: BrowsingMode,
+    isPrivate: Boolean,
     settings: Settings,
-) =
-    when (browsingMode) {
-        BrowsingMode.Normal -> settings.shouldShowSearchSuggestions
-        BrowsingMode.Private -> settings.shouldShowSearchSuggestions && settings.shouldShowSearchSuggestionsInPrivate
-    }
+) = settings.shouldShowSearchSuggestions && (!isPrivate || settings.shouldShowSearchSuggestionsInPrivate)
 
 /**
  * Returns true if trending search suggestions should be shown to the user.
  *
- * @param browsingMode Current browsing mode: normal or private.
+ * @param isPrivate Whether browsing in private mode.
  * @param settings Persistence layer containing user option's for showing search suggestions.
  * @param isTrendingSuggestionSupported is true when trending URL is available.
  */
 @VisibleForTesting
 internal fun shouldShowTrendingSearchSuggestions(
-    browsingMode: BrowsingMode,
+    isPrivate: Boolean,
     settings: Settings,
     isTrendingSuggestionSupported: Boolean,
 ) =
     settings.trendingSearchSuggestionsEnabled &&
         isTrendingSuggestionSupported &&
-        shouldShowSearchSuggestions(browsingMode, settings)
+        shouldShowSearchSuggestions(isPrivate, settings)
 
 /**
  * Check whether search optimization cards should be shown in the AwesomeBar.

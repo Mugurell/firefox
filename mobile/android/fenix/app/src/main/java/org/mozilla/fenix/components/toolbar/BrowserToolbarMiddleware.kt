@@ -96,9 +96,6 @@ import org.mozilla.fenix.GleanMetrics.Translations
 import org.mozilla.fenix.NavGraphDirections
 import org.mozilla.fenix.R
 import org.mozilla.fenix.browser.BrowserFragmentDirections
-import org.mozilla.fenix.browser.browsingmode.BrowsingMode
-import org.mozilla.fenix.browser.browsingmode.BrowsingMode.Normal
-import org.mozilla.fenix.browser.browsingmode.BrowsingMode.Private
 import org.mozilla.fenix.browser.readermode.ReaderModeController
 import org.mozilla.fenix.browser.store.BrowserScreenAction
 import org.mozilla.fenix.browser.store.BrowserScreenStore
@@ -365,22 +362,18 @@ class BrowserToolbarMiddleware(
                 navController.nav(
                     R.id.browserFragment,
                     BrowserFragmentDirections.actionGlobalTabManagementFragment(
-                        page =
-                            when (BrowsingMode.fromBoolean(isPrivate())) {
-                                Normal -> Page.NormalTabs
-                                Private -> Page.PrivateTabs
-                            }
+                        page = if (isPrivate()) Page.PrivateTabs else Page.NormalTabs
                     ),
                 )
 
                 next(action)
             }
             is AddNewTab -> {
-                openNewTab(Normal)
+                openNewTab(isPrivateTab = false)
                 next(action)
             }
             is AddNewPrivateTab -> {
-                openNewTab(Private)
+                openNewTab(isPrivateTab = true)
                 next(action)
             }
             is CloseCurrentTab -> {
@@ -939,11 +932,11 @@ class BrowserToolbarMiddleware(
 
     private fun buildProgressBar(progress: Int = 0) = ProgressBarConfig(progress)
 
-    private fun openNewTab(browsingMode: BrowsingMode) {
-        settings.lastKnownMode = browsingMode
+    private fun openNewTab(isPrivateTab: Boolean) {
+        settings.lastKnownModeIsPrivate = isPrivateTab
 
         if (settings.enableHomepageAsNewTab) {
-            useCases.fenixBrowserUseCases.addNewHomepageTab(private = browsingMode.isPrivate)
+            useCases.fenixBrowserUseCases.addNewHomepageTab(private = isPrivateTab)
         } else {
             val focusOnAddressBar = !settings.enableHomepageSearchBar && !settings.enableHomepageTrendingRecentSearch
 
@@ -1456,11 +1449,7 @@ class BrowserToolbarMiddleware(
                 ActionButtonRes(
                     drawableResId = iconsR.drawable.mozac_ic_lightning_24,
                     contentDescription = summariesR.string.mozac_summarize_settings_summarize_pages,
-                    state =
-                        when (BrowsingMode.fromBoolean(isPrivate())) {
-                            Normal -> DEFAULT
-                            Private -> DISABLED
-                        },
+                    state = if (isPrivate()) DISABLED else DEFAULT,
                     onClick = SummarizeClicked(source),
                 )
         }.run {

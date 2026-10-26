@@ -8,7 +8,6 @@ import androidx.navigation.NavController
 import mozilla.telemetry.glean.private.NoExtras
 import org.mozilla.fenix.GleanMetrics.Homepage
 import org.mozilla.fenix.R
-import org.mozilla.fenix.browser.browsingmode.BrowsingMode
 import org.mozilla.fenix.components.usecases.FenixBrowserUseCases
 import org.mozilla.fenix.home.privatebrowsing.interactor.PrivateBrowsingInteractor
 import org.mozilla.fenix.settings.SupportUtils
@@ -20,7 +19,7 @@ interface PrivateBrowsingController {
     fun handleLearnMoreClicked()
 
     /** @see [PrivateBrowsingInteractor.onPrivateModeButtonClicked] */
-    fun handlePrivateModeButtonClicked(newMode: BrowsingMode)
+    fun handlePrivateModeButtonClicked(isPrivate: Boolean)
 }
 
 /** The default implementation of [PrivateBrowsingController]. */
@@ -44,16 +43,16 @@ class DefaultPrivateBrowsingController(
         )
     }
 
-    override fun handlePrivateModeButtonClicked(newMode: BrowsingMode) {
+    override fun handlePrivateModeButtonClicked(isPrivate: Boolean) {
         Homepage.privateModeIconTapped.record(NoExtras())
 
         if (settings.enableHomepageAsNewTab) {
-            fenixBrowserUseCases.addNewHomepageTab(private = newMode.isPrivate)
+            fenixBrowserUseCases.addNewHomepageTab(private = isPrivate)
         }
 
-        settings.lastKnownMode = newMode
+        settings.lastKnownModeIsPrivate = isPrivate
 
-        if (newMode == BrowsingMode.Private) {
+        if (isPrivate) {
             settings.incrementNumTimesPrivateModeOpened()
         }
     }

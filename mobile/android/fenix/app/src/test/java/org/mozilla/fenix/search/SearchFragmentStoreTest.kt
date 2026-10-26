@@ -30,7 +30,6 @@ import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.mozilla.fenix.HomeActivity
-import org.mozilla.fenix.browser.browsingmode.BrowsingMode
 import org.mozilla.fenix.components.AppStore
 import org.mozilla.fenix.components.Components
 import org.mozilla.fenix.components.appstate.AppState
@@ -58,7 +57,7 @@ class SearchFragmentStoreTest {
     fun setup() {
         MockKAnnotations.init(this)
         every { components.settings } returns settings
-        every { components.activityPrivacy.isPrivate(customTabSessionId = null) } returns false
+        every { components.browsingMode.isPrivate(customTabSessionId = null) } returns false
         every { searchEngine.trendingUrl } returns null
 
         appStore = AppStore(initialState = AppState())
@@ -134,14 +133,14 @@ class SearchFragmentStoreTest {
             ),
         )
 
-        verify(exactly = 3) { shouldShowSearchSuggestions(BrowsingMode.Normal, settings) }
+        verify(exactly = 3) { shouldShowSearchSuggestions(false, settings) }
     }
 
     @Test
     fun `createInitialSearchFragmentState with no tab in private browsing mode`() {
         appStore = AppStore(initialState = AppState())
         every { components.appStore } returns appStore
-        every { components.activityPrivacy.isPrivate(customTabSessionId = null) } returns true
+        every { components.browsingMode.isPrivate(customTabSessionId = null) } returns true
         every { components.core.store.state } returns BrowserState()
         every { settings.shouldShowHistorySuggestions } returns true
         every { settings.shouldShowSearchSuggestions } returns true
@@ -188,7 +187,7 @@ class SearchFragmentStoreTest {
         every { settings.shouldUseBottomToolbar } returns true
         appStore = AppStore(initialState = AppState())
         every { components.appStore } returns appStore
-        every { components.activityPrivacy.isPrivate(customTabSessionId = null) } returns true
+        every { components.browsingMode.isPrivate(customTabSessionId = null) } returns true
         every { components.core.store.state } returns
             BrowserState(
                 tabs =
@@ -407,7 +406,7 @@ class SearchFragmentStoreTest {
             store.dispatch(
                 SearchFragmentAction.SearchDefaultEngineSelected(
                     engine = searchEngine,
-                    browsingMode = BrowsingMode.Normal,
+                    isPrivate = false,
                     settings = settings,
                 )
             )
@@ -424,7 +423,7 @@ class SearchFragmentStoreTest {
             store.dispatch(
                 SearchFragmentAction.SearchDefaultEngineSelected(
                     engine = searchEngine,
-                    browsingMode = BrowsingMode.Normal,
+                    isPrivate = false,
                     settings = settings,
                 )
             )
@@ -440,7 +439,7 @@ class SearchFragmentStoreTest {
         store.dispatch(
             SearchFragmentAction.SearchDefaultEngineSelected(
                 engine = searchEngine,
-                browsingMode = BrowsingMode.Normal,
+                isPrivate = false,
                 settings = settings,
             )
         )
@@ -465,7 +464,7 @@ class SearchFragmentStoreTest {
             store.dispatch(
                 SearchFragmentAction.SearchShortcutEngineSelected(
                     engine = newEngine,
-                    browsingMode = BrowsingMode.Normal,
+                    isPrivate = false,
                     settings = settings,
                 )
             )
@@ -488,7 +487,7 @@ class SearchFragmentStoreTest {
             store.dispatch(
                 SearchFragmentAction.SearchDefaultEngineSelected(
                     engine = newEngine,
-                    browsingMode = BrowsingMode.Normal,
+                    isPrivate = false,
                     settings = settings,
                 )
             )
@@ -510,7 +509,7 @@ class SearchFragmentStoreTest {
         store.dispatch(
             SearchFragmentAction.SearchDefaultEngineSelected(
                 engine = newEngine,
-                browsingMode = BrowsingMode.Normal,
+                isPrivate = false,
                 settings = settings,
             )
         )
@@ -530,7 +529,7 @@ class SearchFragmentStoreTest {
             store.dispatch(
                 SearchFragmentAction.SearchDefaultEngineSelected(
                     engine = searchEngine,
-                    browsingMode = BrowsingMode.Normal,
+                    isPrivate = false,
                     settings = settings,
                 )
             )
@@ -552,7 +551,7 @@ class SearchFragmentStoreTest {
             store.dispatch(
                 SearchFragmentAction.SearchDefaultEngineSelected(
                     engine = searchEngine,
-                    browsingMode = BrowsingMode.Normal,
+                    isPrivate = false,
                     settings = settings,
                 )
             )
@@ -574,7 +573,7 @@ class SearchFragmentStoreTest {
             store.dispatch(
                 SearchFragmentAction.SearchDefaultEngineSelected(
                     engine = searchEngine,
-                    browsingMode = BrowsingMode.Normal,
+                    isPrivate = false,
                     settings = settings,
                 )
             )
@@ -596,7 +595,7 @@ class SearchFragmentStoreTest {
             store.dispatch(
                 SearchFragmentAction.SearchDefaultEngineSelected(
                     engine = searchEngine,
-                    browsingMode = BrowsingMode.Normal,
+                    isPrivate = false,
                     settings = settings,
                 )
             )
@@ -618,7 +617,7 @@ class SearchFragmentStoreTest {
             store.dispatch(
                 SearchFragmentAction.SearchDefaultEngineSelected(
                     engine = searchEngine,
-                    browsingMode = BrowsingMode.Normal,
+                    isPrivate = false,
                     settings = settings,
                 )
             )
@@ -641,7 +640,7 @@ class SearchFragmentStoreTest {
             store.dispatch(
                 SearchFragmentAction.SearchShortcutEngineSelected(
                     engine = searchEngine,
-                    browsingMode = BrowsingMode.Normal,
+                    isPrivate = false,
                     settings = settings,
                 )
             )
@@ -715,7 +714,7 @@ class SearchFragmentStoreTest {
             store.dispatch(
                 SearchFragmentAction.SearchDefaultEngineSelected(
                     engine = searchEngine,
-                    browsingMode = BrowsingMode.Normal,
+                    isPrivate = false,
                     settings = settings,
                 )
             )
@@ -742,7 +741,7 @@ class SearchFragmentStoreTest {
             store.dispatch(
                 SearchFragmentAction.SearchDefaultEngineSelected(
                     engine = searchEngine,
-                    browsingMode = BrowsingMode.Normal,
+                    isPrivate = false,
                     settings = settings,
                 )
             )
@@ -769,7 +768,7 @@ class SearchFragmentStoreTest {
             store.dispatch(
                 SearchFragmentAction.SearchDefaultEngineSelected(
                     engine = searchEngine,
-                    browsingMode = BrowsingMode.Normal,
+                    isPrivate = false,
                     settings = settings,
                 )
             )
@@ -794,7 +793,7 @@ class SearchFragmentStoreTest {
             store.dispatch(
                 SearchFragmentAction.SearchDefaultEngineSelected(
                     engine = searchEngine,
-                    browsingMode = BrowsingMode.Normal,
+                    isPrivate = false,
                     settings = settings,
                 )
             )
@@ -817,7 +816,7 @@ class SearchFragmentStoreTest {
             store.dispatch(
                 SearchFragmentAction.SearchDefaultEngineSelected(
                     engine = searchEngine,
-                    browsingMode = BrowsingMode.Normal,
+                    isPrivate = false,
                     settings = settings,
                 )
             )
@@ -840,7 +839,7 @@ class SearchFragmentStoreTest {
             store.dispatch(
                 SearchFragmentAction.SearchDefaultEngineSelected(
                     engine = searchEngine,
-                    browsingMode = BrowsingMode.Normal,
+                    isPrivate = false,
                     settings = settings,
                 )
             )
@@ -874,7 +873,7 @@ class SearchFragmentStoreTest {
             store.dispatch(
                 SearchFragmentAction.SearchDefaultEngineSelected(
                     engine = searchEngine,
-                    browsingMode = BrowsingMode.Private,
+                    isPrivate = true,
                     settings = settings,
                 )
             )
@@ -895,7 +894,7 @@ class SearchFragmentStoreTest {
             assertTrue(store.state.showStocksSuggestions)
             assertTrue(store.state.showSportsSuggestions)
             assertTrue(store.state.showFlightsSuggestions)
-            verify { shouldShowSearchSuggestions(BrowsingMode.Private, settings) }
+            verify { shouldShowSearchSuggestions(true, settings) }
         }
 
     @Test
@@ -923,7 +922,7 @@ class SearchFragmentStoreTest {
             store.dispatch(
                 SearchFragmentAction.SearchDefaultEngineSelected(
                     engine = searchEngine,
-                    browsingMode = BrowsingMode.Normal,
+                    isPrivate = false,
                     settings = settings,
                 )
             )
@@ -973,7 +972,7 @@ class SearchFragmentStoreTest {
             store.dispatch(
                 SearchFragmentAction.SearchShortcutEngineSelected(
                     engine = topicSpecificEngine,
-                    browsingMode = BrowsingMode.Normal,
+                    isPrivate = false,
                     settings = settings,
                 )
             )
@@ -1005,7 +1004,7 @@ class SearchFragmentStoreTest {
             store.dispatch(
                 SearchFragmentAction.SearchShortcutEngineSelected(
                     engine = generalEngine,
-                    browsingMode = BrowsingMode.Normal,
+                    isPrivate = false,
                     settings = settings,
                 )
             )
@@ -1055,7 +1054,7 @@ class SearchFragmentStoreTest {
             store.dispatch(
                 SearchFragmentAction.SearchShortcutEngineSelected(
                     engine = searchEngine,
-                    browsingMode = BrowsingMode.Normal,
+                    isPrivate = false,
                     settings = settings,
                 )
             )
@@ -1098,7 +1097,7 @@ class SearchFragmentStoreTest {
             store.dispatch(
                 SearchFragmentAction.SearchShortcutEngineSelected(
                     engine = topicSpecificEngine1,
-                    browsingMode = BrowsingMode.Private,
+                    isPrivate = true,
                     settings = settings,
                 )
             )
@@ -1117,7 +1116,7 @@ class SearchFragmentStoreTest {
             store.dispatch(
                 SearchFragmentAction.SearchShortcutEngineSelected(
                     engine = topicSpecificEngine2,
-                    browsingMode = BrowsingMode.Private,
+                    isPrivate = true,
                     settings = settings,
                 )
             )
@@ -1147,7 +1146,7 @@ class SearchFragmentStoreTest {
             store.dispatch(
                 SearchFragmentAction.SearchShortcutEngineSelected(
                     engine = topicSpecificEngine1,
-                    browsingMode = BrowsingMode.Private,
+                    isPrivate = true,
                     settings = settings,
                 )
             )
@@ -1165,7 +1164,7 @@ class SearchFragmentStoreTest {
             store.dispatch(
                 SearchFragmentAction.SearchShortcutEngineSelected(
                     engine = topicSpecificEngine2,
-                    browsingMode = BrowsingMode.Private,
+                    isPrivate = true,
                     settings = settings,
                 )
             )
@@ -1587,13 +1586,13 @@ class SearchFragmentStoreTest {
             every { shouldShowSearchSuggestions } returns false
             every { shouldShowSearchSuggestionsInPrivate } returns false
         }
-        assertFalse(shouldShowSearchSuggestions(BrowsingMode.Normal, settings))
+        assertFalse(shouldShowSearchSuggestions(false, settings))
 
         settings = mockk {
             every { shouldShowSearchSuggestions } returns true
             every { shouldShowSearchSuggestionsInPrivate } returns false
         }
-        assertTrue(shouldShowSearchSuggestions(BrowsingMode.Normal, settings))
+        assertTrue(shouldShowSearchSuggestions(false, settings))
     }
 
     @Test
@@ -1602,19 +1601,19 @@ class SearchFragmentStoreTest {
             every { shouldShowSearchSuggestions } returns false
             every { shouldShowSearchSuggestionsInPrivate } returns false
         }
-        assertFalse(shouldShowSearchSuggestions(BrowsingMode.Private, settings))
+        assertFalse(shouldShowSearchSuggestions(true, settings))
 
         settings = mockk {
             every { shouldShowSearchSuggestions } returns false
             every { shouldShowSearchSuggestionsInPrivate } returns true
         }
-        assertFalse(shouldShowSearchSuggestions(BrowsingMode.Private, settings))
+        assertFalse(shouldShowSearchSuggestions(true, settings))
 
         settings = mockk {
             every { shouldShowSearchSuggestions } returns true
             every { shouldShowSearchSuggestionsInPrivate } returns true
         }
-        assertTrue(shouldShowSearchSuggestions(BrowsingMode.Private, settings))
+        assertTrue(shouldShowSearchSuggestions(true, settings))
     }
 
     @Test
@@ -1625,8 +1624,8 @@ class SearchFragmentStoreTest {
             every { shouldShowSearchSuggestionsInPrivate } returns true
         }
 
-        assertTrue(shouldShowTrendingSearchSuggestions(BrowsingMode.Private, settings, true))
-        assertTrue(shouldShowTrendingSearchSuggestions(BrowsingMode.Normal, settings, true))
+        assertTrue(shouldShowTrendingSearchSuggestions(true, settings, true))
+        assertTrue(shouldShowTrendingSearchSuggestions(false, settings, true))
 
         settings = mockk {
             every { trendingSearchSuggestionsEnabled } returns false
@@ -1634,8 +1633,8 @@ class SearchFragmentStoreTest {
             every { shouldShowSearchSuggestionsInPrivate } returns true
         }
 
-        assertFalse(shouldShowTrendingSearchSuggestions(BrowsingMode.Private, settings, true))
-        assertFalse(shouldShowTrendingSearchSuggestions(BrowsingMode.Normal, settings, true))
+        assertFalse(shouldShowTrendingSearchSuggestions(true, settings, true))
+        assertFalse(shouldShowTrendingSearchSuggestions(false, settings, true))
 
         settings = mockk {
             every { trendingSearchSuggestionsEnabled } returns true
@@ -1643,8 +1642,8 @@ class SearchFragmentStoreTest {
             every { shouldShowSearchSuggestionsInPrivate } returns true
         }
 
-        assertFalse(shouldShowTrendingSearchSuggestions(BrowsingMode.Private, settings, true))
-        assertFalse(shouldShowTrendingSearchSuggestions(BrowsingMode.Normal, settings, true))
+        assertFalse(shouldShowTrendingSearchSuggestions(true, settings, true))
+        assertFalse(shouldShowTrendingSearchSuggestions(false, settings, true))
     }
 
     @Test
@@ -1655,8 +1654,8 @@ class SearchFragmentStoreTest {
             every { shouldShowSearchSuggestionsInPrivate } returns true
         }
 
-        assertFalse(shouldShowTrendingSearchSuggestions(BrowsingMode.Private, settings, false))
-        assertFalse(shouldShowTrendingSearchSuggestions(BrowsingMode.Normal, settings, false))
+        assertFalse(shouldShowTrendingSearchSuggestions(true, settings, false))
+        assertFalse(shouldShowTrendingSearchSuggestions(false, settings, false))
     }
 
     @Test
@@ -1667,8 +1666,8 @@ class SearchFragmentStoreTest {
             every { shouldShowSearchSuggestionsInPrivate } returns false
         }
 
-        assertFalse(shouldShowTrendingSearchSuggestions(BrowsingMode.Private, settings, true))
-        assertTrue(shouldShowTrendingSearchSuggestions(BrowsingMode.Normal, settings, true))
+        assertFalse(shouldShowTrendingSearchSuggestions(true, settings, true))
+        assertTrue(shouldShowTrendingSearchSuggestions(false, settings, true))
 
         settings = mockk {
             every { trendingSearchSuggestionsEnabled } returns true
@@ -1676,8 +1675,8 @@ class SearchFragmentStoreTest {
             every { shouldShowSearchSuggestionsInPrivate } returns true
         }
 
-        assertTrue(shouldShowTrendingSearchSuggestions(BrowsingMode.Private, settings, true))
-        assertTrue(shouldShowTrendingSearchSuggestions(BrowsingMode.Normal, settings, true))
+        assertTrue(shouldShowTrendingSearchSuggestions(true, settings, true))
+        assertTrue(shouldShowTrendingSearchSuggestions(false, settings, true))
     }
 
     @Test

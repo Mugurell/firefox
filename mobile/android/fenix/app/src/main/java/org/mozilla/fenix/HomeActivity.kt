@@ -110,7 +110,6 @@ import org.mozilla.fenix.bindings.SummarizeToolbarHighlightBinding
 import org.mozilla.fenix.bookmarks.DesktopFolders
 import org.mozilla.fenix.browser.BrowserFragment
 import org.mozilla.fenix.browser.BrowserFragmentDirections
-import org.mozilla.fenix.browser.browsingmode.BrowsingMode
 import org.mozilla.fenix.components.DefaultHomepageAsANewTabPreferenceRepository
 import org.mozilla.fenix.components.DefaultShortcutManagerCompatWrapper
 import org.mozilla.fenix.components.accounts.FenixFxAEntryPoint
@@ -216,10 +215,6 @@ open class HomeActivity : LocaleAwareAppCompatActivity(), NavHostActivity, Crash
     @VisibleForTesting internal lateinit var binding: ActivityHomeBinding
     lateinit var themeManager: ThemeManager
 
-    /** The browsing mode this activity shows, resolved when it is created. */
-    var browsingMode: BrowsingMode = BrowsingMode.Normal
-        private set
-
     private var isVisuallyComplete = false
 
     private var privateNotificationObserver: PrivateNotificationFeature<PrivateNotificationService>? = null
@@ -313,7 +308,7 @@ open class HomeActivity : LocaleAwareAppCompatActivity(), NavHostActivity, Crash
         HomepageTabBinding(
             browserStore = components.core.store,
             appStore = components.appStore,
-            isPrivate = { components.activityPrivacy.isPrivate(customTabSessionId = null) },
+            isPrivate = { components.browsingMode.isPrivate(customTabSessionId = null) },
             fenixBrowserUseCases = components.useCases.fenixBrowserUseCases,
             repository = DefaultHomepageAsANewTabPreferenceRepository(components.settings),
         )
@@ -370,7 +365,7 @@ open class HomeActivity : LocaleAwareAppCompatActivity(), NavHostActivity, Crash
         PrivateBrowsingLockFeature(
             appStore = components.appStore,
             browserStore = components.core.store,
-            isPrivate = { components.activityPrivacy.isPrivate(customTabSessionId = null) },
+            isPrivate = { components.browsingMode.isPrivate(customTabSessionId = null) },
             storage =
                 DefaultPrivateBrowsingLockStorage(
                     preferences = components.settings.preferences,
@@ -396,9 +391,13 @@ open class HomeActivity : LocaleAwareAppCompatActivity(), NavHostActivity, Crash
             StartSearchIntentProcessor(
                 fenixBrowserUseCases = components.useCases.fenixBrowserUseCases,
                 userHasBeenOnboarded = { components.fenixOnboarding.userHasBeenOnboarded() },
+                browsingMode = components.browsingMode,
             ),
             LensResultIntentProcessor(this),
-            OpenHomeIntentProcessor(fenixBrowserUseCases = components.useCases.fenixBrowserUseCases),
+            OpenHomeIntentProcessor(
+                fenixBrowserUseCases = components.useCases.fenixBrowserUseCases,
+                browsingMode = components.browsingMode,
+            ),
             OpenBrowserIntentProcessor(this, ::getIntentSessionId),
             OpenSpecificTabIntentProcessor(this),
             OpenPasswordManagerIntentProcessor(),
@@ -478,9 +477,9 @@ open class HomeActivity : LocaleAwareAppCompatActivity(), NavHostActivity, Crash
         // There is disk read violations on some devices such as samsung and pixel for android 9/10
         components.strictMode.allowViolation(StrictMode::allowThreadDiskReads) {
             // Browsing mode & theme setup should always be called before super.onCreate.
-            browsingMode = resolveCreationBrowsingMode(savedInstanceState)
-            updateSecureWindowFlags()
-            setupTheme()
+            val isPrivate = resolveCreationPrivacy(savedInstanceState)
+            updateSecureWindowFlags(isPrivate)
+            setupTheme(isPrivate)
             if (this !is ExternalAppBrowserActivity) {
                 components.settings.preferences.registerOnSharedPreferenceChangeListener(lastKnownModeListener)
             }
@@ -846,7 +845,7 @@ open class HomeActivity : LocaleAwareAppCompatActivity(), NavHostActivity, Crash
         breadcrumb(message = "onResume()")
 
         binding.root.doOnLayout {
-            if (browsingMode.isPrivate) {
+            if (isActivityPrivate()) {
                 it.announcePrivateModeForAccessibility()
             }
         }
@@ -1487,10 +1486,10 @@ open class HomeActivity : LocaleAwareAppCompatActivity(), NavHostActivity, Crash
         return nimbusOperation
     }
 
-    private fun setupTheme() {
-        themeManager = createThemeManager()
+    private fun setupTheme(isPrivate: Boolean) {
+        themeManager = createThemeManager(isPrivate)
         // ExternalAppBrowserActivity exclusively handles it's own theming unless in private mode.
-        if (this !is ExternalAppBrowserActivity || browsingMode.isPrivate) {
+        if (this !is ExternalAppBrowserActivity || isPrivate) {
             themeManager.setActivityTheme(this)
             themeManager.applyStatusBarTheme(this)
         }
@@ -1552,6 +1551,7 @@ open class HomeActivity : LocaleAwareAppCompatActivity(), NavHostActivity, Crash
      * @param flags Flags that will be used when loading the URL (not applied to searches).
      * @param historyMetadata The [HistoryMetadataKey] of the new tab in case this tab was opened from history.
      * @param additionalHeaders The extra headers to use when loading the URL.
+     * @param private Whether to load the URL in a private tab. Defaults to the privacy of this activity.
      */
     @Deprecated(
         message =
@@ -1569,6 +1569,7 @@ open class HomeActivity : LocaleAwareAppCompatActivity(), NavHostActivity, Crash
         flags: EngineSession.LoadUrlFlags = EngineSession.LoadUrlFlags.none(),
         historyMetadata: HistoryMetadataKey? = null,
         additionalHeaders: Map<String, String>? = null,
+        private: Boolean = isActivityPrivate(),
     ) {
         openToBrowser(from, customTabSessionId)
 
@@ -1576,7 +1577,7 @@ open class HomeActivity : LocaleAwareAppCompatActivity(), NavHostActivity, Crash
             searchTermOrURL = searchTermOrURL,
             newTab = newTab,
             forceSearch = forceSearch,
-            private = browsingMode.isPrivate,
+            private = private,
             searchEngine = engine,
             flags = flags,
             historyMetadata = historyMetadata,
@@ -1608,7 +1609,7 @@ open class HomeActivity : LocaleAwareAppCompatActivity(), NavHostActivity, Crash
 
         // Normal tabs + cold start -> Should go back to browser if we had any tabs open when we left last
         // except for PBM + Cold Start there won't be any tabs since they're evicted so we never will navigate
-        if (components.settings.shouldReturnToBrowser && !browsingMode.isPrivate) {
+        if (components.settings.shouldReturnToBrowser && !isActivityPrivate()) {
             // Navigate to home first (without rendering it) to add it to the back stack.
             openToBrowser(BrowserDirection.FromGlobal, null)
         }
@@ -1662,52 +1663,50 @@ open class HomeActivity : LocaleAwareAppCompatActivity(), NavHostActivity, Crash
     }
 
     /**
-     * Returns the [BrowsingMode] this activity is created with: on a fresh launch, the one its intent asks for, which
-     * is then saved as the last known mode, else the privacy of the regular tabs activity.
+     * Returns whether this activity is created private. On a fresh launch, the privacy its intent asks for is used and,
+     * in the regular tabs activity, saved as the last known mode.
      *
      * @param savedInstanceState The state this activity is recreated from, or null on a fresh launch.
      */
     @VisibleForTesting
-    internal open fun resolveCreationBrowsingMode(savedInstanceState: Bundle?): BrowsingMode {
-        val launchIntent = intent?.toSafeIntent()
-        if (savedInstanceState == null && launchIntent?.hasExtra(PRIVATE_BROWSING_MODE) == true) {
-            val requestedMode = BrowsingMode.fromBoolean(launchIntent.getBooleanExtra(PRIVATE_BROWSING_MODE, false))
-            components.settings.lastKnownMode = requestedMode
-            return requestedMode
+    internal fun resolveCreationPrivacy(savedInstanceState: Bundle?): Boolean {
+        val launchIntent = intent?.takeIf { savedInstanceState == null }
+        val isPrivate = components.browsingMode.isPrivate(getCustomTabSessionId(), launchIntent)
+        val requestsPrivacy = launchIntent?.toSafeIntent()?.hasExtra(PRIVATE_BROWSING_MODE) == true
+        if (this !is ExternalAppBrowserActivity && requestsPrivacy) {
+            components.settings.lastKnownModeIsPrivate = isPrivate
         }
-        return BrowsingMode.fromBoolean(components.activityPrivacy.isPrivate(customTabSessionId = null))
+        return isPrivate
     }
+
+    private fun isActivityPrivate() = components.browsingMode.isPrivate(getCustomTabSessionId())
 
     /** Saves the browsing mode a new intent asks for. */
     private fun saveRequestedBrowsingMode(intent: Intent) {
         val safeIntent = intent.toSafeIntent()
         if (this !is ExternalAppBrowserActivity && safeIntent.hasExtra(PRIVATE_BROWSING_MODE)) {
-            components.settings.lastKnownMode =
-                BrowsingMode.fromBoolean(safeIntent.getBooleanExtra(PRIVATE_BROWSING_MODE, false))
+            components.settings.lastKnownModeIsPrivate = safeIntent.getBooleanExtra(PRIVATE_BROWSING_MODE, false)
         }
     }
 
     /** Applies the last known mode, saved by the regular tabs activity's mode switches. */
     private fun applyLastKnownMode() {
-        val mode = components.settings.lastKnownMode
-        privateBrowsingLockFeature.onBrowsingModeChanged(mode)
-        if (mode != browsingMode) {
-            browsingMode = mode
-            updateSecureWindowFlags()
-            themeManager.currentTheme = mode
-        }
+        val isPrivate = components.settings.lastKnownModeIsPrivate
+        privateBrowsingLockFeature.onBrowsingModeChanged(isPrivate)
+        updateSecureWindowFlags(isPrivate)
+        themeManager.isPrivate = isPrivate
     }
 
-    private fun updateSecureWindowFlags(mode: BrowsingMode = browsingMode) {
-        if (mode == BrowsingMode.Private && !components.settings.shouldSecureModeBeOverridden) {
+    private fun updateSecureWindowFlags(isPrivate: Boolean) {
+        if (isPrivate && !components.settings.shouldSecureModeBeOverridden) {
             window.addFlags(FLAG_SECURE)
         } else {
             window.clearFlags(FLAG_SECURE)
         }
     }
 
-    private fun createThemeManager(): ThemeManager {
-        return DefaultThemeManager(browsingMode, this)
+    private fun createThemeManager(isPrivate: Boolean): ThemeManager {
+        return DefaultThemeManager(isPrivate, this)
     }
 
     private fun openPopup(webExtensionState: WebExtensionState) {

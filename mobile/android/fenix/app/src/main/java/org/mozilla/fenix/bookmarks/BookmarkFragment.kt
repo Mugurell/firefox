@@ -26,7 +26,6 @@ import mozilla.components.lib.state.helpers.StoreProvider.Companion.fragmentStor
 import mozilla.components.support.base.feature.ViewBoundFeatureWrapper
 import org.mozilla.fenix.R
 import org.mozilla.fenix.bookmarks.importer.FenixImporterEvent
-import org.mozilla.fenix.browser.browsingmode.BrowsingMode
 import org.mozilla.fenix.components.LensFeature
 import org.mozilla.fenix.components.QrScanFenixFeature
 import org.mozilla.fenix.components.VoiceSearchFeature
@@ -49,7 +48,7 @@ import org.mozilla.fenix.theme.FirefoxTheme
 /** The screen that displays the user's bookmark list in their Library. */
 @Suppress("TooManyFunctions", "LargeClass")
 class BookmarkFragment : Fragment(), SystemInsetsPaddedFragment {
-    private fun isActivityPrivate() = requireComponents.activityPrivacy.isPrivate(customTabSessionId = null)
+    private fun isActivityPrivate() = requireComponents.browsingMode.isPrivate(customTabSessionId = null)
 
     private val verificationResultLauncher = registerForVerification()
     private var qrScanFenixFeature: ViewBoundFeatureWrapper<QrScanFenixFeature>? =
@@ -183,9 +182,7 @@ class BookmarkFragment : Fragment(), SystemInsetsPaddedFragment {
                                             rootTitles = composeRootTitles(requireContext()),
                                         ) ?: ""
                                     },
-                                    getBrowsingMode = {
-                                        BrowsingMode.fromBoolean(isActivityPrivate())
-                                    },
+                                    isPrivate = { isActivityPrivate() },
                                     saveBookmarkSortOrder = {
                                         requireComponents.settings.bookmarkListSortOrder = it.asString
                                     },

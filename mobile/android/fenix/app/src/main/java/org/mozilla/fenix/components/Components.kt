@@ -53,6 +53,7 @@ import org.mozilla.fenix.R
 import org.mozilla.fenix.autofill.AutofillConfirmActivity
 import org.mozilla.fenix.autofill.AutofillSearchActivity
 import org.mozilla.fenix.autofill.AutofillUnlockActivity
+import org.mozilla.fenix.browser.browsingmode.BrowsingMode
 import org.mozilla.fenix.browser.relay.ErrorMessages
 import org.mozilla.fenix.browser.relay.RelayFeatureIntegration
 import org.mozilla.fenix.components.appstate.AppAction
@@ -308,7 +309,7 @@ class Components(
 
     val appLinkIntentLaunchTypeProvider by lazyMonitored { AppLinkIntentLaunchTypeProvider(appStartReasonProvider) }
 
-    val activityPrivacy by lazyMonitored { ActivityPrivacy(core.store, settings) }
+    val browsingMode by lazyMonitored { BrowsingMode(core.store, settings) }
 
     val appStore by lazyMonitored {
         val blocklistHandler = BlocklistHandler(settings)
@@ -394,7 +395,7 @@ class Components(
     val lensImageSearch by lazyMonitored {
         LensImageSearch(
             appStore = appStore,
-            isPrivate = { activityPrivacy.isPrivate(customTabSessionId = null) },
+            isPrivate = { browsingMode.isPrivate(customTabSessionId = null) },
             uploader = { lensImageUploader },
             browserUseCases = { useCases.fenixBrowserUseCases },
         )

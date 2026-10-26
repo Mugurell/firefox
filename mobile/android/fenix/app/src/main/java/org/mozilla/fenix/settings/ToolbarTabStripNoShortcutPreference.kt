@@ -62,7 +62,7 @@ constructor(
         get() = context.components.core.summarizeFeatureSettings.canShowFeature
 
     private val isBrowsingInNormalMode: Boolean
-        get() = !context.components.activityPrivacy.isPrivate(customTabSessionId = null)
+        get() = !context.components.browsingMode.isPrivate(customTabSessionId = null)
 
     private val isTranslationsFeatureAvailable: Boolean
         get() {

@@ -17,7 +17,6 @@ import mozilla.components.browser.state.store.BrowserStore
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
-import org.mozilla.fenix.browser.browsingmode.BrowsingMode
 import org.mozilla.fenix.components.AppStore
 import org.mozilla.fenix.components.HomepageAsANewTabPreferencesRepository
 import org.mozilla.fenix.components.appstate.AppAction
@@ -44,7 +43,7 @@ class HomepageTabBindingTest {
         runTest(testDispatcher) {
             val browserStore = createStore(restoreComplete = true)
 
-            createBinding(browserStore, mode = BrowsingMode.Private).start()
+            createBinding(browserStore, isPrivate = true).start()
             testDispatcher.scheduler.advanceUntilIdle()
 
             verify { fenixBrowserUseCases.addNewHomepageTab(private = true) }
@@ -57,7 +56,7 @@ class HomepageTabBindingTest {
 
             createBinding(
                     browserStore = browserStore,
-                    mode = BrowsingMode.Private,
+                    isPrivate = true,
                     appStore = AppStore(AppState(isTabsTrayVisible = true)),
                 )
                 .start()
@@ -71,7 +70,7 @@ class HomepageTabBindingTest {
         runTest(testDispatcher) {
             val browserStore = createStore(restoreComplete = true)
 
-            createBinding(browserStore, mode = BrowsingMode.Normal).start()
+            createBinding(browserStore, isPrivate = false).start()
             testDispatcher.scheduler.advanceUntilIdle()
 
             verify { fenixBrowserUseCases.addNewHomepageTab(private = false) }
@@ -84,7 +83,7 @@ class HomepageTabBindingTest {
 
             createBinding(
                     browserStore = browserStore,
-                    mode = BrowsingMode.Normal,
+                    isPrivate = false,
                     appStore = AppStore(AppState(isTabsTrayVisible = true)),
                 )
                 .start()
@@ -101,7 +100,7 @@ class HomepageTabBindingTest {
 
             createBinding(
                     browserStore = browserStore,
-                    mode = BrowsingMode.Normal,
+                    isPrivate = false,
                     appStore = appStore,
                 )
                 .start()
@@ -123,7 +122,7 @@ class HomepageTabBindingTest {
 
             createBinding(
                     browserStore = browserStore,
-                    mode = BrowsingMode.Private,
+                    isPrivate = true,
                     appStore = appStore,
                 )
                 .start()
@@ -150,7 +149,7 @@ class HomepageTabBindingTest {
 
             createBinding(
                     browserStore = browserStore,
-                    mode = BrowsingMode.Normal,
+                    isPrivate = false,
                     appStore = appStore,
                 )
                 .start()
@@ -174,7 +173,7 @@ class HomepageTabBindingTest {
 
             createBinding(
                     browserStore = browserStore,
-                    mode = BrowsingMode.Private,
+                    isPrivate = true,
                     appStore = appStore,
                 )
                 .start()
@@ -191,7 +190,7 @@ class HomepageTabBindingTest {
         runTest(testDispatcher) {
             val browserStore = createStore(restoreComplete = false)
 
-            createBinding(browserStore, mode = BrowsingMode.Private).start()
+            createBinding(browserStore, isPrivate = true).start()
             testDispatcher.scheduler.advanceUntilIdle()
 
             verify(exactly = 0) { fenixBrowserUseCases.addNewHomepageTab(private = any()) }
@@ -206,7 +205,7 @@ class HomepageTabBindingTest {
                     tabs = listOf(createTab(url = "https://www.mozilla.org")),
                 )
 
-            createBinding(browserStore, BrowsingMode.Private).start()
+            createBinding(browserStore, isPrivate = true).start()
             testDispatcher.scheduler.advanceUntilIdle()
 
             verify { fenixBrowserUseCases.addNewHomepageTab(private = true) }
@@ -218,7 +217,7 @@ class HomepageTabBindingTest {
             every { repository.getHomepageAsANewTabEnabled() } returns false
             val browserStore = createStore(restoreComplete = true)
 
-            createBinding(browserStore, BrowsingMode.Normal).start()
+            createBinding(browserStore, isPrivate = false).start()
             testDispatcher.scheduler.advanceUntilIdle()
 
             verify(exactly = 0) { fenixBrowserUseCases.addNewHomepageTab(private = any()) }
@@ -231,13 +230,13 @@ class HomepageTabBindingTest {
 
     private fun createBinding(
         browserStore: BrowserStore,
-        mode: BrowsingMode,
+        isPrivate: Boolean,
         appStore: AppStore = AppStore(),
     ) =
         HomepageTabBinding(
             browserStore = browserStore,
             appStore = appStore,
-            isPrivate = { mode.isPrivate },
+            isPrivate = { isPrivate },
             fenixBrowserUseCases = fenixBrowserUseCases,
             repository = repository,
             mainDispatcher = testDispatcher,

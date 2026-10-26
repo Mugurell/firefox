@@ -17,7 +17,6 @@ import androidx.navigation.fragment.navArgs
 import kotlinx.coroutines.flow.emptyFlow
 import mozilla.components.lib.state.helpers.StoreProvider.Companion.fragmentStore
 import org.mozilla.fenix.R
-import org.mozilla.fenix.browser.browsingmode.BrowsingMode
 import org.mozilla.fenix.components.accounts.FenixFxAEntryPoint
 import org.mozilla.fenix.components.appstate.AppAction
 import org.mozilla.fenix.components.share.ShareSheetChooserAction
@@ -30,7 +29,7 @@ import org.mozilla.fenix.theme.FirefoxTheme
 
 /** Menu to edit the name, URL, and location of a bookmark item. */
 class EditBookmarkFragment : Fragment(), SystemInsetsPaddedFragment {
-    private fun isActivityPrivate() = requireComponents.activityPrivacy.isPrivate(customTabSessionId = null)
+    private fun isActivityPrivate() = requireComponents.browsingMode.isPrivate(customTabSessionId = null)
 
     private val args by navArgs<EditBookmarkFragmentArgs>()
 
@@ -107,9 +106,7 @@ class EditBookmarkFragment : Fragment(), SystemInsetsPaddedFragment {
                                             rootTitles = composeRootTitles(context),
                                         ) ?: ""
                                     },
-                                    getBrowsingMode = {
-                                        BrowsingMode.fromBoolean(isActivityPrivate())
-                                    },
+                                    isPrivate = { isActivityPrivate() },
                                     editBookmarkUseCase = requireComponents.useCases.bookmarksUseCases.editBookmark,
                                     saveBookmarkSortOrder = {},
                                     reportResultGlobally = {

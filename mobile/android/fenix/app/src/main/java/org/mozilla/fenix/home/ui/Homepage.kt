@@ -51,7 +51,6 @@ import org.mozilla.fenix.GleanMetrics.History
 import org.mozilla.fenix.GleanMetrics.HomeBookmarks
 import org.mozilla.fenix.GleanMetrics.RecentlyVisitedHomepage
 import org.mozilla.fenix.R
-import org.mozilla.fenix.browser.browsingmode.BrowsingMode
 import org.mozilla.fenix.components.appstate.AppAction
 import org.mozilla.fenix.components.appstate.AppAction.ShortcutAction
 import org.mozilla.fenix.components.appstate.setup.checklist.SetupChecklistState
@@ -168,19 +167,19 @@ internal fun Homepage(
                     ExperimentalHomepageHeader(
                         showStoriesButton = headerState.showStoriesButton,
                         showButtonAnimation = headerState.showButtonAnimation,
-                        onPrivateModeTapped = { browsingModeChanged(BrowsingMode.Private) },
+                        onPrivateModeTapped = { browsingModeChanged(true) },
                         onStoriesTapped = { interactor.onDiscoverMoreClicked() },
                         onNewsAnimationShown = { settings.recordNewsButtonAnimationShown() },
                     )
                 }
 
                 is HeaderState.Experimental.Private -> {
-                    ExperimentalPrivateHomepageHeader(onHomeTapped = { browsingModeChanged(BrowsingMode.Normal) })
+                    ExperimentalPrivateHomepageHeader(onHomeTapped = { browsingModeChanged(false) })
                 }
 
                 is HeaderState.Normal -> {
                     HomepageHeader(
-                        browsingMode = state.browsingMode,
+                        isPrivate = state.isPrivate,
                         showStoriesButton = headerState.showStoriesButton,
                         browsingModeChanged = browsingModeChanged,
                         onStoriesTapped = { interactor.onDiscoverMoreClicked() },

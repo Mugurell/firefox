@@ -35,7 +35,6 @@ import mozilla.components.feature.tabs.TabsUseCases
 import mozilla.components.support.ktx.android.net.sameHostWithoutMobileSubdomainAs
 import mozilla.components.support.ktx.kotlin.tryGetHostFromUrl
 import mozilla.components.support.ktx.kotlin.urlContainsQueryParameters
-import org.mozilla.fenix.browser.browsingmode.BrowsingMode
 import org.mozilla.fenix.components.Components
 import org.mozilla.fenix.components.Core.Companion.METADATA_HISTORY_SUGGESTION_LIMIT
 import org.mozilla.fenix.components.Core.Companion.METADATA_SHORTCUT_SUGGESTION_LIMIT
@@ -67,11 +66,7 @@ class SearchSuggestionsProvidersBuilder(
     val combinedOnlineDataSource: CombinedOnlineSuggestionDataSource = CombinedOnlineSuggestionDataSource(scope = scope)
 
     init {
-        engineForSpeculativeConnects =
-            when (BrowsingMode.fromBoolean(isPrivate())) {
-                BrowsingMode.Normal -> components.core.engine
-                BrowsingMode.Private -> null
-            }
+        engineForSpeculativeConnects = if (isPrivate()) null else components.core.engine
 
         defaultHistoryStorageProvider =
             HistoryStorageSuggestionProvider(

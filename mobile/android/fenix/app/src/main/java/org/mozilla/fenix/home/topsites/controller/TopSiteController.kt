@@ -40,7 +40,6 @@ import org.mozilla.fenix.GleanMetrics.Pings
 import org.mozilla.fenix.GleanMetrics.ShortcutsLibrary
 import org.mozilla.fenix.GleanMetrics.TopSites
 import org.mozilla.fenix.R
-import org.mozilla.fenix.browser.browsingmode.BrowsingMode
 import org.mozilla.fenix.components.AppStore
 import org.mozilla.fenix.components.appstate.AppAction
 import org.mozilla.fenix.components.appstate.AppAction.ShortcutAction
@@ -141,7 +140,7 @@ class DefaultTopSiteController(
             TopSites.openInPrivateTab.record(TopSites.OpenInPrivateTabExtra(source = source.sourceName))
         }
 
-        settings.lastKnownMode = BrowsingMode.Private
+        settings.lastKnownModeIsPrivate = true
 
         if (navController.currentDestination?.id == R.id.shortcutsFragment) {
             navController.navigate(ShortcutsFragmentDirections.actionShortcutsFragmentToBrowserFragment())

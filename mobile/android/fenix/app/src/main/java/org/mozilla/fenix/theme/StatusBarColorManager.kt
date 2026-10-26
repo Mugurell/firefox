@@ -72,7 +72,7 @@ class StatusBarColorManager(
         when {
             // Don't show the status bar gradient if tab strip is not enabled, shown at the bottom
             // or private mode is enabled.
-            !settings.isTabStripEnabled || settings.shouldUseBottomTabStrip || themeManager.currentTheme.isPrivate -> {
+            !settings.isTabStripEnabled || settings.shouldUseBottomTabStrip || themeManager.isPrivate -> {
                 tabStripStatusBarView.hide()
             }
 

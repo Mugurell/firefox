@@ -28,7 +28,6 @@ import mozilla.components.service.pocket.PocketStory
 import mozilla.components.service.pocket.PocketStory.ContentRecommendation
 import mozilla.components.service.pocket.PocketStory.SponsoredContent
 import org.mozilla.fenix.R
-import org.mozilla.fenix.browser.browsingmode.BrowsingMode
 import org.mozilla.fenix.components.appstate.AppState
 import org.mozilla.fenix.components.appstate.setup.checklist.ChecklistItem
 import org.mozilla.fenix.compose.MessageCardState
@@ -164,7 +163,7 @@ internal object FakeHomepagePreview {
                     /* no op */
                 }
 
-                override fun onPrivateModeButtonClicked(newMode: BrowsingMode) {
+                override fun onPrivateModeButtonClicked(isPrivate: Boolean) {
                     /* no op */
                 }
             }

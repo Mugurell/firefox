@@ -7,15 +7,20 @@ package org.mozilla.fenix.home.intent
 import android.content.Intent
 import androidx.navigation.NavController
 import io.mockk.Called
+import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
+import mozilla.components.browser.state.store.BrowserStore
 import mozilla.components.concept.engine.EngineSession
+import mozilla.components.support.test.robolectric.testContext
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.mozilla.fenix.BrowserDirection
 import org.mozilla.fenix.HomeActivity
+import org.mozilla.fenix.browser.browsingmode.BrowsingMode
+import org.mozilla.fenix.ext.components
 import org.mozilla.fenix.utils.Settings
 import org.robolectric.RobolectricTestRunner
 
@@ -53,6 +58,7 @@ class LensResultIntentProcessorTest {
                 putExtra(HomeActivity.OPEN_TO_BROWSER_AND_LOAD, true)
                 putExtra(HomeActivity.LENS_RESULT_URL, "https://lens.google.com/results")
             }
+        every { activity.applicationContext } returns testContext
 
         val processed = LensResultIntentProcessor(activity).process(intent, navController, out, settings)
 
@@ -66,6 +72,33 @@ class LensResultIntentProcessorTest {
                 from = BrowserDirection.FromGlobal,
                 forceSearch = false,
                 flags = EngineSession.LoadUrlFlags.external(),
+                private = false,
+            )
+        }
+    }
+
+    @Test
+    fun `GIVEN the lens result url and an intent asking for private mode WHEN process is called THEN it loads the url in a new private tab`() {
+        val intent =
+            Intent().apply {
+                putExtra(HomeActivity.OPEN_TO_BROWSER_AND_LOAD, true)
+                putExtra(HomeActivity.LENS_RESULT_URL, "https://lens.google.com/results")
+                putExtra(HomeActivity.PRIVATE_BROWSING_MODE, true)
+            }
+        every { activity.applicationContext } returns testContext
+        every { testContext.components.browsingMode } returns BrowsingMode(BrowserStore(), Settings(testContext))
+
+        LensResultIntentProcessor(activity).process(intent, navController, out, settings)
+
+        verify {
+            @Suppress("DEPRECATION")
+            activity.openToBrowserAndLoad(
+                searchTermOrURL = "https://lens.google.com/results",
+                newTab = true,
+                from = BrowserDirection.FromGlobal,
+                forceSearch = false,
+                flags = EngineSession.LoadUrlFlags.external(),
+                private = true,
             )
         }
     }

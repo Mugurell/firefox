@@ -9,6 +9,7 @@ import androidx.navigation.NavController
 import mozilla.components.concept.engine.EngineSession
 import org.mozilla.fenix.BrowserDirection
 import org.mozilla.fenix.HomeActivity
+import org.mozilla.fenix.ext.components
 import org.mozilla.fenix.utils.Settings
 
 /**
@@ -34,6 +35,7 @@ class LensResultIntentProcessor(private val activity: HomeActivity) : HomeIntent
             from = BrowserDirection.FromGlobal,
             forceSearch = false,
             flags = EngineSession.LoadUrlFlags.external(),
+            private = activity.components.browsingMode.isPrivate(customTabSessionId = null, intent = intent),
         )
 
         return true

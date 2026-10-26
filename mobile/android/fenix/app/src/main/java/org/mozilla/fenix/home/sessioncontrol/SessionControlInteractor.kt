@@ -9,7 +9,6 @@ import mozilla.components.feature.tab.collections.TabCollection
 import mozilla.components.feature.top.sites.TopSite
 import mozilla.components.service.nimbus.messaging.Message
 import mozilla.components.service.pocket.PocketStory
-import org.mozilla.fenix.browser.browsingmode.BrowsingMode
 import org.mozilla.fenix.components.appstate.AppState
 import org.mozilla.fenix.components.appstate.setup.checklist.ChecklistItem
 import org.mozilla.fenix.home.bookmarks.Bookmark
@@ -288,8 +287,8 @@ class SessionControlInteractor(
         privateBrowsingController.handleLearnMoreClicked()
     }
 
-    override fun onPrivateModeButtonClicked(newMode: BrowsingMode) {
-        privateBrowsingController.handlePrivateModeButtonClicked(newMode)
+    override fun onPrivateModeButtonClicked(isPrivate: Boolean) {
+        privateBrowsingController.handlePrivateModeButtonClicked(isPrivate)
     }
 
     override fun onNavigateSearch() {

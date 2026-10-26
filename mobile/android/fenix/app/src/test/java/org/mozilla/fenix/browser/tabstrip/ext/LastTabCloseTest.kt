@@ -12,7 +12,6 @@ import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 import org.mozilla.fenix.NavGraphDirections
 import org.mozilla.fenix.R
-import org.mozilla.fenix.browser.browsingmode.BrowsingMode
 import org.mozilla.fenix.components.AppStore
 import org.mozilla.fenix.components.appstate.AppState
 import org.mozilla.fenix.ext.nav
@@ -31,7 +30,7 @@ class LastTabCloseTest {
             isLastTabClosedPrivate = false,
             navigateFromId = R.id.homeFragment,
             appStore = appStore,
-            browsingMode = BrowsingMode.Normal,
+            isActivityPrivate = false,
             navController = navController,
             onHomepageAsNewTabDisabled = { homepageAsNewTabDisabledLambdaCalled = true },
         )
@@ -59,7 +58,7 @@ class LastTabCloseTest {
             isLastTabClosedPrivate = false,
             navigateFromId = R.id.homeFragment,
             appStore = appStore,
-            browsingMode = BrowsingMode.Normal,
+            isActivityPrivate = false,
             navController = navController,
             onHomepageAsNewTabDisabled = { homepageAsNewTabDisabledLambdaCalled = true },
         )
@@ -87,7 +86,7 @@ class LastTabCloseTest {
             isLastTabClosedPrivate = true,
             navigateFromId = R.id.homeFragment,
             appStore = appStore,
-            browsingMode = BrowsingMode.Private,
+            isActivityPrivate = true,
             navController = navController,
             onHomepageAsNewTabDisabled = { homepageAsNewTabDisabledLambdaCalled = true },
         )

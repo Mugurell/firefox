@@ -66,9 +66,6 @@ import mozilla.components.ui.tabcounter.R as tabcounterR
 import org.mozilla.fenix.GleanMetrics.Events
 import org.mozilla.fenix.NavGraphDirections
 import org.mozilla.fenix.R
-import org.mozilla.fenix.browser.browsingmode.BrowsingMode
-import org.mozilla.fenix.browser.browsingmode.BrowsingMode.Normal
-import org.mozilla.fenix.browser.browsingmode.BrowsingMode.Private
 import org.mozilla.fenix.components.AppStore
 import org.mozilla.fenix.components.appstate.AppAction
 import org.mozilla.fenix.components.appstate.AppAction.SearchAction.SearchStarted
@@ -230,21 +227,17 @@ class BrowserToolbarMiddleware(
                 navController.nav(
                     R.id.homeFragment,
                     NavGraphDirections.actionGlobalTabManagementFragment(
-                        page =
-                            when (BrowsingMode.fromBoolean(isPrivate())) {
-                                Normal -> Page.NormalTabs
-                                Private -> Page.PrivateTabs
-                            }
+                        page = if (isPrivate()) Page.PrivateTabs else Page.NormalTabs
                     ),
                 )
                 next(action)
             }
             is AddNewTab -> {
-                addNewTab(store, Normal)
+                addNewTab(store, isPrivateTab = false)
                 next(action)
             }
             is AddNewPrivateTab -> {
-                addNewTab(store, Private)
+                addNewTab(store, isPrivateTab = true)
                 next(action)
             }
 
@@ -312,22 +305,22 @@ class BrowserToolbarMiddleware(
 
     private fun addNewTab(
         store: Store<BrowserToolbarState, BrowserToolbarAction>,
-        browsingMode: BrowsingMode,
+        isPrivateTab: Boolean,
     ) {
         if (settings.enableHomepageAsNewTab) {
-            fenixBrowserUseCases.addNewHomepageTab(private = browsingMode.isPrivate)
-            settings.lastKnownMode = browsingMode
+            fenixBrowserUseCases.addNewHomepageTab(private = isPrivateTab)
+            settings.lastKnownModeIsPrivate = isPrivateTab
         } else {
-            openNewTab(store, browsingMode)
+            openNewTab(store, isPrivateTab)
         }
     }
 
     private fun openNewTab(
         store: Store<BrowserToolbarState, BrowserToolbarAction>,
-        browsingMode: BrowsingMode? = null,
+        isPrivateTab: Boolean? = null,
         searchTerms: String? = null,
     ) {
-        browsingMode?.let { settings.lastKnownMode = it }
+        isPrivateTab?.let { settings.lastKnownModeIsPrivate = it }
         store.dispatch(SearchQueryUpdated(BrowserToolbarQuery(searchTerms ?: ""), true))
         appStore.dispatch(SearchStarted())
     }
@@ -505,11 +498,11 @@ class BrowserToolbarMiddleware(
     }
 
     private fun buildTabCounterMenu(source: Source): CombinedEventAndMenu? {
-        val currentBrowsingMode = BrowsingMode.fromBoolean(isPrivate())
+        val isPrivateMode = isPrivate()
 
         return CombinedEventAndMenu(TabCounterLongClicked(source)) {
-            when (currentBrowsingMode) {
-                Private ->
+            when {
+                isPrivateMode ->
                     listOf(
                         BrowserToolbarMenuButton(
                             icon = DrawableResIcon(iconsR.drawable.mozac_ic_plus_24),

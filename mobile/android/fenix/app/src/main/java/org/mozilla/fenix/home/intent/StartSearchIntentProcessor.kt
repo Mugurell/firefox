@@ -10,7 +10,7 @@ import mozilla.telemetry.glean.private.NoExtras
 import org.mozilla.fenix.GleanMetrics.SearchWidget
 import org.mozilla.fenix.HomeActivity
 import org.mozilla.fenix.NavGraphDirections
-import org.mozilla.fenix.browser.browsingmode.resolveBrowsingMode
+import org.mozilla.fenix.browser.browsingmode.BrowsingMode
 import org.mozilla.fenix.components.metrics.MetricsUtils
 import org.mozilla.fenix.components.usecases.FenixBrowserUseCases
 import org.mozilla.fenix.ext.nav
@@ -23,10 +23,12 @@ import org.mozilla.fenix.utils.Settings
  * @param fenixBrowserUseCases [FenixBrowserUseCases] used to add a new homepage tab when the homepage as a new tab
  *   feature is enabled.
  * @param userHasBeenOnboarded Returns whether the user has completed onboarding.
+ * @param browsingMode [BrowsingMode] giving the privacy of the homepage tab to open.
  */
 class StartSearchIntentProcessor(
     private val fenixBrowserUseCases: FenixBrowserUseCases,
     private val userHasBeenOnboarded: () -> Boolean,
+    private val browsingMode: BrowsingMode,
 ) : HomeIntentProcessor {
 
     override fun process(intent: Intent, navController: NavController, out: Intent, settings: Settings): Boolean {
@@ -61,10 +63,9 @@ class StartSearchIntentProcessor(
 
             source?.let {
                 if (settings.enableHomepageAsNewTab) {
-                    val mode =
-                        resolveBrowsingMode(sessionMode = null, intent = intent, lastKnownMode = settings.lastKnownMode)
-                    fenixBrowserUseCases.addNewHomepageTab(private = mode.isPrivate)
-                    settings.lastKnownMode = mode
+                    val isPrivate = browsingMode.isPrivate(customTabSessionId = null, intent = intent)
+                    fenixBrowserUseCases.addNewHomepageTab(private = isPrivate)
+                    settings.lastKnownModeIsPrivate = isPrivate
                 }
 
                 navController.nav(

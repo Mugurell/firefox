@@ -37,11 +37,13 @@ class SpeechProcessingIntentProcessor(
 
         out.putExtra(HomeActivity.OPEN_TO_BROWSER_AND_LOAD, false)
 
+        val isPrivate = activity.components.browsingMode.isPrivate(customTabSessionId = null, intent = intent)
         store.waitForSelectedOrDefaultSearchEngine { searchEngine ->
             if (searchEngine != null) {
                 launchToBrowser(
                     searchEngine,
                     intent.getStringExtra(SPEECH_PROCESSING).orEmpty(),
+                    isPrivate,
                 )
             }
         }
@@ -49,7 +51,7 @@ class SpeechProcessingIntentProcessor(
         return true
     }
 
-    private fun launchToBrowser(searchEngine: SearchEngine, text: String) {
+    private fun launchToBrowser(searchEngine: SearchEngine, text: String, isPrivate: Boolean) {
         activity.components.strictMode.allowViolation(StrictMode::allowThreadDiskReads) {
             MetricsUtils.recordSearchMetrics(
                 searchEngine,
@@ -66,6 +68,7 @@ class SpeechProcessingIntentProcessor(
             from = BrowserDirection.FromGlobal,
             engine = searchEngine,
             forceSearch = true,
+            private = isPrivate,
         )
     }
 }

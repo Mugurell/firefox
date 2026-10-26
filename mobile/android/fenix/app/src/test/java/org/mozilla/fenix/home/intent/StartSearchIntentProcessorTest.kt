@@ -46,7 +46,7 @@ class StartSearchIntentProcessorTest {
 
     @Before
     fun setup() {
-        every { settings.lastKnownMode } returns BrowsingMode.Normal
+        every { settings.lastKnownModeIsPrivate } returns false
         browserStore =
             BrowserStore(
                 initialState = BrowserState(tabs = listOf()),
@@ -67,6 +67,7 @@ class StartSearchIntentProcessorTest {
         StartSearchIntentProcessor(
             fenixBrowserUseCases = fenixBrowserUseCases,
             userHasBeenOnboarded = { userHasBeenOnboarded },
+            browsingMode = BrowsingMode(browserStore, settings),
         )
 
     private fun searchWidgetIntent() =
@@ -125,7 +126,7 @@ class StartSearchIntentProcessorTest {
         assertEquals(null, recordedEvents.single().extra)
 
         assertEquals(0, browserStore.state.tabs.size)
-        verify(exactly = 0) { settings.lastKnownMode = any() }
+        verify(exactly = 0) { settings.lastKnownModeIsPrivate = any() }
         verify {
             navController.navigate(
                 NavGraphDirections.actionGlobalHome(
@@ -147,7 +148,7 @@ class StartSearchIntentProcessorTest {
 
         assertEquals(1, browserStore.state.tabs.size)
         assertFalse(browserStore.state.tabs[0].content.private)
-        verify { settings.lastKnownMode = BrowsingMode.Normal }
+        verify { settings.lastKnownModeIsPrivate = false }
         verify {
             navController.navigate(
                 NavGraphDirections.actionGlobalHome(
@@ -171,7 +172,7 @@ class StartSearchIntentProcessorTest {
 
         assertEquals(1, browserStore.state.tabs.size)
         assertTrue(browserStore.state.tabs[0].content.private)
-        verify { settings.lastKnownMode = BrowsingMode.Private }
+        verify { settings.lastKnownModeIsPrivate = true }
         verify {
             navController.navigate(
                 NavGraphDirections.actionGlobalHome(

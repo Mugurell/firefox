@@ -16,7 +16,7 @@ import mozilla.components.feature.tabs.CustomTabsUseCases
 import mozilla.components.support.base.feature.ViewBoundFeatureWrapper
 import org.junit.Before
 import org.junit.Test
-import org.mozilla.fenix.components.ActivityPrivacy
+import org.mozilla.fenix.browser.browsingmode.BrowsingMode
 import org.mozilla.fenix.components.AppStore
 import org.mozilla.fenix.components.appstate.AppAction
 
@@ -41,14 +41,14 @@ class OpenInFirefoxBindingTest {
     fun `GIVEN a private custom tab WHEN open in Firefox is requested THEN open it in Firefox in private mode`() =
         runTest(testDispatcher) {
             val appStore = AppStore()
-            val activityPrivacy: ActivityPrivacy = mockk()
-            every { activityPrivacy.isPrivate("") } returns true
+            val browsingMode: BrowsingMode = mockk()
+            every { browsingMode.isPrivate("") } returns true
 
             val binding =
                 OpenInFirefoxBinding(
                     activity = activity,
                     appStore = appStore,
-                    activityPrivacy = activityPrivacy,
+                    browsingMode = browsingMode,
                     customTabSessionId = "",
                     customTabsUseCases = customTabsUseCases,
                     openInFenixIntent = openInFenixIntent,
