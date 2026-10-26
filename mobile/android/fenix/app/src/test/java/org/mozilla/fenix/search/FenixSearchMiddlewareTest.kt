@@ -62,7 +62,6 @@ import org.mozilla.fenix.GleanMetrics.History
 import org.mozilla.fenix.GleanMetrics.Toolbar
 import org.mozilla.fenix.NavGraphDirections
 import org.mozilla.fenix.R
-import org.mozilla.fenix.browser.browsingmode.BrowsingMode
 import org.mozilla.fenix.components.AppStore
 import org.mozilla.fenix.components.NimbusComponents
 import org.mozilla.fenix.components.UseCases
@@ -442,16 +441,16 @@ class FenixSearchMiddlewareTest {
     }
 
     @Test
-    fun `GIVEN browsing mode is private and search suggestions not allowed WHEN the query is not empty THEN don't show the private suggestions banner`() {
-        val privateAppStore = AppStore(AppState(mode = BrowsingMode.Private))
-        val (_, store) = buildMiddlewareAndAddToSearchStore(appStore = privateAppStore)
+    fun `GIVEN browsing mode is private and search suggestions not allowed WHEN the query is not empty THEN show the private suggestions banner`() {
+        isPrivateMode = true
+        val (_, store) = buildMiddlewareAndAddToSearchStore()
         every { settings.showSearchSuggestionsInPrivateOnboardingFinished } returns false
         every { settings.shouldShowSearchSuggestions } returns false
         every { settings.shouldShowSearchSuggestionsInPrivate } returns false
 
         store.dispatch(SearchFragmentAction.UpdateQuery("test"))
 
-        assertFalse(store.state.showSearchSuggestionsHint)
+        assertTrue(store.state.showSearchSuggestionsHint)
     }
 
     @Test

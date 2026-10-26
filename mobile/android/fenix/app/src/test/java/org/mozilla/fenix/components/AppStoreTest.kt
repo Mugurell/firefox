@@ -29,8 +29,6 @@ import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.mozilla.fenix.R
-import org.mozilla.fenix.browser.browsingmode.BrowsingMode
-import org.mozilla.fenix.browser.browsingmode.BrowsingModeManager
 import org.mozilla.fenix.components.appstate.AppAction
 import org.mozilla.fenix.components.appstate.AppAction.ContentRecommendationsAction
 import org.mozilla.fenix.components.appstate.AppAction.MessagingAction.UpdateMessageToShow
@@ -60,7 +58,6 @@ class AppStoreTest {
     private lateinit var context: Context
     private lateinit var accountManager: FxaAccountManager
     private lateinit var onboarding: FenixOnboarding
-    private lateinit var browsingModeManager: BrowsingModeManager
     private lateinit var appState: AppState
     private lateinit var appStore: AppStore
     private lateinit var recentSyncedTabsList: List<RecentSyncedTab>
@@ -70,7 +67,6 @@ class AppStoreTest {
         context = mockk(relaxed = true)
         accountManager = mockk(relaxed = true)
         onboarding = mockk(relaxed = true)
-        browsingModeManager = mockk(relaxed = true)
         recentSyncedTabsList =
             listOf(
                 RecentSyncedTab(
@@ -84,33 +80,17 @@ class AppStoreTest {
 
         every { context.components.backgroundServices.accountManager } returns accountManager
         every { onboarding.userHasBeenOnboarded() } returns true
-        every { browsingModeManager.mode } returns BrowsingMode.Normal
 
         appState =
             AppState(
                 collections = emptyList(),
                 expandedCollections = emptySet(),
-                mode = browsingModeManager.mode,
                 topSites = emptyList(),
                 recentTabs = emptyList(),
                 recentSyncedTabState = RecentSyncedTabState.Success(recentSyncedTabsList),
             )
 
         appStore = AppStore(appState)
-    }
-
-    @Test
-    fun `Test toggling the mode in AppStore`() = runTest {
-        // Verify that the default mode and tab states of the HomeFragment are correct.
-        assertEquals(BrowsingMode.Normal, appStore.state.mode)
-
-        // Change the AppStore to Private mode.
-        appStore.dispatch(AppAction.BrowsingModeManagerModeChanged(BrowsingMode.Private))
-        assertEquals(BrowsingMode.Private, appStore.state.mode)
-
-        // Change the AppStore back to Normal mode.
-        appStore.dispatch(AppAction.BrowsingModeManagerModeChanged(BrowsingMode.Normal))
-        assertEquals(BrowsingMode.Normal, appStore.state.mode)
     }
 
     @Test
@@ -250,7 +230,7 @@ class AppStoreTest {
     }
 
     @Test
-    fun `Test changing the collections, mode, recent tabs and bookmarks, history metadata, top sites and recent synced tabs in the AppStore`() =
+    fun `Test changing the collections, recent tabs and bookmarks, history metadata, top sites and recent synced tabs in the AppStore`() =
         runTest {
             // Verify that the default state of the HomeFragment is correct.
             assertEquals(0, appStore.state.collections.size)
@@ -258,7 +238,6 @@ class AppStoreTest {
             assertEquals(0, appStore.state.recentTabs.size)
             assertEquals(0, appStore.state.bookmarks.size)
             assertEquals(0, appStore.state.recentHistory.size)
-            assertEquals(BrowsingMode.Normal, appStore.state.mode)
             assertEquals(
                 RecentSyncedTabState.Success(recentSyncedTabsList),
                 appStore.state.recentSyncedTabState,
@@ -287,7 +266,6 @@ class AppStoreTest {
             appStore.dispatch(
                 AppAction.Change(
                     collections = collections,
-                    mode = BrowsingMode.Private,
                     topSites = topSites,
                     recentTabs = recentTabs,
                     bookmarks = bookmarks,
@@ -301,7 +279,6 @@ class AppStoreTest {
             assertEquals(recentTabs, appStore.state.recentTabs)
             assertEquals(bookmarks, appStore.state.bookmarks)
             assertEquals(listOf(group1, group2, group3, highlight), appStore.state.recentHistory)
-            assertEquals(BrowsingMode.Private, appStore.state.mode)
             assertEquals(
                 recentSyncedTabState,
                 appStore.state.recentSyncedTabState,

@@ -128,7 +128,7 @@ class UnlockPrivateTabsFragment : Fragment(), UserInteractionHandler, SystemInse
                         fenixBrowserUseCases = requireComponents.useCases.fenixBrowserUseCases,
                     )
                 }
-                (activity as HomeActivity).browsingModeManager.mode = BrowsingMode.Normal
+                requireComponents.settings.lastKnownMode = BrowsingMode.Normal
                 findNavController().navigate(UnlockPrivateTabsFragmentDirections.actionGlobalHome())
 
                 if (hasNormalTabs) {

@@ -43,7 +43,6 @@ import org.mozilla.fenix.GleanMetrics.HomeBookmarks
 import org.mozilla.fenix.GleanMetrics.RecentTabs
 import org.mozilla.fenix.HomeActivity
 import org.mozilla.fenix.R
-import org.mozilla.fenix.browser.browsingmode.BrowsingMode
 import org.mozilla.fenix.components.AppStore
 import org.mozilla.fenix.components.TabCollectionStorage
 import org.mozilla.fenix.components.accounts.FenixFxAEntryPoint
@@ -112,7 +111,6 @@ class DefaultSessionControlControllerTest {
             AppState(
                 collections = emptyList(),
                 expandedCollections = emptySet(),
-                mode = BrowsingMode.Normal,
                 topSites = emptyList(),
                 recentTabs = emptyList(),
                 bookmarks = emptyList(),

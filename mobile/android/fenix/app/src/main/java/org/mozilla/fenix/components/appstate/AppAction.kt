@@ -21,7 +21,6 @@ import mozilla.components.service.pocket.PocketStory.ContentRecommendation
 import mozilla.components.service.pocket.PocketStory.SponsoredContent
 import org.mozilla.fenix.bookmarks.BookmarksGlobalResultReport
 import org.mozilla.fenix.browser.StandardSnackbarError
-import org.mozilla.fenix.browser.browsingmode.BrowsingMode
 import org.mozilla.fenix.components.AppStore
 import org.mozilla.fenix.components.appstate.setup.checklist.ChecklistItem
 import org.mozilla.fenix.components.appstate.webcompat.WebCompatState
@@ -74,7 +73,6 @@ sealed class AppAction : Action {
 
     data class Change(
         val topSites: List<TopSite>,
-        val mode: BrowsingMode,
         val collections: List<TabCollection>,
         val recentTabs: List<RecentTab>,
         val bookmarks: List<Bookmark>,
@@ -85,9 +83,6 @@ sealed class AppAction : Action {
     data class CollectionExpanded(val collection: TabCollection, val expand: Boolean) : AppAction()
 
     data class CollectionsChange(val collections: List<TabCollection>) : AppAction()
-
-    /** Action dispatched when the browsing mode changes inside the BrowsingModeManager. */
-    data class BrowsingModeManagerModeChanged(val mode: BrowsingMode) : AppAction()
 
     data class TopSitesChange(val topSites: List<TopSite>) : AppAction()
 

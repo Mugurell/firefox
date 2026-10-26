@@ -58,7 +58,6 @@ import androidx.navigation.fragment.navArgs
 import java.lang.ref.WeakReference
 import kotlin.math.roundToInt
 import kotlinx.coroutines.Dispatchers.IO
-import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
 import mozilla.components.browser.state.state.TabSessionState
 import mozilla.components.browser.state.store.BrowserStore
@@ -226,9 +225,6 @@ class HomeFragment : Fragment(), UserInteractionHandler, OnLongPressedListener {
     @VisibleForTesting internal var homeNavigationBar: HomeNavigationBar? = null
 
     private var awesomeBarComposable: AwesomeBarComposable? = null
-
-    private val browsingModeManager
-        get() = (activity as HomeActivity).browsingModeManager
 
     private fun isActivityPrivate() = requireComponents.activityPrivacy.isPrivate(customTabSessionId = null)
 
@@ -523,7 +519,6 @@ class HomeFragment : Fragment(), UserInteractionHandler, OnLongPressedListener {
             navController = findNavController(),
             appStore = requireContext().components.appStore,
             browserStore = requireContext().components.core.store,
-            browsingModeManager = activity.browsingModeManager,
             isPrivate = ::isActivityPrivate,
         )
 
@@ -689,18 +684,7 @@ class HomeFragment : Fragment(), UserInteractionHandler, OnLongPressedListener {
         view.setContent {
             FirefoxTheme {
                 val settings = components.settings
-                val appState =
-                    with(components.appStore) {
-                        remember {
-                                // Ignore AppState changes where only the browsing mode differs.
-                                // This avoids unnecessary recompositions triggered by theme/browsing mode transitions,
-                                // which are handled outside Compose via ThemeManager recreating the activity.
-                                // Without this, transient states can cause visual glitches (e.g., incorrect
-                                // theme/frame)
-                                flow().distinctUntilChanged { old, new -> old.mode != new.mode }
-                            }
-                            .collectAsState(state)
-                    }
+                val appState = with(components.appStore) { remember { flow() }.collectAsState(state) }
                 val privacyNoticeBannerState =
                     privacyNoticeBannerStore.flow().collectAsState(initial = privacyNoticeBannerStore.state)
                 val collectionsMigrationCardState =
@@ -1707,7 +1691,6 @@ class HomeFragment : Fragment(), UserInteractionHandler, OnLongPressedListener {
                 privateBrowsingController =
                     DefaultPrivateBrowsingController(
                         navController = findNavController(),
-                        browsingModeManager = browsingModeManager,
                         fenixBrowserUseCases = requireComponents.useCases.fenixBrowserUseCases,
                         settings = requireComponents.settings,
                     ),
@@ -1735,7 +1718,6 @@ class HomeFragment : Fragment(), UserInteractionHandler, OnLongPressedListener {
             activityRef = WeakReference(requireActivity()),
             store = store,
             appStore = requireComponents.appStore,
-            browsingModeManager = browsingModeManager,
             navControllerRef = WeakReference(findNavController()),
             settings = requireComponents.settings,
             defaultTopSitesProvider = requireComponents.core.defaultTopSitesProvider,

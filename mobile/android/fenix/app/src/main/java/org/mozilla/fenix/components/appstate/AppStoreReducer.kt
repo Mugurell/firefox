@@ -51,7 +51,6 @@ internal object AppStoreReducer {
             is AppAction.Change ->
                 state.copy(
                     collections = action.collections,
-                    mode = action.mode,
                     topSites = action.topSites,
                     bookmarks = action.bookmarks,
                     recentTabs = action.recentTabs,
@@ -70,7 +69,6 @@ internal object AppStoreReducer {
                 state.copy(expandedCollections = newExpandedCollection)
             }
             is AppAction.CollectionsChange -> state.copy(collections = action.collections)
-            is AppAction.BrowsingModeManagerModeChanged -> state.copy(mode = action.mode)
             is AppAction.OrientationChange -> state.copy(orientation = action.orientation)
             is AppAction.TopSitesChange -> state.copy(topSites = action.topSites)
             is AppAction.RecentTabsChange -> {

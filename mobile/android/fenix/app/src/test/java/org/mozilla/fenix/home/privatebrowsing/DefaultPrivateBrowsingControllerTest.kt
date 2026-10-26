@@ -21,7 +21,6 @@ import org.junit.runner.RunWith
 import org.mozilla.fenix.GleanMetrics.Homepage
 import org.mozilla.fenix.R
 import org.mozilla.fenix.browser.browsingmode.BrowsingMode
-import org.mozilla.fenix.browser.browsingmode.BrowsingModeManager
 import org.mozilla.fenix.components.AppStore
 import org.mozilla.fenix.components.appstate.AppState
 import org.mozilla.fenix.components.usecases.FenixBrowserUseCases
@@ -38,7 +37,6 @@ class DefaultPrivateBrowsingControllerTest {
     private val appStore: AppStore = mockk(relaxed = true)
     private val navController: NavController = mockk(relaxed = true)
     private val settings: Settings = mockk(relaxed = true)
-    private val browsingModeManager: BrowsingModeManager = mockk(relaxed = true)
     private val fenixBrowserUseCases: FenixBrowserUseCases = mockk(relaxed = true)
 
     private lateinit var store: BrowserStore
@@ -50,7 +48,6 @@ class DefaultPrivateBrowsingControllerTest {
         controller =
             DefaultPrivateBrowsingController(
                 navController = navController,
-                browsingModeManager = browsingModeManager,
                 fenixBrowserUseCases = fenixBrowserUseCases,
                 settings = settings,
             )
@@ -118,7 +115,7 @@ class DefaultPrivateBrowsingControllerTest {
         assertEquals(1, snapshot.size)
 
         verify {
-            browsingModeManager.mode = newMode
+            settings.lastKnownMode = newMode
             settings.incrementNumTimesPrivateModeOpened()
         }
     }
@@ -142,8 +139,8 @@ class DefaultPrivateBrowsingControllerTest {
         assertEquals(1, snapshot.size)
 
         verify {
-            browsingModeManager.mode = newMode
             fenixBrowserUseCases.addNewHomepageTab(private = false)
+            settings.lastKnownMode = BrowsingMode.Normal
         }
     }
 
@@ -166,8 +163,8 @@ class DefaultPrivateBrowsingControllerTest {
         assertEquals(1, snapshot.size)
 
         verify {
-            browsingModeManager.mode = newMode
             fenixBrowserUseCases.addNewHomepageTab(private = true)
+            settings.lastKnownMode = BrowsingMode.Private
             settings.incrementNumTimesPrivateModeOpened()
         }
     }

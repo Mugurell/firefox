@@ -96,10 +96,17 @@ class DefaultPrivateBrowsingLockStorage(
 /**
  * A lifecycle-aware feature that locks private browsing mode behind authentication when certain conditions are met
  * (e.g., switching modes or backgrounding the app).
+ *
+ * @param appStore The [AppStore] holding whether private tabs are locked.
+ * @param browserStore The [BrowserStore] holding the private tabs.
+ * @param isPrivate Whether the regular tabs activity is private.
+ * @param storage The [PrivateBrowsingLockStorage] telling whether the lock is enabled.
+ * @param mainDispatcher The [CoroutineDispatcher] on which the stores are observed.
  */
 class PrivateBrowsingLockFeature(
     private val appStore: AppStore,
     private val browserStore: BrowserStore,
+    private val isPrivate: () -> Boolean,
     private val storage: PrivateBrowsingLockStorage,
     private val mainDispatcher: CoroutineDispatcher = Dispatchers.Main,
 ) : DefaultLifecycleObserver {
@@ -127,7 +134,7 @@ class PrivateBrowsingLockFeature(
 
             updateFeatureState(
                 isFeatureEnabled = isFeatureEnabled,
-                isLocked = appStore.state.mode == BrowsingMode.Normal && browserStore.state.privateTabs.isNotEmpty(),
+                isLocked = !isPrivate() && browserStore.state.privateTabs.isNotEmpty(),
             )
         }
     }
@@ -149,6 +156,17 @@ class PrivateBrowsingLockFeature(
 
         if (appStore.state.isPrivateScreenLocked != isLocked) {
             appStore.dispatch(PrivateBrowsingLockAction.UpdatePrivateBrowsingLock(isLocked = isLocked))
+        }
+    }
+
+    /**
+     * Locks private tabs when the regular tabs activity switches to normal mode.
+     *
+     * @param mode The [BrowsingMode] the regular tabs activity switched to.
+     */
+    fun onBrowsingModeChanged(mode: BrowsingMode) {
+        if (isFeatureEnabled && mode == BrowsingMode.Normal) {
+            maybeLockPrivateMode()
         }
     }
 
@@ -193,13 +211,12 @@ class PrivateBrowsingLockFeature(
                             .collect { openInFirefoxRequested = true }
                     }
 
-                    // Observe mode changes to lock private mode when switching to normal mode.
+                    // Lock private mode when starting in normal mode. Later switches to normal mode lock it through
+                    // onBrowsingModeChanged.
                     launch {
-                        flow
-                            .map { it.mode }
-                            .distinctUntilChanged()
-                            .filter { it != BrowsingMode.Private }
-                            .collect { maybeLockPrivateMode() }
+                        if (!isPrivate()) {
+                            maybeLockPrivateMode()
+                        }
                     }
 
                     // Observe tray visibility to lock the private tabs when leaving the tabstray unless it’s private
@@ -210,7 +227,7 @@ class PrivateBrowsingLockFeature(
                             .distinctUntilChanged()
                             .filter { !it }
                             .collect {
-                                if (appStore.state.mode != BrowsingMode.Private) {
+                                if (!isPrivate()) {
                                     maybeLockPrivateMode()
                                 }
                             }

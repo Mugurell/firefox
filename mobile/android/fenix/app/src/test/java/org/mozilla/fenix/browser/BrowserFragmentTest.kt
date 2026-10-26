@@ -39,6 +39,7 @@ import org.junit.runner.RunWith
 import org.mozilla.fenix.FenixApplication
 import org.mozilla.fenix.HomeActivity
 import org.mozilla.fenix.R
+import org.mozilla.fenix.browser.browsingmode.BrowsingMode
 import org.mozilla.fenix.components.AppStore
 import org.mozilla.fenix.components.appstate.AppState
 import org.mozilla.fenix.components.toolbar.BrowserToolbarComposable
@@ -104,22 +105,22 @@ class BrowserFragmentTest {
     }
 
     @Test
-    fun `GIVEN fragment is added WHEN selected tab changes THEN theme is updated`() = runTest {
+    fun `GIVEN fragment is added WHEN selected tab changes THEN its browsing mode is saved`() = runTest {
         browserFragment.observeTabSelection(
             store,
             false,
             coroutineContext[ContinuationInterceptor] as CoroutineDispatcher,
         )
-        verify(exactly = 0) { browserFragment.updateThemeForSession(testTab) }
+        verify(exactly = 0) { settings.lastKnownMode = any() }
 
         addAndSelectTab(testTab)
         testScheduler.advanceUntilIdle()
 
-        verify(exactly = 1) { browserFragment.updateThemeForSession(testTab) }
+        verify(exactly = 1) { settings.lastKnownMode = BrowsingMode.Normal }
     }
 
     @Test
-    fun `GIVEN fragment is added WHEN selected tab is customTab THEN theme is not updated`() = runTest {
+    fun `GIVEN fragment is added WHEN selected tab is customTab THEN no browsing mode is saved`() = runTest {
         browserFragment.observeTabSelection(
             store,
             true,
@@ -127,16 +128,16 @@ class BrowserFragmentTest {
         )
         testScheduler.advanceUntilIdle()
 
-        verify(exactly = 0) { browserFragment.updateThemeForSession(testTab) }
+        verify(exactly = 0) { settings.lastKnownMode = any() }
 
         addAndSelectTab(testTab)
         testScheduler.advanceUntilIdle()
 
-        verify(exactly = 0) { browserFragment.updateThemeForSession(testTab) }
+        verify(exactly = 0) { settings.lastKnownMode = any() }
     }
 
     @Test
-    fun `GIVEN fragment is removing WHEN selected tab changes THEN theme is not updated`() = runTest {
+    fun `GIVEN fragment is removing WHEN selected tab changes THEN no browsing mode is saved`() = runTest {
         every { browserFragment.isRemoving } returns true
         browserFragment.observeTabSelection(
             store,
@@ -147,7 +148,7 @@ class BrowserFragmentTest {
         addAndSelectTab(testTab)
         testScheduler.advanceUntilIdle()
 
-        verify(exactly = 0) { browserFragment.updateThemeForSession(testTab) }
+        verify(exactly = 0) { settings.lastKnownMode = any() }
     }
 
     @Test

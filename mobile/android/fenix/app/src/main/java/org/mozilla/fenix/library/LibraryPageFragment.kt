@@ -9,10 +9,10 @@ import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
 import com.google.android.material.R as materialR
 import mozilla.components.support.ktx.android.content.getColorFromAttr
-import org.mozilla.fenix.HomeActivity
 import org.mozilla.fenix.R
 import org.mozilla.fenix.browser.browsingmode.BrowsingMode
 import org.mozilla.fenix.ext.components
+import org.mozilla.fenix.ext.requireComponents
 import org.mozilla.fenix.ext.setToolbarColors
 
 abstract class LibraryPageFragment<T> : Fragment() {
@@ -36,7 +36,7 @@ abstract class LibraryPageFragment<T> : Fragment() {
             }
         }
 
-        (activity as HomeActivity).browsingModeManager.mode = BrowsingMode.fromBoolean(private)
+        requireComponents.settings.lastKnownMode = BrowsingMode.fromBoolean(private)
     }
 
     override fun onDetach() {

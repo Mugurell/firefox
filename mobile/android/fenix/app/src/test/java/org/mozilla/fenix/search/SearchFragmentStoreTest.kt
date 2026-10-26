@@ -4,7 +4,6 @@
 
 package org.mozilla.fenix.search
 
-import android.content.Intent
 import io.mockk.MockKAnnotations
 import io.mockk.every
 import io.mockk.impl.annotations.MockK
@@ -32,7 +31,6 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.mozilla.fenix.HomeActivity
 import org.mozilla.fenix.browser.browsingmode.BrowsingMode
-import org.mozilla.fenix.browser.browsingmode.BrowsingModeManager
 import org.mozilla.fenix.components.AppStore
 import org.mozilla.fenix.components.Components
 import org.mozilla.fenix.components.appstate.AppState
@@ -59,23 +57,17 @@ class SearchFragmentStoreTest {
     @Before
     fun setup() {
         MockKAnnotations.init(this)
-        every { activity.browsingModeManager } returns
-            object : BrowsingModeManager {
-                override var mode: BrowsingMode = BrowsingMode.Normal
-
-                override fun updateMode(intent: Intent?) = Unit
-            }
         every { components.settings } returns settings
         every { components.activityPrivacy.isPrivate(customTabSessionId = null) } returns false
         every { searchEngine.trendingUrl } returns null
 
-        appStore = AppStore(initialState = AppState(mode = BrowsingMode.Normal))
+        appStore = AppStore(initialState = AppState())
         every { components.appStore } returns appStore
     }
 
     @Test
     fun `createInitialSearchFragmentState with no tab in normal browsing mode`() {
-        appStore = AppStore(initialState = AppState(mode = BrowsingMode.Normal))
+        appStore = AppStore(initialState = AppState())
         every { components.appStore } returns appStore
         every { components.core.store.state } returns BrowserState()
         every { settings.shouldShowHistorySuggestions } returns true
@@ -147,7 +139,7 @@ class SearchFragmentStoreTest {
 
     @Test
     fun `createInitialSearchFragmentState with no tab in private browsing mode`() {
-        appStore = AppStore(initialState = AppState(mode = BrowsingMode.Private))
+        appStore = AppStore(initialState = AppState())
         every { components.appStore } returns appStore
         every { components.activityPrivacy.isPrivate(customTabSessionId = null) } returns true
         every { components.core.store.state } returns BrowserState()
@@ -194,7 +186,7 @@ class SearchFragmentStoreTest {
     @Test
     fun `createInitialSearchFragmentState with tab`() {
         every { settings.shouldUseBottomToolbar } returns true
-        appStore = AppStore(initialState = AppState(mode = BrowsingMode.Private))
+        appStore = AppStore(initialState = AppState())
         every { components.appStore } returns appStore
         every { components.activityPrivacy.isPrivate(customTabSessionId = null) } returns true
         every { components.core.store.state } returns
@@ -237,7 +229,7 @@ class SearchFragmentStoreTest {
 
     @Test
     fun `GIVEN sponsored and non-sponsored suggestions are enabled and Firefox Suggest is disabled WHEN the initial state is created THEN neither are displayed`() {
-        appStore = AppStore(initialState = AppState(mode = BrowsingMode.Normal))
+        appStore = AppStore(initialState = AppState())
         every { components.appStore } returns appStore
         every { components.core.store.state } returns BrowserState()
         every { settings.enableFxSuggest } returns false

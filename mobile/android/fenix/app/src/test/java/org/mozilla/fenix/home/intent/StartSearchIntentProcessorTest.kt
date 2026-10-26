@@ -27,8 +27,6 @@ import org.mozilla.fenix.GleanMetrics.SearchWidget
 import org.mozilla.fenix.HomeActivity
 import org.mozilla.fenix.NavGraphDirections
 import org.mozilla.fenix.browser.browsingmode.BrowsingMode
-import org.mozilla.fenix.browser.browsingmode.BrowsingModeManager
-import org.mozilla.fenix.browser.browsingmode.fakes.FakeBrowsingModeManager
 import org.mozilla.fenix.components.metrics.MetricsUtils
 import org.mozilla.fenix.components.usecases.FenixBrowserUseCases
 import org.mozilla.fenix.helpers.FenixGleanTestRule
@@ -48,6 +46,7 @@ class StartSearchIntentProcessorTest {
 
     @Before
     fun setup() {
+        every { settings.lastKnownMode } returns BrowsingMode.Normal
         browserStore =
             BrowserStore(
                 initialState = BrowserState(tabs = listOf()),
@@ -64,13 +63,9 @@ class StartSearchIntentProcessorTest {
             )
     }
 
-    private fun createProcessor(
-        userHasBeenOnboarded: Boolean,
-        browsingModeManager: BrowsingModeManager = FakeBrowsingModeManager(BrowsingMode.Normal),
-    ) =
+    private fun createProcessor(userHasBeenOnboarded: Boolean) =
         StartSearchIntentProcessor(
             fenixBrowserUseCases = fenixBrowserUseCases,
-            browsingModeManager = browsingModeManager,
             userHasBeenOnboarded = { userHasBeenOnboarded },
         )
 
@@ -120,12 +115,9 @@ class StartSearchIntentProcessorTest {
     @Test
     fun `process search intents to navigate home with address bar focused`() {
         every { settings.enableHomepageAsNewTab } returns false
-        val browsingModeManager = FakeBrowsingModeManager(BrowsingMode.Normal)
         assertEquals(0, browserStore.state.tabs.size)
-        assertFalse(browsingModeManager.hasModeUpdated)
 
-        createProcessor(userHasBeenOnboarded = true, browsingModeManager = browsingModeManager)
-            .process(searchWidgetIntent(), navController, out, settings)
+        createProcessor(userHasBeenOnboarded = true).process(searchWidgetIntent(), navController, out, settings)
 
         assertNotNull(SearchWidget.newTabButton.testGetValue())
         val recordedEvents = SearchWidget.newTabButton.testGetValue()!!
@@ -133,8 +125,7 @@ class StartSearchIntentProcessorTest {
         assertEquals(null, recordedEvents.single().extra)
 
         assertEquals(0, browserStore.state.tabs.size)
-        assertFalse(browsingModeManager.hasModeUpdated)
-        assertEquals(BrowsingMode.Normal, browsingModeManager.mode)
+        verify(exactly = 0) { settings.lastKnownMode = any() }
         verify {
             navController.navigate(
                 NavGraphDirections.actionGlobalHome(
@@ -150,17 +141,13 @@ class StartSearchIntentProcessorTest {
     @Test
     fun `GIVEN homepage as a new tab is enabled and open links in a private tab is disabled WHEN a search intent is processed THEN add a new homepage tab and focus the address bar`() {
         every { settings.enableHomepageAsNewTab } returns true
-        val browsingModeManager = FakeBrowsingModeManager(BrowsingMode.Normal)
         assertEquals(0, browserStore.state.tabs.size)
-        assertFalse(browsingModeManager.hasModeUpdated)
 
-        createProcessor(userHasBeenOnboarded = true, browsingModeManager = browsingModeManager)
-            .process(searchWidgetIntent(), navController, out, settings)
+        createProcessor(userHasBeenOnboarded = true).process(searchWidgetIntent(), navController, out, settings)
 
-        assertTrue(browsingModeManager.hasModeUpdated)
-        assertEquals(BrowsingMode.Normal, browsingModeManager.mode)
         assertEquals(1, browserStore.state.tabs.size)
         assertFalse(browserStore.state.tabs[0].content.private)
+        verify { settings.lastKnownMode = BrowsingMode.Normal }
         verify {
             navController.navigate(
                 NavGraphDirections.actionGlobalHome(
@@ -176,19 +163,15 @@ class StartSearchIntentProcessorTest {
     @Test
     fun `GIVEN homepage as a new tab is enabled and open links in a private tab is enabled WHEN a search intent is processed THEN add a new private homepage tab`() {
         every { settings.enableHomepageAsNewTab } returns true
-        val browsingModeManager = FakeBrowsingModeManager(BrowsingMode.Normal)
         assertEquals(0, browserStore.state.tabs.size)
-        assertFalse(browsingModeManager.hasModeUpdated)
 
         val intent = searchWidgetIntent().apply { putExtra(HomeActivity.PRIVATE_BROWSING_MODE, true) }
 
-        createProcessor(userHasBeenOnboarded = true, browsingModeManager = browsingModeManager)
-            .process(intent, navController, out, settings)
+        createProcessor(userHasBeenOnboarded = true).process(intent, navController, out, settings)
 
-        assertTrue(browsingModeManager.hasModeUpdated)
-        assertEquals(BrowsingMode.Private, browsingModeManager.mode)
         assertEquals(1, browserStore.state.tabs.size)
         assertTrue(browserStore.state.tabs[0].content.private)
+        verify { settings.lastKnownMode = BrowsingMode.Private }
         verify {
             navController.navigate(
                 NavGraphDirections.actionGlobalHome(

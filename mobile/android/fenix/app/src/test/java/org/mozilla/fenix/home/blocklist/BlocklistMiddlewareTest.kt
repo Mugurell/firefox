@@ -47,7 +47,6 @@ class BlocklistMiddlewareTest {
         appStore.dispatch(
             AppAction.Change(
                 topSites = appStore.state.topSites,
-                mode = appStore.state.mode,
                 collections = appStore.state.collections,
                 recentTabs = appStore.state.recentTabs,
                 bookmarks = listOf(updatedBookmark),
@@ -74,7 +73,6 @@ class BlocklistMiddlewareTest {
         appStore.dispatch(
             AppAction.Change(
                 topSites = appStore.state.topSites,
-                mode = appStore.state.mode,
                 collections = appStore.state.collections,
                 recentTabs = appStore.state.recentTabs,
                 bookmarks = listOf(updatedBookmark),
@@ -102,7 +100,6 @@ class BlocklistMiddlewareTest {
         appStore.dispatch(
             AppAction.Change(
                 topSites = appStore.state.topSites,
-                mode = appStore.state.mode,
                 collections = appStore.state.collections,
                 recentTabs = appStore.state.recentTabs,
                 bookmarks = listOf(updatedBookmark),
@@ -129,7 +126,6 @@ class BlocklistMiddlewareTest {
         appStore.dispatch(
             AppAction.Change(
                 topSites = appStore.state.topSites,
-                mode = appStore.state.mode,
                 collections = appStore.state.collections,
                 recentTabs = appStore.state.recentTabs,
                 bookmarks = listOf(updatedBookmark),
@@ -158,7 +154,6 @@ class BlocklistMiddlewareTest {
         appStore.dispatch(
             AppAction.Change(
                 topSites = appStore.state.topSites,
-                mode = appStore.state.mode,
                 collections = appStore.state.collections,
                 recentTabs = updatedRecentTabs,
                 bookmarks = updatedBookmarks,
@@ -196,7 +191,6 @@ class BlocklistMiddlewareTest {
         appStore.dispatch(
             AppAction.Change(
                 topSites = appStore.state.topSites,
-                mode = appStore.state.mode,
                 collections = appStore.state.collections,
                 recentTabs = updatedRecentTabs,
                 bookmarks = updatedBookmarks,
@@ -248,7 +242,6 @@ class BlocklistMiddlewareTest {
         appStore.dispatch(
             AppAction.Change(
                 topSites = appStore.state.topSites,
-                mode = appStore.state.mode,
                 collections = appStore.state.collections,
                 recentTabs = appStore.state.recentTabs,
                 bookmarks = listOf(updatedBookmark),
@@ -276,7 +269,6 @@ class BlocklistMiddlewareTest {
         appStore.dispatch(
             AppAction.Change(
                 topSites = appStore.state.topSites,
-                mode = appStore.state.mode,
                 collections = appStore.state.collections,
                 recentTabs = appStore.state.recentTabs,
                 bookmarks = listOf(updatedBookmark),
@@ -304,7 +296,6 @@ class BlocklistMiddlewareTest {
         appStore.dispatch(
             AppAction.Change(
                 topSites = appStore.state.topSites,
-                mode = appStore.state.mode,
                 collections = appStore.state.collections,
                 recentTabs = appStore.state.recentTabs,
                 bookmarks = listOf(updatedBookmark),

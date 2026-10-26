@@ -13,7 +13,6 @@ import mozilla.components.browser.state.store.BrowserStore
 import mozilla.components.compose.browser.toolbar.store.BrowserToolbarState
 import mozilla.components.compose.browser.toolbar.store.BrowserToolbarStore
 import mozilla.components.lib.state.helpers.StoreProvider.Companion.fragmentStore
-import org.mozilla.fenix.browser.browsingmode.BrowsingModeManager
 import org.mozilla.fenix.components.AppStore
 import org.mozilla.fenix.ext.components
 import org.mozilla.fenix.ext.isTallWindow
@@ -34,7 +33,6 @@ object HomeToolbarStoreBuilder {
      * @param navController [NavController] to use for navigating to other in-app destinations.
      * @param appStore [AppStore] to sync from.
      * @param browserStore [BrowserStore] to sync from.
-     * @param browsingModeManager [BrowsingModeManager] for querying the current browsing mode.
      * @param isPrivate Whether the activity showing the toolbar is private.
      */
     fun build(
@@ -43,7 +41,6 @@ object HomeToolbarStoreBuilder {
         navController: NavController,
         appStore: AppStore,
         browserStore: BrowserStore,
-        browsingModeManager: BrowsingModeManager,
         isPrivate: () -> Boolean,
     ) =
         fragment.fragmentStore(BrowserToolbarState()) {
@@ -65,7 +62,7 @@ object HomeToolbarStoreBuilder {
                             clipboard = context.components.clipboardHandler,
                             fenixBrowserUseCases = context.components.useCases.fenixBrowserUseCases,
                             navController = navController,
-                            browsingModeManager = browsingModeManager,
+                            isPrivate = isPrivate,
                             settings = context.components.settings,
                             translationsFeatureSettings = TranslationsEnabledSettings.dataStore(context),
                             isWideScreen = { fragment.isWideWindow() },

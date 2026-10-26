@@ -11,7 +11,6 @@ import mozilla.components.lib.crash.Crash.NativeCodeCrash
 import mozilla.components.lib.crash.store.CrashState
 import mozilla.components.lib.state.State
 import org.mozilla.fenix.browser.StandardSnackbarError
-import org.mozilla.fenix.browser.browsingmode.BrowsingMode
 import org.mozilla.fenix.components.appstate.blockedtrackers.BlockedTrackersState
 import org.mozilla.fenix.components.appstate.lens.LensState
 import org.mozilla.fenix.components.appstate.qrScanner.QrScannerState
@@ -51,7 +50,6 @@ import org.mozilla.fenix.wallpapers.WallpaperState
  * @property collections The list of [TabCollection] to display in the [HomeFragment].
  * @property expandedCollections A set containing the ids of the [TabCollection] that are expanded in the
  *   [HomeFragment].
- * @property mode Whether the app is in private browsing mode.
  * @property orientation Current orientation of the application.
  * @property topSites The list of [TopSite] in the [HomeFragment].
  * @property recentTabs The list of recent [RecentTab] in the [HomeFragment].
@@ -98,7 +96,6 @@ data class AppState(
     val nonFatalCrashes: List<NativeCodeCrash> = emptyList(),
     val collections: List<TabCollection> = emptyList(),
     val expandedCollections: Set<Long> = emptySet(),
-    val mode: BrowsingMode = BrowsingMode.Normal,
     val orientation: OrientationMode = OrientationMode.Undefined,
     val topSites: List<TopSite> = emptyList(),
     val recentTabs: List<RecentTab> = emptyList(),

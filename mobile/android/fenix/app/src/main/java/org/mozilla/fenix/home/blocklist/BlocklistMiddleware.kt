@@ -99,7 +99,6 @@ class BlocklistMiddleware(private val blocklistHandler: BlocklistHandler) : Midd
                 bookmarks = bookmarks.filteredByBlocklist(),
                 recentHistory = recentHistory.filteredByBlocklist().filterContile(),
                 topSites = topSites,
-                mode = mode,
                 collections = collections,
                 recentSyncedTabState = recentSyncedTabState.filteredByBlocklist().filterContile(),
             )

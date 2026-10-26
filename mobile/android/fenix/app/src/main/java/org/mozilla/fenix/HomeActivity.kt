@@ -10,6 +10,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.Intent.ACTION_MAIN
 import android.content.Intent.FLAG_ACTIVITY_REORDER_TO_FRONT
+import android.content.SharedPreferences
 import android.content.pm.PackageManager
 import android.content.res.Configuration
 import android.os.Build
@@ -110,8 +111,6 @@ import org.mozilla.fenix.bookmarks.DesktopFolders
 import org.mozilla.fenix.browser.BrowserFragment
 import org.mozilla.fenix.browser.BrowserFragmentDirections
 import org.mozilla.fenix.browser.browsingmode.BrowsingMode
-import org.mozilla.fenix.browser.browsingmode.BrowsingModeManager
-import org.mozilla.fenix.browser.browsingmode.DefaultBrowsingModeManager
 import org.mozilla.fenix.components.DefaultHomepageAsANewTabPreferenceRepository
 import org.mozilla.fenix.components.DefaultShortcutManagerCompatWrapper
 import org.mozilla.fenix.components.accounts.FenixFxAEntryPoint
@@ -216,7 +215,10 @@ import org.mozilla.fenix.utils.changeAppLauncherIcon
 open class HomeActivity : LocaleAwareAppCompatActivity(), NavHostActivity, CrashActionDispatcher {
     @VisibleForTesting internal lateinit var binding: ActivityHomeBinding
     lateinit var themeManager: ThemeManager
-    lateinit var browsingModeManager: BrowsingModeManager
+
+    /** The browsing mode this activity shows, resolved when it is created. */
+    var browsingMode: BrowsingMode = BrowsingMode.Normal
+        private set
 
     private var isVisuallyComplete = false
 
@@ -301,6 +303,12 @@ open class HomeActivity : LocaleAwareAppCompatActivity(), NavHostActivity, Crash
         )
     }
 
+    private val lastKnownModeListener = SharedPreferences.OnSharedPreferenceChangeListener { _, key ->
+        if (key == getString(R.string.pref_key_last_known_mode_private)) {
+            applyLastKnownMode()
+        }
+    }
+
     private val homepageTabBinding by lazy {
         HomepageTabBinding(
             browserStore = components.core.store,
@@ -362,6 +370,7 @@ open class HomeActivity : LocaleAwareAppCompatActivity(), NavHostActivity, Crash
         PrivateBrowsingLockFeature(
             appStore = components.appStore,
             browserStore = components.core.store,
+            isPrivate = { components.activityPrivacy.isPrivate(customTabSessionId = null) },
             storage =
                 DefaultPrivateBrowsingLockStorage(
                     preferences = components.settings.preferences,
@@ -386,14 +395,10 @@ open class HomeActivity : LocaleAwareAppCompatActivity(), NavHostActivity, Crash
             AssistIntentProcessor(),
             StartSearchIntentProcessor(
                 fenixBrowserUseCases = components.useCases.fenixBrowserUseCases,
-                browsingModeManager = browsingModeManager,
                 userHasBeenOnboarded = { components.fenixOnboarding.userHasBeenOnboarded() },
             ),
             LensResultIntentProcessor(this),
-            OpenHomeIntentProcessor(
-                fenixBrowserUseCases = components.useCases.fenixBrowserUseCases,
-                browsingModeManager = browsingModeManager,
-            ),
+            OpenHomeIntentProcessor(fenixBrowserUseCases = components.useCases.fenixBrowserUseCases),
             OpenBrowserIntentProcessor(this, ::getIntentSessionId),
             OpenSpecificTabIntentProcessor(this),
             OpenPasswordManagerIntentProcessor(),
@@ -473,8 +478,12 @@ open class HomeActivity : LocaleAwareAppCompatActivity(), NavHostActivity, Crash
         // There is disk read violations on some devices such as samsung and pixel for android 9/10
         components.strictMode.allowViolation(StrictMode::allowThreadDiskReads) {
             // Browsing mode & theme setup should always be called before super.onCreate.
-            browsingModeManager = createBrowsingModeManager(intent)
+            browsingMode = resolveCreationBrowsingMode(savedInstanceState)
+            updateSecureWindowFlags()
             setupTheme()
+            if (this !is ExternalAppBrowserActivity) {
+                components.settings.preferences.registerOnSharedPreferenceChangeListener(lastKnownModeListener)
+            }
 
             super.onCreate(savedInstanceState)
         }
@@ -837,7 +846,7 @@ open class HomeActivity : LocaleAwareAppCompatActivity(), NavHostActivity, Crash
         breadcrumb(message = "onResume()")
 
         binding.root.doOnLayout {
-            if (browsingModeManager.mode.isPrivate) {
+            if (browsingMode.isPrivate) {
                 it.announcePrivateModeForAccessibility()
             }
         }
@@ -878,12 +887,6 @@ open class HomeActivity : LocaleAwareAppCompatActivity(), NavHostActivity, Crash
         components.core.store.dispatch(SearchAction.RefreshSearchEnginesAction)
 
         showPendingSendToDevicesIfPossible()
-    }
-
-    override fun onRestart() {
-        super.onRestart()
-
-        browsingModeManager.updateMode(intent)
     }
 
     final override fun onStart() {
@@ -994,6 +997,8 @@ open class HomeActivity : LocaleAwareAppCompatActivity(), NavHostActivity, Crash
 
         super.onDestroy()
 
+        components.settings.preferences.unregisterOnSharedPreferenceChangeListener(lastKnownModeListener)
+
         // Diagnostic breadcrumb for "Display already aquired" crash:
         // https://github.com/mozilla-mobile/android-components/issues/7960
         breadcrumb(
@@ -1093,7 +1098,7 @@ open class HomeActivity : LocaleAwareAppCompatActivity(), NavHostActivity, Crash
             val intentProcessors =
                 listOf(CrashReporterIntentProcessor(components.appStore)) + externalSourceIntentProcessors
             intentProcessors.forEach { it.process(intent, navHost.navController, this.intent, components.settings) }
-            browsingModeManager.updateMode(intent)
+            saveRequestedBrowsingMode(intent)
         }
     }
 
@@ -1485,7 +1490,7 @@ open class HomeActivity : LocaleAwareAppCompatActivity(), NavHostActivity, Crash
     private fun setupTheme() {
         themeManager = createThemeManager()
         // ExternalAppBrowserActivity exclusively handles it's own theming unless in private mode.
-        if (this !is ExternalAppBrowserActivity || browsingModeManager.mode.isPrivate) {
+        if (this !is ExternalAppBrowserActivity || browsingMode.isPrivate) {
             themeManager.setActivityTheme(this)
             themeManager.applyStatusBarTheme(this)
         }
@@ -1571,7 +1576,7 @@ open class HomeActivity : LocaleAwareAppCompatActivity(), NavHostActivity, Crash
             searchTermOrURL = searchTermOrURL,
             newTab = newTab,
             forceSearch = forceSearch,
-            private = browsingModeManager.mode.isPrivate,
+            private = browsingMode.isPrivate,
             searchEngine = engine,
             flags = flags,
             historyMetadata = historyMetadata,
@@ -1603,7 +1608,7 @@ open class HomeActivity : LocaleAwareAppCompatActivity(), NavHostActivity, Crash
 
         // Normal tabs + cold start -> Should go back to browser if we had any tabs open when we left last
         // except for PBM + Cold Start there won't be any tabs since they're evicted so we never will navigate
-        if (components.settings.shouldReturnToBrowser && !browsingModeManager.mode.isPrivate) {
+        if (components.settings.shouldReturnToBrowser && !browsingMode.isPrivate) {
             // Navigate to home first (without rendering it) to add it to the back stack.
             openToBrowser(BrowserDirection.FromGlobal, null)
         }
@@ -1656,33 +1661,44 @@ open class HomeActivity : LocaleAwareAppCompatActivity(), NavHostActivity, Crash
         return super.getSystemService(name)
     }
 
-    /** Returns the [BrowsingMode] of the session this activity is bound to, if any. */
-    @VisibleForTesting(otherwise = VisibleForTesting.PROTECTED)
-    internal open fun getSessionBrowsingMode(): BrowsingMode? = null
-
+    /**
+     * Returns the [BrowsingMode] this activity is created with: on a fresh launch, the one its intent asks for, which
+     * is then saved as the last known mode, else the privacy of the regular tabs activity.
+     *
+     * @param savedInstanceState The state this activity is recreated from, or null on a fresh launch.
+     */
     @VisibleForTesting
-    internal fun createBrowsingModeManager(intent: Intent?): BrowsingModeManager {
-        return DefaultBrowsingModeManager(
-            intent = intent,
-            settings = components.settings,
-            getSessionMode = ::getSessionBrowsingMode,
-            onModeChange = { newMode ->
-                updateSecureWindowFlags(newMode)
-
-                if (this !is ExternalAppBrowserActivity) {
-                    components.settings.lastKnownMode = newMode
-
-                    if (::themeManager.isInitialized) {
-                        themeManager.currentTheme = newMode
-                    }
-
-                    components.appStore.dispatch(AppAction.BrowsingModeManagerModeChanged(mode = newMode))
-                }
-            },
-        )
+    internal open fun resolveCreationBrowsingMode(savedInstanceState: Bundle?): BrowsingMode {
+        val launchIntent = intent?.toSafeIntent()
+        if (savedInstanceState == null && launchIntent?.hasExtra(PRIVATE_BROWSING_MODE) == true) {
+            val requestedMode = BrowsingMode.fromBoolean(launchIntent.getBooleanExtra(PRIVATE_BROWSING_MODE, false))
+            components.settings.lastKnownMode = requestedMode
+            return requestedMode
+        }
+        return BrowsingMode.fromBoolean(components.activityPrivacy.isPrivate(customTabSessionId = null))
     }
 
-    private fun updateSecureWindowFlags(mode: BrowsingMode = browsingModeManager.mode) {
+    /** Saves the browsing mode a new intent asks for. */
+    private fun saveRequestedBrowsingMode(intent: Intent) {
+        val safeIntent = intent.toSafeIntent()
+        if (this !is ExternalAppBrowserActivity && safeIntent.hasExtra(PRIVATE_BROWSING_MODE)) {
+            components.settings.lastKnownMode =
+                BrowsingMode.fromBoolean(safeIntent.getBooleanExtra(PRIVATE_BROWSING_MODE, false))
+        }
+    }
+
+    /** Applies the last known mode, saved by the regular tabs activity's mode switches. */
+    private fun applyLastKnownMode() {
+        val mode = components.settings.lastKnownMode
+        privateBrowsingLockFeature.onBrowsingModeChanged(mode)
+        if (mode != browsingMode) {
+            browsingMode = mode
+            updateSecureWindowFlags()
+            themeManager.currentTheme = mode
+        }
+    }
+
+    private fun updateSecureWindowFlags(mode: BrowsingMode = browsingMode) {
         if (mode == BrowsingMode.Private && !components.settings.shouldSecureModeBeOverridden) {
             window.addFlags(FLAG_SECURE)
         } else {
@@ -1691,7 +1707,7 @@ open class HomeActivity : LocaleAwareAppCompatActivity(), NavHostActivity, Crash
     }
 
     private fun createThemeManager(): ThemeManager {
-        return DefaultThemeManager(browsingModeManager.mode, this)
+        return DefaultThemeManager(browsingMode, this)
     }
 
     private fun openPopup(webExtensionState: WebExtensionState) {

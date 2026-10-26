@@ -24,7 +24,6 @@ import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
-import org.mozilla.fenix.browser.browsingmode.BrowsingMode
 import org.mozilla.fenix.components.AppStore
 import org.mozilla.fenix.components.appstate.AppAction.SearchAction.SearchEnded
 import org.mozilla.fenix.components.appstate.AppAction.SearchAction.SearchStarted
@@ -204,7 +203,7 @@ class BrowserStoreToFenixSearchMapperMiddlewareTest {
             val newSearchEngines: List<SearchEngine> = listOf(mockk(), mockk())
             val browserStore =
                 BrowserStore(BrowserState(search = SearchState(applicationSearchEngines = newSearchEngines)))
-            val appStore = AppStore(AppState(mode = BrowsingMode.Private))
+            val appStore = AppStore(AppState())
             val actionsCaptor = CaptureActionsMiddleware<SearchFragmentState, SearchFragmentAction>()
             val middleware = BrowserStoreToFenixSearchMapperMiddleware(browserStore, backgroundScope, appStore) { true }
             buildStore(middleware, actionsCaptor)
@@ -223,7 +222,7 @@ class BrowserStoreToFenixSearchMapperMiddlewareTest {
             val newSearchEngines: List<SearchEngine> = listOf(mockk(), mockk())
             val browserStore =
                 BrowserStore(BrowserState(search = SearchState(applicationSearchEngines = newSearchEngines)))
-            val appStore = AppStore(AppState(mode = BrowsingMode.Normal))
+            val appStore = AppStore(AppState())
             val actionsCaptor = CaptureActionsMiddleware<SearchFragmentState, SearchFragmentAction>()
             val middleware = BrowserStoreToFenixSearchMapperMiddleware(browserStore, backgroundScope, appStore)
             buildStore(middleware, actionsCaptor)

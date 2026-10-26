@@ -121,7 +121,7 @@ class HomeDeepLinkIntentProcessor(
                 if (settings.enableHomepageAsNewTab) {
                     activity.components.useCases.fenixBrowserUseCases.addNewHomepageTab(private = true)
                 }
-                activity.browsingModeManager.mode = BrowsingMode.Private
+                settings.lastKnownMode = BrowsingMode.Private
             }
             "make_default_browser" -> {
                 activity.openSetDefaultBrowserOption(

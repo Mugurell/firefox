@@ -1696,7 +1696,6 @@ abstract class BaseBrowserFragment :
             browserStore = activity.components.core.store,
             browserScreenStore = browserScreenStore,
             components = activity.components,
-            browsingModeManager = activity.browsingModeManager,
             isPrivate = ::isActivityPrivate,
             thumbnailsFeature = { thumbnailsFeature.get() },
             readerModeController = readerModeController,
@@ -2079,7 +2078,7 @@ abstract class BaseBrowserFragment :
 
     private fun handleTabSelected(selectedTab: TabSessionState, isCustomTabSession: Boolean) {
         if (!this.isRemoving && !isCustomTabSession) {
-            updateThemeForSession(selectedTab)
+            persistLastBrowsingMode(selectedTab)
         }
 
         if (browserInitialized) {
@@ -2285,11 +2284,10 @@ abstract class BaseBrowserFragment :
         }
     }
 
-    /** Set the activity normal/private theme to match the current session. */
+    /** Saves the privacy of [session] as the last known browsing mode, which the regular tabs activity applies. */
     @VisibleForTesting
-    internal fun updateThemeForSession(session: SessionState) {
-        val sessionMode = BrowsingMode.fromBoolean(session.content.private)
-        (activity as HomeActivity).browsingModeManager.mode = sessionMode
+    internal fun persistLastBrowsingMode(session: SessionState) {
+        requireComponents.settings.lastKnownMode = BrowsingMode.fromBoolean(session.content.private)
     }
 
     private fun isActivityPrivate() = requireComponents.activityPrivacy.isPrivate(customTabSessionId)

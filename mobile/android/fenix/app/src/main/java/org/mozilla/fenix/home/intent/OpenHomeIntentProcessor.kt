@@ -8,7 +8,7 @@ import android.content.Intent
 import androidx.navigation.NavController
 import org.mozilla.fenix.HomeActivity
 import org.mozilla.fenix.NavGraphDirections
-import org.mozilla.fenix.browser.browsingmode.BrowsingModeManager
+import org.mozilla.fenix.browser.browsingmode.resolveBrowsingMode
 import org.mozilla.fenix.components.usecases.FenixBrowserUseCases
 import org.mozilla.fenix.ext.nav
 import org.mozilla.fenix.home.intent.StartSearchIntentProcessor.Companion.PRIVATE_BROWSING_PINNED_SHORTCUT
@@ -21,12 +21,8 @@ import org.mozilla.fenix.utils.Settings
  * before that setting existed open the private homepage rather than focusing the address bar.
  *
  * @param fenixBrowserUseCases [FenixBrowserUseCases] used to add a new homepage tab.
- * @param browsingModeManager [BrowsingModeManager] used to get and set the browsing mode.
  */
-class OpenHomeIntentProcessor(
-    private val fenixBrowserUseCases: FenixBrowserUseCases,
-    private val browsingModeManager: BrowsingModeManager,
-) : HomeIntentProcessor {
+class OpenHomeIntentProcessor(private val fenixBrowserUseCases: FenixBrowserUseCases) : HomeIntentProcessor {
     override fun process(intent: Intent, navController: NavController, out: Intent, settings: Settings): Boolean {
         return if (
             intent.extras?.getBoolean(HomeActivity.OPEN_TO_HOME) == true ||
@@ -36,8 +32,9 @@ class OpenHomeIntentProcessor(
             out.putExtra(HomeActivity.OPEN_TO_HOME, false)
             out.removeExtra(HomeActivity.OPEN_TO_SEARCH)
 
-            browsingModeManager.updateMode(intent)
-            fenixBrowserUseCases.addNewHomepageTab(private = browsingModeManager.mode.isPrivate)
+            val mode = resolveBrowsingMode(sessionMode = null, intent = intent, lastKnownMode = settings.lastKnownMode)
+            fenixBrowserUseCases.addNewHomepageTab(private = mode.isPrivate)
+            settings.lastKnownMode = mode
             navController.nav(
                 null,
                 directions = NavGraphDirections.actionGlobalHome(),

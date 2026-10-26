@@ -15,7 +15,6 @@ import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
-import org.mozilla.fenix.browser.browsingmode.BrowsingMode
 import org.mozilla.fenix.components.AppStore
 import org.mozilla.fenix.components.appstate.AppAction.SearchAction.SearchEnded
 import org.mozilla.fenix.components.appstate.AppAction.SearchAction.SearchStarted
@@ -69,7 +68,7 @@ class BrowserToolbarSearchStatusSyncMiddlewareTest {
     @Test
     fun `GIVEN in private browsing mode WHEN search starts in the application THEN put the toolbar in search mode also`() =
         runTest(testDispatcher) {
-            val appStore = AppStore(AppState(mode = BrowsingMode.Private))
+            val appStore = AppStore(AppState())
             isPrivateMode = true
             val (_, toolbarStore) = buildMiddlewareAndAddToSearchStore(appStore)
 
@@ -84,7 +83,7 @@ class BrowserToolbarSearchStatusSyncMiddlewareTest {
     @Test
     fun `GIVEN in normal browsing mode WHEN search starts in the application THEN put the toolbar in search mode also`() =
         runTest(testDispatcher) {
-            val appStore = AppStore(AppState(mode = BrowsingMode.Normal))
+            val appStore = AppStore(AppState())
             val (_, toolbarStore) = buildMiddlewareAndAddToSearchStore(appStore)
 
             appStore.dispatch(SearchStarted())

@@ -5,6 +5,7 @@
 package org.mozilla.fenix.components
 
 import mozilla.components.browser.state.selector.findTabOrCustomTab
+import mozilla.components.browser.state.selector.selectedTab
 import mozilla.components.browser.state.store.BrowserStore
 import org.mozilla.fenix.utils.Settings
 
@@ -20,12 +21,14 @@ class ActivityPrivacy(
 ) {
     /**
      * Whether currently showing a private tab, based on
-     * - the private mode of the currently selected tab or the custom tab identified by [customTabSessionId] or
+     * - the private mode of the custom tab identified by [customTabSessionId], or of the currently selected tab when
+     *   homepage as a new tab is enabled, or
      * - the last known mode if the tabs above could not be found.
      *
      * @param customTabSessionId The ID of the custom tab shown or `null` when a regular tab is currently displayed.
      */
     fun isPrivate(customTabSessionId: String?): Boolean =
         customTabSessionId?.let { browserStore.state.findTabOrCustomTab(it) }?.content?.private
+            ?: browserStore.state.selectedTab?.content?.private?.takeIf { settings.enableHomepageAsNewTab }
             ?: settings.lastKnownMode.isPrivate
 }

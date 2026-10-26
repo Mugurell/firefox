@@ -30,6 +30,7 @@ import org.mozilla.fenix.browser.BrowserFragmentDirections
 import org.mozilla.fenix.browser.browsingmode.BrowsingMode
 import org.mozilla.fenix.browser.browsingmode.BrowsingMode.Normal
 import org.mozilla.fenix.browser.browsingmode.BrowsingMode.Private
+import org.mozilla.fenix.components.ActivityPrivacy
 import org.mozilla.fenix.components.AppStore
 import org.mozilla.fenix.components.appstate.AppState
 import org.mozilla.fenix.components.appstate.search.SearchState
@@ -54,13 +55,9 @@ class ToolbarVerticalGesturesHandlerTest(private val scenario: Scenario) {
     private val toolbarLayout = spyk(View(testContext))
     private var navbarLayout: View? = null
     private val appStore =
-        AppStore(
-            AppState(
-                mode = scenario.browsingMode,
-                searchState = SearchState.EMPTY.copy(isSearchActive = scenario.isSearchActive),
-            )
-        )
+        AppStore(AppState(searchState = SearchState.EMPTY.copy(isSearchActive = scenario.isSearchActive)))
     private val navController: NavController = mockk(relaxed = true)
+    val activityPrivacy: ActivityPrivacy = mockk()
 
     @Before
     fun setup() {
@@ -81,6 +78,8 @@ class ToolbarVerticalGesturesHandlerTest(private val scenario: Scenario) {
         val mockDestination: NavDestination = mockk()
         every { mockDestination.id } returns R.id.browserFragment
         every { navController.currentDestination } returns mockDestination
+
+        every { activityPrivacy.isPrivate("") } returns scenario.browsingMode.isPrivate
 
         val rootView =
             spyk(View(testContext)).also {

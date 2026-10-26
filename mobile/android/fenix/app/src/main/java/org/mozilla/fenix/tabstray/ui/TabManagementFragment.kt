@@ -77,7 +77,6 @@ import mozilla.telemetry.glean.private.NoExtras
 import org.mozilla.fenix.Config
 import org.mozilla.fenix.GleanMetrics.PrivateBrowsingLocked
 import org.mozilla.fenix.GleanMetrics.TabsTray
-import org.mozilla.fenix.HomeActivity
 import org.mozilla.fenix.R
 import org.mozilla.fenix.components.appstate.AppAction
 import org.mozilla.fenix.components.share.CacheHelper
@@ -240,7 +239,6 @@ class TabManagementFragment : Fragment() {
                 tabsTrayStore = tabsTrayStore,
                 browserStore = requireComponents.core.store,
                 settings = requireComponents.settings,
-                browsingModeManager = (activity as HomeActivity).browsingModeManager,
                 navController = findNavController(),
                 navigateToHomeAndDeleteSession = ::navigateToHomeAndDeleteSession,
                 profiler = requireComponents.core.engine.profiler,

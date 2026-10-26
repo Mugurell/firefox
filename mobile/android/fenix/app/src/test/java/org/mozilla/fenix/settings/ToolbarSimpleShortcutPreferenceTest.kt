@@ -22,7 +22,6 @@ import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
-import org.mozilla.fenix.browser.browsingmode.BrowsingMode
 import org.mozilla.fenix.components.AppStore
 import org.mozilla.fenix.components.Components
 import org.mozilla.fenix.components.appstate.AppState
@@ -45,7 +44,7 @@ class ToolbarSimpleShortcutPreferenceTest {
     @Before
     fun setUp() {
         every { context.components } returns components
-        every { components.appStore } returns AppStore(AppState(mode = BrowsingMode.Normal))
+        every { components.appStore } returns AppStore(AppState())
         every { components.activityPrivacy.isPrivate(customTabSessionId = null) } returns false
         every { components.core.summarizeFeatureSettings } returns summarizationFeatureSettings
         every { summarizationFeatureSettings.canShowFeature } returns true

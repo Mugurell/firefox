@@ -44,8 +44,11 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import mozilla.appservices.autofill.AutofillApiException
 import mozilla.components.ExperimentalAndroidComponentsApi
+import mozilla.components.browser.session.storage.SessionStorage
+import mozilla.components.browser.state.action.RestoreCompleteAction
 import mozilla.components.browser.state.action.SearchAction.SearchConfigurationAvailabilityChanged
 import mozilla.components.browser.state.action.SystemAction
+import mozilla.components.browser.state.action.TabListAction.RestoreAction.RestoreLocation
 import mozilla.components.browser.state.state.selectedOrDefaultPrivateSearchEngine
 import mozilla.components.browser.state.store.BrowserStore
 import mozilla.components.browser.storage.sync.GlobalPlacesDependencyProvider
@@ -479,8 +482,13 @@ open class FenixApplication : Application(), Provider, ThemeProvider {
     private fun restoreBrowserState() = applicationScope.launch {
         val store = components.core.store
         val sessionStorage = components.core.sessionStorage
+        val settings = components.settings
 
-        components.useCases.tabsUseCases.restore(sessionStorage, components.settings.getTabTimeout())
+        if (settings.enableHomepageAsNewTab && settings.lastKnownMode.isPrivate) {
+            restoreWithoutSelectedTab(sessionStorage, settings.getTabTimeout())
+        } else {
+            components.useCases.tabsUseCases.restore(sessionStorage, settings.getTabTimeout())
+        }
 
         // Now that we have restored our previous state (if there's one) let's setup auto saving the state while
         // the app is used.
@@ -489,6 +497,27 @@ open class FenixApplication : Application(), Provider, ThemeProvider {
             .periodicallyInForeground(interval = 30, unit = TimeUnit.SECONDS)
             .whenGoingToBackground()
             .whenSessionsChange()
+    }
+
+    /**
+     * Restores the tabs without selecting one, so that a cold start in private mode doesn't select a normal tab and the
+     * private homepage tab added afterwards is the one shown.
+     */
+    private suspend fun restoreWithoutSelectedTab(sessionStorage: SessionStorage, tabTimeoutInMs: Long) {
+        val now = System.currentTimeMillis()
+        val state =
+            withContext(IO) {
+                sessionStorage.restore { now - maxOf(it.state.lastAccess, it.state.createdAt) <= tabTimeoutInMs }
+            }
+        withContext(Dispatchers.Main) {
+            state?.let {
+                components.useCases.tabsUseCases.restore(
+                    state = it.copy(selectedTabId = null),
+                    restoreLocation = RestoreLocation.BEGINNING,
+                )
+            }
+            components.core.store.dispatch(RestoreCompleteAction)
+        }
     }
 
     private fun restoreDownloads() {

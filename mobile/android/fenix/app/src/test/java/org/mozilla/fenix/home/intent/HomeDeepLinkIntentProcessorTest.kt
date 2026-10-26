@@ -224,13 +224,13 @@ class HomeDeepLinkIntentProcessorTest {
     fun `process enable_private_browsing deep link`() {
         assertTrue(processorHome.process(testIntent("enable_private_browsing"), navController, out, settings))
 
-        verify { activity.browsingModeManager.mode = BrowsingMode.Private }
+        verify { settings.lastKnownMode = BrowsingMode.Private }
         verify { navController.navigate(NavGraphDirections.actionGlobalHome()) }
         verify { out wasNot Called }
     }
 
     @Test
-    fun `GIVEN homepage as a new tab WHEN the enable_private_browsing deep link is processed THEN a private homepage tab is added and private mode is on`() {
+    fun `GIVEN homepage as a new tab WHEN the enable_private_browsing deep link is processed THEN a private homepage tab is added and private mode is saved`() {
         val fenixBrowserUseCases: FenixBrowserUseCases = mockk(relaxed = true)
         every { settings.enableHomepageAsNewTab } returns true
         every { activity.applicationContext } returns testContext
@@ -239,7 +239,7 @@ class HomeDeepLinkIntentProcessorTest {
         assertTrue(processorHome.process(testIntent("enable_private_browsing"), navController, out, settings))
 
         verify { fenixBrowserUseCases.addNewHomepageTab(private = true) }
-        verify { activity.browsingModeManager.mode = BrowsingMode.Private }
+        verify { settings.lastKnownMode = BrowsingMode.Private }
     }
 
     @Test
